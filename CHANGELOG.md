@@ -1,0 +1,573 @@
+# Changelog
+
+All notable changes to this project are documented in this file. The format is based on
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.17.3] - 2026-10-29
+
+### Changed
+
+- The HTTP API reads `multipart/form-data` with the multipart support of axum (multer) instead of a hand-written
+  parser. Quoted boundaries, blank lines inside values and broken bodies are covered by unit tests; a broken part
+  ends reading and keeps the fields read so far.
+- `CONTRIBUTING` and `SECURITY` exist in English and German (`*.de.md`).
+
+## [0.17.2] - 2026-10-29
+
+### Fixed
+
+- Placeholders in texts are filled in one pass, so braces in a pad title or a name are never replaced.
+- The language switch stores the choice for the email before deletion only when the click comes from NextPad itself;
+  a link on another site can no longer change it. The cookie for the page language is set as before.
+- The last German-only answers of the API (origin check, restoring without a version, owner-only actions) follow the
+  language of the request.
+
+## [0.17.1] - 2026-10-29
+
+### Fixed
+
+- In a free pad with an institution logo, the logo at the top left of the toolbar now leads to the start page, like
+  the house icon; it is named for screen readers and is at least 44 px large.
+- Restoring an earlier version from the timeline keeps the indentation of paragraphs and headings (contributed in #1).
+- The error pages of the Moodle sign-in (LTI) follow the language: the person’s own choice, otherwise the language
+  from Moodle, otherwise the browser language. Before they were German only.
+- The “Author colours on/off” button in the editor toolbar was German on English pages.
+
+## [0.17.0] - 2026-10-29
+
+Upgrade note: the database gains the column `authors.sprache`, added automatically on start. Back up the database
+before updating; an older version keeps working with the extra column.
+
+### Added
+
+- German and English throughout: pages and messages, help, editor, idea collection (including the board for the
+  projector), quiz grid, buzzer measurement, exports, the email before deletion and the appearance settings page for
+  admins. Text in pads and everything people enter stays as written.
+- Language choice, in this order: the person’s own choice through the “DE | EN” switch in the page header and the
+  editor toolbar (remembered for a year, also inside the Moodle activity; it returns to the same page), the language
+  from Moodle at LTI launch (`launch_presentation.locale`), the browser language, otherwise German.
+- Exports follow the language of the request: table of contents in HTML, text, Markdown and PDF; PDF header, date
+  and page numbers (with English hyphenation); print view. The idea collection’s CSV is comma-separated in English
+  (`No,Entry,Votes,Done`, `ideas.csv`) and stays semicolon-separated in German. A quiz question table may start with
+  the English header row `Category | Points | Question | Answer`.
+- The email before deletion uses the language the owner last chose while signed in through Moodle, with the PDF in
+  that language; without a choice it contains both languages, German first.
+- Inviting from the editor: “Share and export” (formerly “Export”) starts with “Copy link” and, where the device
+  offers it, “Share via device”. If copying is blocked, for example inside Moodle, the link appears selected for
+  copying by hand. Only for free pads; menu entries are at least 44 px high.
+- Operating documentation in English and German: `server/README.md` (configuration), `docs/docker.md` and the
+  YunoHost documents are English, with German versions next to them (`*.de.md`, YunoHost `doc/*_de.md`). The YunoHost
+  configuration panel and install questions have English labels throughout.
+
+### Changed
+
+- CI runs the browser and API tests (`web/test/browsertests.sh`) against freshly started servers, with the same
+  script as locally, including the appearance settings test that before only ran by hand; clippy runs with
+  `-D warnings`. Four tests that only printed values (sync, timeline, guests, Markdown) now check them and fail with
+  exit code 1, as do all others.
+- Buzzer and buzzer measurement: each clock sync request gives up after 3 s, so a hanging connection no longer keeps a
+  phone on an old offset. The measurement page and its verdict now say what is measured (how much the clock sync
+  varies, not whether the clock is right) and that the reaction time includes the short query until the button
+  appears; a failed receipt report is retried once and then shown instead of being dropped. Measurement and game
+  share one 50 ms threshold.
+- A lock poisoned by a crash under the lock is still recovered, but now logged as an error with its location.
+- `web/package.json` carries the server version; a unit test keeps both in step. `CITATION.cff` names the current
+  version again.
+
+### Fixed
+
+- The help mentioned a “Share” button that did not exist.
+- The email before deleting an idea collection named a button that is actually called “Teilen, zeigen, sichern”.
+- On English pages in the HSD look, the start page showed the German default subtitle.
+- The read-only label in the editor was German on English pages, and the logo in the editor toolbar was announced as
+  “Hochschule Düsseldorf” regardless of the configured institution.
+
+## [0.16.0] - 2026-10-29
+
+### Added
+
+- Restore an earlier version from the timeline: the owner of a free pad (in Moodle: teachers) can bring back any step or
+  saved version with “Diesen Stand wiederherstellen”. The server rebuilds that version and applies it as a new change,
+  so the version before stays in the timeline. Other people and read-only links cannot restore (server-side check).
+- Add-ons can be switched per instance with `NEXTPAD_ADDONS` (comma-separated `ideen`, `quiz`, `zeichenbrett`; unset =
+  all, empty = none). A switched-off add-on has no start page tile, routes, help section or Moodle activity type;
+  existing pads show a notice and keep their data, which is still removed when the pad is deleted. The YunoHost package
+  asks at install time and offers the switches in its configuration panel; existing installations keep all add-ons.
+
+### Changed
+
+- The pad is the core; idea collection, quiz grid (with buzzer and buzzer measurement) and drawing board are add-ons in
+  `server/src/addons/`. Each describes itself (tables, routes, page, export, tile, help, Moodle type), and the core no
+  longer checks pad types one by one. The live channel and QR codes are shared core services.
+- The deletion notice for a quiz no longer attaches an empty PDF; it says how to save the quiz instead.
+
+## [0.15.0] - 2026-10-28
+
+### Added
+
+- Quiz countdown: the time per question is set when creating the quiz (default 10 seconds, 0 turns it off). It runs in
+  large type on the projector from the moment a question opens; afterwards the buzzer takes no more presses.
+- The projector shows the reaction time of the first team (time from opening the question to the press).
+- After a wrong answer (minus points) the question stays open and the projector shows “Jetzt dran” with the next team
+  in the buzz order; the order marks the wrong answer.
+- End screen statistics: fastest team and mean reaction time per team.
+
+### Fixed
+
+- A failed SQLite write batch (for example a locked database) is retried with growing pauses instead of being dropped.
+  Loading a pad and the history export now wait for pending writes and report an error if they cannot be stored.
+- Scoring is only accepted for the question that is currently open in a running game.
+
+## [0.14.0] - 2026-10-28
+
+### Added
+
+- Quiz game flow: after saving, the board is locked and phones pick their team (switching allowed). “Spiel starten”
+  unlocks the board and fixes the teams. “Spiel beenden” shows the result at any time, also with open fields.
+  “Neues Spiel” resets points and played fields and keeps questions and teams. “Rückgängig” after ending resumes the
+  game. Quizzes running before the update keep running.
+- Buzzer on the projector: the team that pressed first appears in large type (“gleichauf” when two teams are within
+  50 ms), and a buzzer sound plays at the first press of a question. The sound is generated in the browser, can be
+  switched off in the menu, and plays only after the lead has clicked once on the page (browser rule).
+- Lead tools moved into a “⋯” menu on the right (undo, QR code, full screen, edit questions, buzzer measurement, sound),
+  so the top stays free for the game.
+
+## [0.13.1] - 2026-10-28
+
+### Changed
+
+- Quiz on the phone: with a team chosen and no question open, a line says that the buzzer appears as soon as the lead
+  opens a question. Before, the phone showed nothing and the buzzer seemed broken.
+- The team choice is hidden on the end screen.
+- No team change during a running game: once a question is open or played, “Team wechseln” is gone, and the server
+  refuses a press from a device that already pressed for another team in this game. Joining late still works.
+
+## [0.13.0] - 2026-10-28
+
+### Added
+
+- Moodle activities show “Zurück zum Kurs” (back to the course): text pads in the toolbar, quiz and idea collection in
+  the header. The link leads to the Moodle course page (`…/course/view.php?id=<context id>`), remembered at each launch,
+  and opens in the top window when the activity is embedded.
+- Quiz: while the lead has the buzzer measurement open, everyone else sees “An der Messung teilnehmen” in the top
+  right corner of the quiz. This is the way into the measurement from Moodle, where the QR code leads to the quiz.
+  The button disappears about 15 seconds after the lead leaves the measurement page and is hidden during a question.
+
+- Task lists by typing Markdown: “- [ ] ” and “- [x] ” now turn into a task (before, the dash made a bullet point and
+  “[ ]” stayed as text). “[ ] ” at the start of a line and pasted Markdown already worked.
+
+### Fixed
+
+- Quiz buzzer stuck at “Verbinde …” after the page was reloaded with a team already chosen (back from the buzzer
+  measurement, launched again from Moodle, or reloaded by the phone after the screen lock). The clock sync only started
+  when a team was picked; it now also starts when the page loads with a stored team.
+- PDF export shows thumbs up and down for ratings, drawn like in the editor, instead of “+2 · −1”.
+- Indent and outdent buttons always return the focus to the text, also when nothing changes. Before, a following Tab
+  moved the focus to the next button.
+
+## [0.12.3] - 2026-10-28
+
+### Added
+
+- Indenting plain paragraphs and headings, not only list items: Tab and Shift+Tab or the indent and outdent buttons
+  move the paragraph (or all selected paragraphs) by one step, up to eight steps. Lists keep nesting with Tab, tables
+  keep moving between cells. HTML, plain text and PDF exports keep the indentation; Markdown has none.
+
+### Known limitations
+
+- Importing HTML (API `setHTML`, templates) does not read indentation back.
+
+## [0.12.2] - 2026-10-28
+
+### Fixed
+
+- Moodle activities: the QR code on the quiz board, the buzzer measurement and the idea wall was empty. It now leads to
+  the activity in Moodle (`…/mod/lti/view.php?l=<id>`), remembered at each launch from Moodle; scanning means signing in
+  to Moodle and landing in the activity. Without a known address the QR button is hidden.
+
+## [0.12.1] - 2026-10-28
+
+### Added
+
+- Buzzer and buzzer measurement: if the browser cannot keep the screen on (no Screen Wake Lock or request refused),
+  the phone shows how to turn off auto-lock for the session.
+
+## [0.12.0] - 2026-10-28
+
+### Added
+
+- Quiz board buzzer: viewers pick their team on their phone and get a large buzzer while a question is open and not
+  revealed. Phones sync their clock with the server every few seconds; the server ranks teams by the time of the press,
+  not by arrival, fixes the order half a second after the first press and marks teams less than 50 ms apart as tied.
+  One press per phone and question; implausible times fall back to arrival and are marked. The order is shown on the
+  projector and on the phones, and the first team is marked next to the scoring buttons.
+- Plain text pad as a Moodle course activity: custom parameter `typ=pad` (or tool URL `…/lti/pad`) opens a pad of
+  its own for each activity, like an Etherpad group pad; only people who start it from Moodle get in.
+
+## [0.11.1] - 2026-10-28
+
+### Changed
+
+- Quiz board: tiles stand out from the background (white with a black frame and edge) and react to mouse and keyboard
+  focus: they invert, lift slightly and get a red edge. No movement with reduced motion.
+
+## [0.11.0] - 2026-10-28
+
+### Added
+
+- Buzzer measurement for the quiz board: phones join via QR code, sync their clock with the server every few seconds
+  and press on a signal from the lead. The lead sees round-trip times, remaining clock error, signal delay and how often
+  the first press by arrival differs from the first press by corrected time, plus a verdict and a CSV export. Stores
+  only times and the device type (iOS, Android, other), no names.
+
+### Changed
+
+- Quiz board: played fields are locked (the server refuses to reopen them; undo brings a question back), the changed
+  score is highlighted briefly (static outline with reduced motion), and during a question only reveal, scoring and
+  full screen are shown.
+- Quiz board: after the last question an end screen shows the ranking, the winner (or a tie) and, for discussion, the
+  questions nobody solved or that were solved only after a wrong answer.
+
+## [0.10.0] - 2026-10-28
+
+### Added
+
+- Quiz board: a new pad kind for a review quiz in class. The lead pastes a table (category, points,
+  question, answer), names the teams and runs the board on the projector; everyone else follows live
+  on their phone via QR code. Answers reach viewers only after they are revealed. Points per team,
+  undo, keyboard control (Space, Esc, Z) and a score export. Available from the start page and via LTI.
+
+## [0.9.3] - 2026-10-28
+
+0.9.2 was built but not released; its fixes are part of this release.
+
+### Added
+
+- "Open or create" without a name creates a pad with a random name, like "New pad".
+
+### Fixed
+
+- Emoji in the PDF (such as the thumbs of ratings) were empty boxes; the PDF now embeds the monochrome
+  Noto Emoji font (SIL Open Font License 1.1) as fallback.
+- The tighter spacing from 0.9.1 now actually ships: it was only in the generated stylesheet, which the
+  release build overwrites, and is now in the source stylesheet of the editor bundle.
+- The cache-busting version of the editor stylesheets now also covers the HSD theme stylesheet, so browsers
+  load a changed theme instead of keeping the old one for up to a year.
+
+## [0.9.1] - 2026-10-28
+
+### Changed
+
+- HSD theme: all editor headings in Arial bold like the HSD LaTeX templates; HSD Sans stays on the start page
+  wordmark and level-1 headings in the PDF. Line height 1.4 instead of 1.55.
+- Tighter spacing in both themes: list items without paragraph gap (2 px between items), headings with more
+  space above than below; also in the timeline and print view.
+
+## [0.9.0] - 2026-10-27
+
+### Added
+
+- Tables: toolbar button inserts a 3 × 3 table with header row; the "Tabelle" menu (active inside a table)
+  adds or deletes rows and columns and toggles the header row. Markdown tables (`| A | B |` with a `| --- |`
+  line) become tables on paste and in the Markdown dialog. Exported as HTML table, GFM table, text and
+  Typst table in the PDF; `setHTML` reads tables back, so Moodle backup and restore keeps them.
+- Rating with thumbs up and thumbs down as an inline block. One vote per person and rating, click again to
+  withdraw. Votes live in the Y.Map `ratings` under `<rating id>:<author>`, so simultaneous votes do not
+  overwrite each other; copied ratings get a new id. Exports show the counts (`👍 3 · 👎 1`, PDF `+3 · −1`);
+  HTML export and `setHTML` carry the votes along. The browser counts the votes, not the server.
+- Table of contents: sidebar in the left margin (toggle "H" on the right of the toolbar, remembered per
+  browser; above the text on narrow screens) and as a block in the text via "Ins Pad einfügen". Both
+  update live; the block exports as linked list (HTML, headings get `id="abschnitt-N"`), list (Markdown,
+  text) and Typst outline with page numbers (PDF).
+
+### Changed
+
+- Task list button uses the icon font like the other buttons instead of the ☑ character.
+
+## [0.8.2] - 2026-10-26
+
+### Fixed
+
+- Projector view of an idea collection shows the QR code also in a fresh browser: the join link now depends on
+  the link that was opened, not on an existing cookie.
+- Start page without a background image: template tiles stay inside the entry panel on wide screens.
+
+## [0.8.1] - 2026-10-26
+
+### Changed
+
+- Logo without red: the speech bubble and its tail are both HSD blue (favicon, header, README).
+
+## [0.8.0] - 2026-10-26
+
+### Added
+
+- Appearance settings for admins at `/admin/erscheinungsbild` (HSD theme): name and subtitle in the header,
+  institution name, logo (PNG, JPEG, WebP or script-free SVG), start page background with credit, accent and
+  three house colours. Lines and tints for light and dark mode are derived with WCAG contrast checks or set by
+  hand; the page warns about weak contrasts. Applies to start page, help, editor, idea collection, projector view
+  and PDF export. Reset to the server defaults at any time.
+- Admins are Moodle administrators signing in via LTI, or addresses listed in `NEXTPAD_ADMINS`
+  (YunoHost: configuration panel).
+
+### Changed
+
+- The NextPad mark appears in the header only when no institution logo is set; without a logo, mark and name
+  link to the start page.
+- Editor (HSD theme) takes the accent from a variable instead of a fixed red.
+
+## [0.7.0] - 2026-10-26
+
+### Added
+
+- Logo: a filled speech bubble in HSD blue with a red tail (blue since 0.8.1), a line of text and a cursor inside.
+  It serves as favicon (SVG, 32 px PNG, Apple touch icon), stands before the name in the page header
+  and on the projector view; README files show it as a word mark (`docs/bilder/`).
+
+## [0.6.1] - 2026-10-26
+
+### Changed
+
+- Editor (HSD theme) follows the softened design: active tool and participant count as HSD-blue
+  tint with an underline instead of black, controls with 4 px radius, timeline buttons outlined.
+- Start page: panels over the photo 94 % opaque instead of 88 %. Measured on the rendered page
+  (`web/test/transparenz.mjs`, text against the least favourable background pixel), every text now
+  reaches at least 7.4:1 in light and 7.6:1 in dark mode (before: 6.4:1).
+- Idea collection: the read-only link is gone (the projector view covers it); "Link zum Mitmachen
+  kopieren" is a button with a short explanation like "Leinwand öffnen"; the header reads
+  "Ideensammlung · Bearbeitungsansicht".
+
+### Fixed
+
+- The editor's writing area has an accessible name ("Text des Pads"); screen readers announced
+  only "text field" before.
+
+## [0.6.0] - 2026-10-26
+
+### Added
+
+- Idea collection: projector view (`/p/<id>/leinwand`) with the most popular open posts in large
+  type, live, and a QR code for joining (free collections only).
+
+### Changed
+
+- Design softened within the HSD corporate design, always derived from the house colours:
+  blue, green and yellow as tints (12 %, yellow 30 %) for surfaces and darkened to 70 % for lines
+  (at least 3:1, WCAG 1.4.11); in dark mode the house colours themselves. Black only for the main
+  action. Controls get a 4 px radius, surfaces stay square. Start page tiles carry a tinted icon.
+- Idea collection: sorting as tabs; a cast vote shows HSD blue; new posts flash in yellow
+  (a static marker with reduced motion); done posts show a green check and the word "erledigt";
+  moderation as icon buttons; the question is edited via a pencil next to the heading.
+
+## [0.5.0] - 2026-10-26
+
+### Added
+
+- Idea collection as a Moodle activity: an "External tool" (LTI 1.3) with the custom parameter
+  `typ=ideen` (or tool URL `…/lti/ideen`) opens a collection of its own for each activity.
+  Only people who start it from Moodle get in (group session as with Etherpad group pads,
+  works embedded too); teachers moderate, the activity name becomes the question
+  (`web/test/ltitest.mjs`).
+
+### Changed
+
+- Idea collection: empty-state text fits the situation (course, everything done).
+
+## [0.4.0] - 2026-10-26
+
+### Added
+
+- Idea collection (start page tile "Ideensammlung", modelled on liveask): everyone posts ideas
+  or questions without a name and votes; one vote per person and post, checked by the server.
+  Whoever created the collection sets the question, marks posts as done or hides them.
+  Changes reach all open pages live (Server-Sent Events). Read-only link for the projector,
+  export as Markdown, text or CSV (`web/test/ideentest.mjs`, `web/test/ideen-a11y.mjs`).
+
+### Changed
+
+- Start page: the tile "Leeres Pad" is gone (opening a new name already creates a pad); the
+  text template "Ideensammlung" is replaced by the idea collection, old links lead there.
+  Desktop shows three tiles per row.
+
+## [0.3.3] - 2026-10-26
+
+### Changed
+
+- Start page (HSD theme, desktop): the entry panel is as wide as the panel below it.
+
+## [0.3.2] - 2026-10-26
+
+### Changed
+
+- Start page (HSD theme, desktop): the photo now reaches down to the footer; sign-in, recently
+  opened pads and the note sit on their own translucent panel, aligned with the entry panel.
+
+### Fixed
+
+- A hidden "recently opened" list no longer leaves an empty gap above the sign-in.
+
+## [0.3.1] - 2026-10-26
+
+### Changed
+
+- Only the name `nextpad` remains: settings must use the prefix `NEXTPAD_*`, the database
+  file is `nextpad.sqlite`, cookies are `nextpad_*`.
+
+### Fixed
+
+- Opening a pad no longer clears the list of recently opened pads (introduced in 0.3.0).
+
+## [0.3.0] - 2026-10-26
+
+### Changed
+
+- Technical name is now `nextpad` throughout: program and crate, settings `NEXTPAD_*`,
+  database file `nextpad.sqlite`, cookies `nextpad_login`, `nextpad_author`, `nextpad_lti`,
+  status name, browser object `window.nextpad`.
+
+### Added
+
+- Help page: section "Über NextPad" with author and link to the source code.
+- READMEs: section on why Rust, including attack surface.
+- CI runs `cargo audit`; advisories that cannot be reached from NextPad are documented in
+  `server/.cargo/audit.toml`.
+- `#![forbid(unsafe_code)]` for the server.
+
+## [0.2.12] - 2026-10-26
+
+### Added
+
+- CI workflow for GitHub (`.github/workflows/ci.yml`): build, tests and clippy of the server.
+
+### Changed
+
+- Example addresses in the documentation and the configuration panel use the documentation
+  range `192.0.2.0/24`; the LTI example platform is called `test-moodle`.
+- `web/test/markdowntest.mjs` creates its own group and pad and no longer needs a fixture file.
+- The operator name (`NEXTPAD_SITE_NAME`) is empty by default; without it the footer shows
+  only "NextPad". Previously the operator was hard-coded in the plain start and info pages.
+- Binaries for the YunoHost app come from the GitHub releases.
+
+### Fixed
+
+- Container image label states the licence correctly as EUPL-1.2 (was Apache-2.0).
+
+## [0.2.11] - 2026-10-25
+
+### Added
+
+- Dark mode in the pad: toggle in the toolbar (◐), the choice is kept in the browser; without
+  a choice the pad follows the device setting. Works for both themes; text on author colours
+  stays dark (`web/test/darktest.mjs`, axe colour contrast clean).
+
+## [0.2.10] - 2026-10-25
+
+### Changed
+
+- "Leeres Pad oder Vorlage" is open by default.
+- Signing out is easier to find: a proper button on the start page ("Über Moodle angemeldet
+  als …"), a sign-out button in the pad under "Teilnehmende", and `GET /logout` shows a short
+  page with a sign-out button instead of 405 (`web/test/logouttest.mjs`).
+
+## [0.2.9] - 2026-10-25
+
+### Changed
+
+- "Neues Pad" moved into the entry panel as a collapsible section ("Leeres Pad oder Vorlage",
+  native `details`/`summary`, works without JavaScript); closed by default, so the start page
+  shows the main task first. Compact tiles inside, two columns from 480 px.
+
+## [0.2.8] - 2026-10-25
+
+### Changed
+
+- Larger photo: 200 px on phones, 300 px on tablets; on wide screens the entry panel sits fully
+  on the photo, which grows with the panel. Entry panel slightly translucent over the photo
+  (88 %). Less black: only the main action stays black, "Leeres Pad" and the Moodle sign-in
+  get thin grey borders.
+
+## [0.2.7] - 2026-10-25
+
+### Changed
+
+- Start page for phones first: slim photo band (112 to 200 px) with the entry panel overlapping
+  it, so the main action sits in the first screen even at 320 × 640. One button "Öffnen oder
+  anlegen" with a sentence on what happens, the access note ("Kein Passwortschutz …") right
+  under the field. Title in Arial Bold, sentence case. Sign-in via Moodle as a secondary button
+  above the templates. "Neues Pad" as a list with icon, name, short description and chevron on
+  phones, five cards on wide screens. Field and button stacked on phones, smaller header logo.
+  Type sizes in rem so they follow the browser's font size.
+
+## [0.2.6] - 2026-10-25
+
+### Changed
+
+- Start page reduced: a photo band with a single opaque panel (title, pad name, open) as the
+  one main task; below on a calm surface a row of five tiles to create a pad (names only),
+  the recent list without frame, sign-in via Moodle as one sentence and a short note above
+  the footer instead of the "Gut zu wissen" box. Body text 17 px, hints about half as long,
+  header aligned with the content column.
+
+## [0.2.5] - 2026-10-25
+
+### Changed
+
+- Split start page from 0.2.4 withdrawn: header, photo behind the panels and footer are back
+  as in 0.2.3. With a background photo the panels are now slightly translucent (88 % opacity);
+  secondary text keeps at least 6.3:1 contrast in the worst case.
+
+## [0.2.4] - 2026-10-25
+
+### Changed
+
+- Start page on wide screens (1000 px and up) with a background photo: split layout like the
+  Moodle login page (Boost theme, e.g. ZBIW). The photo fills the left side on its own, the
+  controls sit on a calm surface on the right, header and footer belong to the right column.
+  Narrower screens keep the previous layout.
+
+## [0.2.3] - 2026-10-25
+
+### Added
+
+- Task lists you can tick off: Markdown `- [ ]` / `- [x]` while typing and when pasting,
+  toolbar button, sync of the checked state; exported to HTML (checkboxes), Markdown, text
+  and PDF; kept through `getHTML` → `setHTML` (Moodle course backup and restore)
+  (`web/test/tasklist.mjs`).
+
+### Changed
+
+- Incoming remote changes are applied at most once per frame, with a longer interval when
+  applying gets expensive (up to 250 ms). With 100 people typing into the same paragraph,
+  remote input now appears after about 170 ms instead of several seconds
+  (`web/src/yjs-batch.js`, also used by the whiteboard).
+
+## [0.2.2] - 2026-10-25
+
+### Added
+
+- Load test with 100 people on one pad (400 inputs/s): median around 50 ms, p99 under
+  80 ms; footer aligned (`web/test/belastung.mjs`, `belastung-leicht.mjs`,
+  `browser-unter-last.mjs`).
+
+## [0.2.1] - 2026-10-25
+
+### Added
+
+- Feedback on tap, side safe areas, hint box, arrows in "recently opened"; package source
+  Gitea.
+
+## [0.2.0] - 2026-10-24
+
+### Added
+
+- Renamed to NextPad, address `/np`; write thread for SQLite and update-log compaction;
+  Typst cache bounded.
+- Whiteboard prototype via Excalidraw; profile pictures from Moodle; PDF typesetting with
+  Typst; free pads with ownership and retention; LTI 1.3 sign-in; switchable appearance.
+
+### Changed
+
+- Pilot switched to a YunoHost app (`packaging/nextpad_ynh`).

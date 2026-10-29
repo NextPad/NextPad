@@ -1,0 +1,43 @@
+/* HSD-Design für den NextPad-Editor nach dem Corporate Design der Hochschule Düsseldorf:
+   Arial, Schwarz und Grauraster, HSD-Rot #E60028 nur als Akzent (Linien, Fokus). Wie Startseite und Ideensammlung:
+   Zustände als Tönung und Linie aus den Hausfarben (Werte und Kontraste in start.css), Bedienelemente 4 px gerundet,
+   Flächen (Leisten, Menüs, Dialoge) eckig.
+   Logo und HSD Sans kommen zur Laufzeit aus NEXTPAD_THEME_DIR, nicht aus dem Repo. */
+.theme-hsd { --super-dark: #000; --dark: #333; --middle: #999; --light: #f2f2f2; --super-light: #fff; --primary: #e60028; --border: #d9d9d9;
+  --line-blue: #007a96; --tint-blue: #e0f5fa; --radius-control: 4px; }
+.theme-hsd, .theme-hsd body { font-family: Arial, "Liberation Sans", Helvetica, sans-serif; color: #000; }
+.theme-hsd #toolbar { border-bottom: 2px solid var(--primary); }
+.theme-hsd .popup, .theme-hsd #mddialog, .theme-hsd .collaboration-carets__label { border-radius: 0; }
+.theme-hsd .ib, .theme-hsd .tsel, .theme-hsd .popup a, .theme-hsd .popup button, .theme-hsd .popup input.myname, .theme-hsd #timeline .tl-controls button, .theme-hsd #mddialog button, .theme-hsd #mddialog textarea, .theme-hsd #timeline .tl-authors .user { border-radius: var(--radius-control); }
+.theme-hsd .ib { color: #333; } .theme-hsd .ib:hover { background: #e6e6e6; }
+/* aktives Werkzeug: Tönung und Unterstrich in HSD-Blau statt schwarzer Fläche */
+.theme-hsd .ib.selected { background: var(--tint-blue); color: #000; box-shadow: inset 0 -3px 0 var(--line-blue); }
+.theme-hsd .ib:focus-visible, .theme-hsd .tsel:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.theme-hsd .tsel { font-family: Arial, "Liberation Sans", sans-serif; background-color: #f2f2f2; color: #000; }
+.theme-hsd .separator { background: #d9d9d9; }
+.theme-hsd .toolbar-logo { height: 26px; width: auto; margin: 0 8px 0 6px; display: block; }
+.theme-hsd #editor .ProseMirror, .theme-hsd #timeline .snapshot { font-family: Arial, "Liberation Sans", Helvetica, sans-serif; line-height: 1.4; color: #000; }
+/* Überschriften: Maße wie Etherpad (2.5/1.8/1.5/1.2 em bei 15 px), alle Ebenen in Arial fett wie die HSD-LaTeX-Vorlagen.
+   HSD Sans hat nur Versalien und bleibt der Wortmarke im Kopf der Startseite und Ebene 1 im PDF vorbehalten. */
+.theme-hsd #editor .ProseMirror :is(h1,h2,h3,h4), .theme-hsd #timeline .snapshot :is(h1,h2,h3,h4) { color: #000; font-family: Arial, "Liberation Sans", sans-serif; font-weight: 700; }
+.theme-hsd #editor .ProseMirror > :not(ul):not(ol)::before, .theme-hsd #editor .ProseMirror > ul > li::before, .theme-hsd #editor .ProseMirror > ol > li::before { color: #666; }
+.theme-hsd #editor .ProseMirror a { color: #333; text-decoration: underline; }
+.theme-hsd #statusbar .users { background: var(--tint-blue); color: #000; }
+.theme-hsd #statusbar .ok { color: #333; } .theme-hsd #statusbar .warn { color: var(--primary); }
+.theme-hsd .popup { box-shadow: 0 2px 10px #0003; } .theme-hsd .popup h2 { color: #333; }
+.theme-hsd .popup .swatch { border-radius: 0; }
+.theme-hsd #timeline .tl-slider { accent-color: var(--primary); }
+.theme-hsd #timeline .tl-controls button { background: #fff; color: #000; border: 1px solid #767676; } .theme-hsd #timeline .tl-controls button:hover { border-color: #000; background: #f2f2f2; }
+.theme-hsd #mddialog button[value="ok"] { background: #333; color: #fff; }
+.theme-hsd .avatar { border-radius: 0; }
+
+/* dunkler Modus: Hausfarbe Blau selbst als Linie, 25-%-Tönung als Fläche (wie start.css) */
+html[data-theme="dark"] .theme-hsd { --line-blue: #00afd7; --tint-blue: #16424c; }
+html[data-theme="dark"] .theme-hsd .ib.selected { background: var(--tint-blue); color: #f2f2f2; box-shadow: inset 0 -3px 0 var(--line-blue); }
+html[data-theme="dark"] .theme-hsd #statusbar .users { background: var(--tint-blue); color: #f2f2f2; }
+html[data-theme="dark"] .theme-hsd #timeline .tl-controls button { background: #1e1e1e; color: #ececec; border-color: #8c8c8c; }
+html[data-theme="dark"] .theme-hsd #timeline .tl-controls button:hover { background: #2e2e2e; border-color: #ececec; }
+
+/* Logo in der Werkzeugleiste als Weg zur Startseite: Ziel mindestens 44 px, sichtbarer Fokus */
+.theme-hsd a.toolbar-home { display: flex; align-items: center; min-height: 44px; min-width: 44px; }
+.theme-hsd a.toolbar-home:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }

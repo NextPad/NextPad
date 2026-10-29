@@ -1,0 +1,95 @@
+#:schema https://raw.githubusercontent.com/YunoHost/apps/main/schemas/manifest.v2.schema.json
+
+packaging_format = 2
+
+id = "nextpad"
+name = "NextPad"
+description.en = "Collaborative pads with timeline, whiteboard and Moodle login; Etherpad API compatible"
+description.de = "Gemeinsam schreiben und zeichnen mit Zeitleiste und Moodle-Anmeldung; Etherpad-kompatibel"
+
+version = "0.17.2~ynh1"
+
+maintainers = ["ZWEK der Hochschule Düsseldorf"]
+
+[upstream]
+license = "EUPL-1.2"
+code = "https://github.com/christiansteier/nextpad"
+
+[integration]
+yunohost = ">= 12.0"
+helpers_version = "2.1"
+architectures = ["amd64"]
+multi_instance = false
+ldap = false
+sso = false
+disk = "100M"
+ram.build = "50M"
+ram.runtime = "100M"
+
+[install]
+    [install.domain]
+    type = "domain"
+
+    [install.path]
+    type = "path"
+    default = "/np"
+
+    [install.init_main_permission]
+    help.de = "„Besucher“ macht freie Pads und die Etherpad-API für Moodle ohne YunoHost-Anmeldung erreichbar."
+    help.en = "'Visitors' makes free pads and the Etherpad API for Moodle reachable without YunoHost login."
+    type = "group"
+    default = "visitors"
+
+    [install.theme]
+    ask.de = "Erscheinungsbild"
+    ask.en = "Theme"
+    help.de = "„hsd“ braucht Logo und Hausschrift in /home/yunohost.app/nextpad/theme (nicht im Paket)."
+    help.en = "'hsd' needs the logo and house font in /home/yunohost.app/nextpad/theme (not in the package)."
+    type = "select"
+    choices = ["colibris", "hsd"]
+    default = "colibris"
+
+    [install.allow_free_pads]
+    ask.de = "Freie Pads von der Startseite erlauben?"
+    ask.en = "Allow free pads from the start page?"
+    type = "boolean"
+    default = true
+
+    [install.addon_ideen]
+    ask.de = "Addon Ideensammlung einschalten?"
+    ask.en = "Enable the idea collection add-on?"
+    type = "boolean"
+    default = true
+
+    [install.addon_quiz]
+    ask.de = "Addon Quiz-Raster (mit Buzzer) einschalten?"
+    ask.en = "Enable the quiz grid add-on (with buzzer)?"
+    type = "boolean"
+    default = true
+
+    [install.addon_zeichenbrett]
+    ask.de = "Addon Zeichenbrett einschalten?"
+    ask.en = "Enable the whiteboard add-on?"
+    type = "boolean"
+    default = true
+
+[resources]
+    [resources.sources.main]
+    url = "https://github.com/christiansteier/nextpad/releases/download/v0.17.2/nextpad-0.17.2-amd64"
+    sha256 = "9e2ef62289cc7e56f9bf706c9495bbc077c01e61cb1e682cf3560d7d374cf72c"
+    extract = false
+    rename = "nextpad"
+
+    [resources.system_user]
+
+    [resources.install_dir]
+
+    [resources.data_dir]
+    subdirs = ["data", "secrets", "theme"]
+
+    [resources.permissions]
+    main.url = "/"
+    main.show_tile = false
+
+    [resources.ports]
+    main.default = 5096
