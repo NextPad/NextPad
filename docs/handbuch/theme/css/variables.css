@@ -1,0 +1,474 @@
+
+/* Globals */
+
+:root {
+    --sidebar-target-width: 300px;
+    --sidebar-width: min(var(--sidebar-target-width), 80vw);
+    --sidebar-resize-indicator-width: 8px;
+    --sidebar-resize-indicator-space: 2px;
+    --page-padding: 15px;
+    --content-max-width: 750px;
+    --menu-bar-height: 50px;
+    --mono-font: "Source Code Pro", Consolas, "Ubuntu Mono", Menlo, "DejaVu Sans Mono", monospace, monospace;
+    --code-font-size: 0.875em; /* please adjust the ace font size accordingly in editor.js */
+    --searchbar-margin-block-start: 5px;
+}
+
+/* Themes */
+
+.ayu {
+    --bg: hsl(210, 25%, 8%);
+    --fg: #c5c5c5;
+
+    --sidebar-bg: #14191f;
+    --sidebar-fg: #c8c9db;
+    --sidebar-non-existant: #5c6773;
+    --sidebar-active: #ffb454;
+    --sidebar-spacer: #2d334f;
+
+    --scrollbar: var(--sidebar-fg);
+
+    --icons: #737480;
+    --icons-hover: #b7b9cc;
+
+    --links: #0096cf;
+
+    --inline-code-color: #ffb454;
+
+    --theme-popup-bg: #14191f;
+    --theme-popup-border: #5c6773;
+    --theme-hover: #191f26;
+
+    --quote-bg: hsl(226, 15%, 17%);
+    --quote-border: hsl(226, 15%, 22%);
+
+    --warning-border: #ff8e00;
+
+    --table-border-color: hsl(210, 25%, 13%);
+    --table-header-bg: hsl(210, 25%, 28%);
+    --table-alternate-bg: hsl(210, 25%, 11%);
+
+    --searchbar-border-color: #848484;
+    --searchbar-bg: #424242;
+    --searchbar-fg: #fff;
+    --searchbar-shadow-color: #d4c89f;
+    --searchresults-header-fg: #666;
+    --searchresults-border-color: #888;
+    --searchresults-li-bg: #252932;
+    --search-mark-bg: #e3b171;
+
+    --color-scheme: dark;
+
+    /* Same as `--icons` */
+    --copy-button-filter: invert(45%) sepia(6%) saturate(621%) hue-rotate(198deg) brightness(99%) contrast(85%);
+    /* Same as `--sidebar-active` */
+    --copy-button-filter-hover: invert(68%) sepia(55%) saturate(531%) hue-rotate(341deg) brightness(104%) contrast(101%);
+
+    --footnote-highlight: #2668a6;
+
+    --overlay-bg: rgba(33, 40, 48, 0.4);
+
+    --blockquote-note-color: #74b9ff;
+    --blockquote-tip-color: #09ca09;
+    --blockquote-important-color: #d3abff;
+    --blockquote-warning-color: #f0b72f;
+    --blockquote-caution-color: #f21424;
+
+    --sidebar-header-border-color: #c18639;
+}
+
+.coal {
+    --bg: hsl(200, 7%, 8%);
+    --fg: #98a3ad;
+
+    --sidebar-bg: #292c2f;
+    --sidebar-fg: #a1adb8;
+    --sidebar-non-existant: #505254;
+    --sidebar-active: #3473ad;
+    --sidebar-spacer: #393939;
+
+    --scrollbar: var(--sidebar-fg);
+
+    --icons: #43484d;
+    --icons-hover: #b3c0cc;
+
+    --links: #2b79a2;
+
+    --inline-code-color: #c5c8c6;
+
+    --theme-popup-bg: #141617;
+    --theme-popup-border: #43484d;
+    --theme-hover: #1f2124;
+
+    --quote-bg: hsl(234, 21%, 18%);
+    --quote-border: hsl(234, 21%, 23%);
+
+    --warning-border: #ff8e00;
+
+    --table-border-color: hsl(200, 7%, 13%);
+    --table-header-bg: hsl(200, 7%, 28%);
+    --table-alternate-bg: hsl(200, 7%, 11%);
+
+    --searchbar-border-color: #aaa;
+    --searchbar-bg: #b7b7b7;
+    --searchbar-fg: #000;
+    --searchbar-shadow-color: #aaa;
+    --searchresults-header-fg: #666;
+    --searchresults-border-color: #98a3ad;
+    --searchresults-li-bg: #2b2b2f;
+    --search-mark-bg: #355c7d;
+
+    --color-scheme: dark;
+
+    /* Same as `--icons` */
+    --copy-button-filter: invert(26%) sepia(8%) saturate(575%) hue-rotate(169deg) brightness(87%) contrast(82%);
+    /* Same as `--sidebar-active` */
+    --copy-button-filter-hover: invert(36%) sepia(70%) saturate(503%) hue-rotate(167deg) brightness(98%) contrast(89%);
+
+    --footnote-highlight: #4079ae;
+
+    --overlay-bg: rgba(33, 40, 48, 0.4);
+
+    --blockquote-note-color: #4493f8;
+    --blockquote-tip-color: #08ae08;
+    --blockquote-important-color: #ab7df8;
+    --blockquote-warning-color: #d29922;
+    --blockquote-caution-color: #d91b29;
+
+    --sidebar-header-border-color: #3473ad;
+}
+
+.light, html:not(.js) {
+    --bg: hsl(0, 0%, 100%);
+    --fg: hsl(0, 0%, 0%);
+
+    --sidebar-bg: #fafafa;
+    --sidebar-fg: hsl(0, 0%, 0%);
+    --sidebar-non-existant: #aaaaaa;
+    --sidebar-active: #1f1fff;
+    --sidebar-spacer: #f4f4f4;
+
+    --scrollbar: #8F8F8F;
+
+    --icons: #747474;
+    --icons-hover: #000000;
+
+    --links: #20609f;
+
+    --inline-code-color: #301900;
+
+    --theme-popup-bg: #fafafa;
+    --theme-popup-border: #cccccc;
+    --theme-hover: #e6e6e6;
+
+    --quote-bg: hsl(197, 37%, 96%);
+    --quote-border: hsl(197, 37%, 91%);
+
+    --warning-border: #ff8e00;
+
+    --table-border-color: hsl(0, 0%, 95%);
+    --table-header-bg: hsl(0, 0%, 80%);
+    --table-alternate-bg: hsl(0, 0%, 97%);
+
+    --searchbar-border-color: #aaa;
+    --searchbar-bg: #fafafa;
+    --searchbar-fg: #000;
+    --searchbar-shadow-color: #aaa;
+    --searchresults-header-fg: #666;
+    --searchresults-border-color: #888;
+    --searchresults-li-bg: #e4f2fe;
+    --search-mark-bg: #a2cff5;
+
+    --color-scheme: light;
+
+    /* Same as `--icons` */
+    --copy-button-filter: invert(45.49%);
+    /* Same as `--sidebar-active` */
+    --copy-button-filter-hover: invert(14%) sepia(93%) saturate(4250%) hue-rotate(243deg) brightness(99%) contrast(130%);
+
+    --footnote-highlight: #7e7eff;
+
+    --overlay-bg: rgba(200, 200, 205, 0.4);
+
+    --blockquote-note-color: #0969da;
+    --blockquote-tip-color: #008000;
+    --blockquote-important-color: #8250df;
+    --blockquote-warning-color: #9a6700;
+    --blockquote-caution-color: #b52731;
+
+    --sidebar-header-border-color: #6e6edb;
+}
+
+.navy {
+    --bg: hsl(226, 23%, 11%);
+    --fg: #bcbdd0;
+
+    --sidebar-bg: #282d3f;
+    --sidebar-fg: #c8c9db;
+    --sidebar-non-existant: #505274;
+    --sidebar-active: #2b79a2;
+    --sidebar-spacer: #2d334f;
+
+    --scrollbar: var(--sidebar-fg);
+
+    --icons: #737480;
+    --icons-hover: #b7b9cc;
+
+    --links: #2b79a2;
+
+    --inline-code-color: #c5c8c6;
+
+    --theme-popup-bg: #161923;
+    --theme-popup-border: #737480;
+    --theme-hover: #282e40;
+
+    --quote-bg: hsl(226, 15%, 17%);
+    --quote-border: hsl(226, 15%, 22%);
+
+    --warning-border: #ff8e00;
+
+    --table-border-color: hsl(226, 23%, 16%);
+    --table-header-bg: hsl(226, 23%, 31%);
+    --table-alternate-bg: hsl(226, 23%, 14%);
+
+    --searchbar-border-color: #aaa;
+    --searchbar-bg: #aeaec6;
+    --searchbar-fg: #000;
+    --searchbar-shadow-color: #aaa;
+    --searchresults-header-fg: #5f5f71;
+    --searchresults-border-color: #5c5c68;
+    --searchresults-li-bg: #242430;
+    --search-mark-bg: #a2cff5;
+
+    --color-scheme: dark;
+
+    /* Same as `--icons` */
+    --copy-button-filter: invert(51%) sepia(10%) saturate(393%) hue-rotate(198deg) brightness(86%) contrast(87%);
+    /* Same as `--sidebar-active` */
+    --copy-button-filter-hover: invert(46%) sepia(20%) saturate(1537%) hue-rotate(156deg) brightness(85%) contrast(90%);
+
+    --footnote-highlight: #4079ae;
+
+    --overlay-bg: rgba(33, 40, 48, 0.4);
+
+    --blockquote-note-color: #4493f8;
+    --blockquote-tip-color: #09ca09;
+    --blockquote-important-color: #ab7df8;
+    --blockquote-warning-color: #d29922;
+    --blockquote-caution-color: #f21424;
+
+    --sidebar-header-border-color: #2f6ab5;
+}
+
+.rust {
+    --bg: hsl(60, 9%, 87%);
+    --fg: #262625;
+
+    --sidebar-bg: #3b2e2a;
+    --sidebar-fg: #c8c9db;
+    --sidebar-non-existant: #505254;
+    --sidebar-active: #e69f67;
+    --sidebar-spacer: #45373a;
+
+    --scrollbar: var(--sidebar-fg);
+
+    --icons: #737480;
+    --icons-hover: #262625;
+
+    --links: #2b79a2;
+
+    --inline-code-color: #6e6b5e;
+
+    --theme-popup-bg: #e1e1db;
+    --theme-popup-border: #b38f6b;
+    --theme-hover: #99908a;
+
+    --quote-bg: hsl(60, 5%, 75%);
+    --quote-border: hsl(60, 5%, 70%);
+
+    --warning-border: #ff8e00;
+
+    --table-border-color: hsl(60, 9%, 82%);
+    --table-header-bg: #b3a497;
+    --table-alternate-bg: hsl(60, 9%, 84%);
+
+    --searchbar-border-color: #aaa;
+    --searchbar-bg: #fafafa;
+    --searchbar-fg: #000;
+    --searchbar-shadow-color: #aaa;
+    --searchresults-header-fg: #666;
+    --searchresults-border-color: #888;
+    --searchresults-li-bg: #dec2a2;
+    --search-mark-bg: #e69f67;
+
+    /* Same as `--icons` */
+    --copy-button-filter: invert(51%) sepia(10%) saturate(393%) hue-rotate(198deg) brightness(86%) contrast(87%);
+    /* Same as `--sidebar-active` */
+    --copy-button-filter-hover: invert(77%) sepia(16%) saturate(1798%) hue-rotate(328deg) brightness(98%) contrast(83%);
+
+    --footnote-highlight: #d3a17a;
+
+    --overlay-bg: rgba(150, 150, 150, 0.25);
+
+    --blockquote-note-color: #023b95;
+    --blockquote-tip-color: #007700;
+    --blockquote-important-color: #8250df;
+    --blockquote-warning-color: #603700;
+    --blockquote-caution-color: #aa1721;
+
+    --sidebar-header-border-color: #8c391f;
+}
+
+@media (prefers-color-scheme: dark) {
+    html:not(.js) {
+        --bg: hsl(200, 7%, 8%);
+        --fg: #98a3ad;
+
+        --sidebar-bg: #292c2f;
+        --sidebar-fg: #a1adb8;
+        --sidebar-non-existant: #505254;
+        --sidebar-active: #3473ad;
+        --sidebar-spacer: #393939;
+
+        --scrollbar: var(--sidebar-fg);
+
+        --icons: #43484d;
+        --icons-hover: #b3c0cc;
+
+        --links: #2b79a2;
+
+        --inline-code-color: #c5c8c6;
+
+        --theme-popup-bg: #141617;
+        --theme-popup-border: #43484d;
+        --theme-hover: #1f2124;
+
+        --quote-bg: hsl(234, 21%, 18%);
+        --quote-border: hsl(234, 21%, 23%);
+
+        --warning-border: #ff8e00;
+
+        --table-border-color: hsl(200, 7%, 13%);
+        --table-header-bg: hsl(200, 7%, 28%);
+        --table-alternate-bg: hsl(200, 7%, 11%);
+
+        --searchbar-border-color: #aaa;
+        --searchbar-bg: #b7b7b7;
+        --searchbar-fg: #000;
+        --searchbar-shadow-color: #aaa;
+        --searchresults-header-fg: #666;
+        --searchresults-border-color: #98a3ad;
+        --searchresults-li-bg: #2b2b2f;
+        --search-mark-bg: #355c7d;
+
+        --color-scheme: dark;
+
+        /* Same as `--icons` */
+        --copy-button-filter: invert(26%) sepia(8%) saturate(575%) hue-rotate(169deg) brightness(87%) contrast(82%);
+        /* Same as `--sidebar-active` */
+        --copy-button-filter-hover: invert(36%) sepia(70%) saturate(503%) hue-rotate(167deg) brightness(98%) contrast(89%);
+
+        --footnote-highlight: #4079ae;
+
+        --overlay-bg: rgba(33, 40, 48, 0.4);
+
+        --blockquote-note-color: #4493f8;
+        --blockquote-tip-color: #08ae08;
+        --blockquote-important-color: #ab7df8;
+        --blockquote-warning-color: #d29922;
+        --blockquote-caution-color: #d91b29;
+
+        --sidebar-header-border-color: #3473ad;
+    }
+}
+
+/* ---------- NextPad: Farben, Schrift und Formen wie die Projektseite ---------- */
+:root { --np-primary: #007a96; --np-primary-ink: #005f75; --np-line: #d5e2e5; --np-bg-alt: #f2f7f8; --np-muted: #4f5b5e; --np-tint: #e0f0f4; --content-max-width: 760px; --menu-bar-height: 56px; }
+.light, html:not(.js) {
+    --bg: #ffffff; --fg: #1e1e1e;
+    --sidebar-bg: #f2f7f8; --sidebar-fg: #1e1e1e; --sidebar-non-existant: #5b6669; --sidebar-active: #005f75; --sidebar-spacer: #d5e2e5;
+    --scrollbar: #8fa3a8; --icons: #4f5b5e; --icons-hover: #005f75; --links: #005f75; --inline-code-color: #0f2a31;
+    --theme-popup-bg: #ffffff; --theme-popup-border: #d5e2e5; --theme-hover: #e0f0f4;
+    --quote-bg: #f2f7f8; --quote-border: #007a96; --warning-border: #b35900;
+    --table-border-color: #d5e2e5; --table-header-bg: #e0f0f4; --table-alternate-bg: #f7fafb;
+    --searchbar-border-color: #8fa3a8; --searchbar-bg: #ffffff; --searchbar-fg: #1e1e1e; --searchbar-shadow-color: transparent;
+    --searchresults-header-fg: #4f5b5e; --searchresults-border-color: #d5e2e5; --searchresults-li-bg: #f2f7f8; --search-mark-bg: #e0f0f4;
+    --np-primary: #007a96; --np-primary-ink: #005f75; --np-line: #d5e2e5; --np-bg-alt: #f2f7f8; --np-muted: #4f5b5e; --np-tint: #e0f0f4;
+}
+.navy {
+    --bg: #141a1c; --fg: #f1f4f5;
+    --sidebar-bg: #1b2326; --sidebar-fg: #f1f4f5; --sidebar-non-existant: #a9b6b9; --sidebar-active: #7fd4ff; --sidebar-spacer: #2e3a3e;
+    --scrollbar: #4f5b5e; --icons: #a9b6b9; --icons-hover: #7fd4ff; --links: #7fd4ff; --inline-code-color: #e6f3f6;
+    --theme-popup-bg: #1b2326; --theme-popup-border: #2e3a3e; --theme-hover: #17343c;
+    --quote-bg: #1b2326; --quote-border: #3fb4d0;
+    --table-border-color: #2e3a3e; --table-header-bg: #17343c; --table-alternate-bg: #182023;
+    --searchbar-border-color: #4f5b5e; --searchbar-bg: #1b2326; --searchbar-fg: #f1f4f5; --searchbar-shadow-color: transparent;
+    --searchresults-header-fg: #a9b6b9; --searchresults-border-color: #2e3a3e; --searchresults-li-bg: #1b2326; --search-mark-bg: #17343c;
+    --np-primary: #3fb4d0; --np-primary-ink: #7fd4ff; --np-line: #2e3a3e; --np-bg-alt: #1b2326; --np-muted: #a9b6b9; --np-tint: #17343c;
+}
+html:root { font-family: Arial, "Helvetica Neue", Helvetica, "Liberation Sans", sans-serif; --mono-font: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace; }
+html:root body { font-size: 1.7rem; line-height: 1.6; }
+/* eckig wie die Projektseite */
+html:root .content pre, html:root code, html:root #mdbook-searchbar, html:root .theme-popup, html:root .content video, html:root .content img { border-radius: 0; }
+html:root .sidebar { --sidebar-header-border-color: var(--np-primary); }
+/* Hell und dunkel folgen dem System; die Auswahl weiterer mdBook-Themes entfällt */
+html:root #mdbook-theme-toggle { display: none; }
+/* Bewegtbild mit Standbild, Bedienelementen und Schrittliste darunter */
+html:root .np-film { margin: 1.5em 0 2em; }
+html:root .np-film video { display: block; width: 100%; height: auto; border: 1px solid var(--np-line); background: var(--np-bg-alt); }
+html:root .np-film figcaption { font-size: .9em; color: var(--np-muted); margin-top: .5em; }
+html:root .content h1, html:root .content h2 { text-wrap: balance; }
+html:root .content h1 { border-block-end: 3px solid var(--np-primary); padding-block-end: .3em; }
+html:root .content main a, html:root .content main a:link { text-decoration: underline; text-underline-offset: .2em; }
+html:root .content main a:hover { text-decoration-thickness: 2px; }
+html:root .content main a.header, html:root .content main a.header:link { text-decoration: none; color: inherit; }
+/* Ziele im Inhaltsverzeichnis mindestens 24 px hoch (WCAG 2.5.8) */
+html:root .sidebar .chapter li a, html:root .sidebar .header-in-summary { display: inline-block; min-height: 24px; padding-block: 3px; }
+
+/* Lesbarkeit nach dem Dossier „Lernmaterial gestalten“: höchstens ~70 Zeichen je Zeile, Zeilenabstand 1,6.
+   Filme, Tabellen und Codeblöcke dürfen breiter sein. */
+html:root .content main { line-height: 1.6; }
+html:root .content main :is(p, ul, ol, dl, h1, h2, h3, .np-kasten) { max-width: 35em; }
+html:root .content main li, html:root .content main p { line-height: 1.6; }
+/* Kästen: Farbe nie allein, jeder Kasten trägt eine Textüberschrift und eine Randlinie */
+html:root .np-kasten { border: 1px solid var(--np-line); border-inline-start: 4px solid var(--np-primary); background: var(--np-bg-alt); padding: .2em 1.1em .6em; margin: 1.2em 0; }
+html:root .np-kasten-titel { font-weight: 700; margin: .8em 0 .3em; }
+html:root .np-kasten-titel::before { display: inline-block; width: 1.4em; font-weight: 700; color: var(--np-primary-ink); }
+html:root .np-ziel .np-kasten-titel::before { content: "→"; }
+html:root .np-begriffe .np-kasten-titel::before { content: "Aa"; width: 1.9em; }
+html:root .np-kasten ul { margin: .3em 0 .4em; }
+html:root .np-begriffe dl { margin: .3em 0 .4em; }
+html:root .np-begriffe dt { font-weight: 700; margin-top: .5em; }
+html:root .np-begriffe dd { margin-inline-start: 0; }
+
+/* ---------- Kopf und Fuß wie auf der Projektseite (site/static/style.css, rem dort = 16 px) ---------- */
+html:root .np-site { font-size: 17px; line-height: 1.6; color: var(--fg); background: var(--bg); }
+html:root .np-site, html:root .np-site * { box-sizing: border-box; }
+html:root .np-site .wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+html:root .np-site .skip { position: absolute; left: -999px; top: 8px; background: var(--bg); padding: 8px 12px; z-index: 200; }
+html:root .np-site .skip:focus { left: 16px; }
+html:root .np-site p { margin: 0; }
+html:root .np-site .top { border-bottom: 1px solid var(--np-line); }
+html:root .np-site .top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 14px; flex-wrap: wrap; }
+html:root .np-site .brand { display: flex; align-items: center; gap: 10px; color: var(--fg); text-decoration: none; font-size: 21.6px; }
+html:root .np-site .brand img { width: 34px; height: 34px; }
+html:root .np-site .brand b { font-weight: 700; }
+html:root .np-site .top nav { display: flex; gap: 20px; flex-wrap: wrap; font-size: 15.2px; }
+html:root .np-site .top nav a { color: var(--fg); text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
+html:root .np-site .top nav a:hover { color: var(--np-primary-ink); text-decoration: underline; }
+html:root .np-site .top nav a[aria-current] { color: var(--np-primary-ink); text-decoration: underline; text-underline-offset: 2px; }
+html:root .np-site .top nav a.lang { border: 1px solid var(--np-line); padding-inline: 12px; }
+html:root .np-site .langhint { background: var(--np-tint); font-size: 14.72px; }
+html:root .np-site .langhint .wrap { display: block; padding-block: 10px; }
+html:root .np-site .langhint a { color: var(--np-primary-ink); }
+html:root footer.np-site { border-top: 1px solid var(--np-line); padding-block: 32px 40px; font-size: 14.72px; color: var(--np-muted); margin-top: 48px; }
+html:root footer.np-site .wrap { display: flex; flex-wrap: wrap; gap: 12px 32px; justify-content: space-between; }
+html:root footer.np-site p + p { margin-top: 6px; }
+html:root footer.np-site a { color: var(--np-primary-ink); text-underline-offset: 2px; }
+html:root .np-site :focus-visible { outline: 3px solid var(--np-primary); outline-offset: 2px; }
+@media (max-width: 560px) { html:root .np-site .top nav { gap: 14px; } }
+/* Die Seitenleiste beginnt unter dem Kopf und rückt beim Scrollen nach oben (Wert setzt book.js) */
+html:root .sidebar { top: var(--np-oben, 0px); }
+/* mdBook-Leiste: Inhaltsverzeichnis, Suche, Buchtitel */
+html:root .menu-bar { border-block-end: 1px solid var(--np-line); }
+html:root .np-buch { font-weight: 700; font-size: 1.8rem; }

@@ -1,0 +1,18 @@
+[book]
+title = "NextPad manual"
+language = "en"
+src = "src"
+
+[output.html]
+theme = "../theme"
+default-theme = "light"
+preferred-dark-theme = "navy"
+site-url = "/en/manual/"
+no-section-label = false
+print = { enable = false }
+
+[output.html.playground]
+runnable = false
+
+[output.html.search]
+enable = true

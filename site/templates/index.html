@@ -4,7 +4,7 @@
 {% block description %}{{ section.description }}{% endblock %}
 {% block og_title %}{{ section.title }}{% endblock %}
 {% block og_description %}{{ section.description }}{% endblock %}
-{% block jsonld %}<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"NextPad","url":"{{ current_url }}","description":"{{ section.description }}","applicationCategory":"EducationalApplication","operatingSystem":"Linux","softwareVersion":"{{ config.extra.version }}","license":"https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12","inLanguage":["de","en"],"isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"codeRepository":"{{ config.extra.repo }}","author":{"@type":"Person","name":"Christian-Maximilian Steier"},"screenshot":"{{ config.base_url }}/bilder/pad.webp"}</script>{% endblock %}
+{% block jsonld %}<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"NextPad","url":"{{ current_url }}","description":"{{ section.description }}","applicationCategory":"EducationalApplication","operatingSystem":"Linux","softwareVersion":"{{ config.extra.version }}","license":"https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12","inLanguage":["de","en"],"isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"codeRepository":"{{ config.extra.repo }}","author":{"@type":"Person","name":"Christian-Maximilian Steier"},"screenshot":"{{ config.base_url }}/bilder/pad.webp","image":"{{ config.base_url }}/bilder/vorschau.png","downloadUrl":"{{ config.extra.repo }}/releases/latest"}</script>{% endblock %}
 {% block content %}
 {%- set x = section.extra -%}
 {%- set root = "" -%}
@@ -84,7 +84,7 @@
     <div class="moodle">
       <ol class="steps">{% for s in x.steps %}<li><h3>{{ s.title }}</h3><p>{{ s.text | safe }}</p></li>{% endfor %}</ol>
       <div>
-        <pre class="term" tabindex="0" aria-label="{{ x.api_label }}"><span class="c"># {{ x.api_c1 }}</span>
+        <pre class="term" tabindex="0" role="region" aria-label="{{ x.api_label }}"><span class="c"># {{ x.api_c1 }}</span>
 <span class="k">POST</span> /api/1.2.15/createGroupPad
 apikey=…&amp;groupID=g.x3Kq…&amp;padName=kurs-4711
 

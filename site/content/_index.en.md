@@ -61,7 +61,6 @@ ops_title = "Privacy, operation, accessibility"
 cards = [
   { title = "No third-party services", text = "No trackers, no fonts or scripts from others. Everything the browser loads comes from your own server." },
   { title = "Delete your own pads", text = "Whoever creates a free pad owns it and can delete it or extend it by a year at any time. Unused pads disappear after a year; people signed in through Moodle get an email with the content first. Pads in Moodle courses follow the course." },
-  { title = "No chat, little data", text = "Stored is what belongs to the pad. Students need no account; without Moodle they use a name of their choice. Profile pictures stay in Moodle, NextPad does not store them." },
   { title = "Small attack surface", text = "One program without Node.js and without runtime plugins. Pad content stays data, sign-in through Moodle only accepts RS256-signed tokens." },
   { title = "Easy to run", text = "SQLite in the data directory, configuration through environment variables. A reverse proxy with TLS in front, done." },
   { title = "Accessibility checked", text = "Start page and idea collection are checked with axe against WCAG 2.2 AA in every look, light and dark, on every test run. Targets are at least 44 px." },

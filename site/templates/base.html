@@ -14,13 +14,20 @@
 <link rel="alternate" hreflang="en" href="{{ config.base_url }}/en/">
 <link rel="alternate" hreflang="x-default" href="{{ config.base_url }}/">
 <link rel="icon" href="{{ root }}bilder/nextpad-zeichen.svg" type="image/svg+xml">
+<link rel="icon" href="{{ root }}bilder/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="{{ root }}bilder/apple-touch-icon.png">
 <link rel="stylesheet" href="{{ root }}style.css">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="{{ config.title }}">
 <meta property="og:url" content="{{ current_url }}">
 <meta property="og:title" content="{% block og_title %}{{ config.title }}{% endblock %}">
 <meta property="og:description" content="{% block og_description %}{{ config.description }}{% endblock %}">
 <meta property="og:image" content="{{ config.base_url }}/bilder/vorschau.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{{ trans(key='og_image_alt', lang=lang) }}">
 <meta property="og:locale" content="{% if lang == 'de' %}de_DE{% else %}en_GB{% endif %}">
+<meta property="og:locale:alternate" content="{% if lang == 'de' %}en_GB{% else %}de_DE{% endif %}">
 <meta name="twitter:card" content="summary_large_image">
 {% block jsonld %}{% endblock %}
 </head>
@@ -37,6 +44,7 @@
       <a href="#themes">{{ trans(key="nav_themes", lang=lang) }}</a>
       <a href="#betrieb">{{ trans(key="nav_betrieb", lang=lang) }}</a>
       <a href="#installieren">{{ trans(key="nav_installieren", lang=lang) }}</a>
+      <a href="{{ root }}{% if lang == 'de' %}handbuch/{% else %}en/manual/{% endif %}">{{ trans(key="nav_handbuch", lang=lang) }}</a>
       <a href="{{ config.extra.repo }}">GitHub</a>
       <a class="lang" href="{{ other_href }}" hreflang="{{ other }}" lang="{{ other }}" data-lang="{{ other }}" aria-label="{{ trans(key='other_lang_label', lang=lang) }}">{{ trans(key="other_lang", lang=lang) }}</a>
     </nav>

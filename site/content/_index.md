@@ -61,7 +61,6 @@ ops_title = "Datenschutz, Betrieb, Barrierefreiheit"
 cards = [
   { title = "Keine fremden Dienste", text = "Keine Tracker, keine Schriften oder Skripte von Dritten. Alles, was der Browser lädt, kommt vom eigenen Server." },
   { title = "Eigene Pads löschen", text = "Wer ein freies Pad anlegt, besitzt es und kann es jederzeit löschen oder um ein Jahr verlängern. Ungenutzte Pads verschwinden nach einem Jahr; wer über Moodle angemeldet ist, bekommt vorher eine Mail mit dem Inhalt. Pads in Moodle-Kursen folgen dem Kurs." },
-  { title = "Kein Chat, wenig Daten", text = "Gespeichert wird, was zum Pad gehört. Studierende brauchen kein Konto; ohne Moodle tragen sie einen selbst gewählten Namen. Profilbilder bleiben in Moodle, NextPad speichert sie nicht." },
   { title = "Kleine Angriffsfläche", text = "Ein Programm ohne Node.js und ohne Plugins zur Laufzeit. Pad-Inhalte bleiben Daten, die Anmeldung über Moodle nimmt nur RS256-signierte Tokens an." },
   { title = "Einfach zu betreiben", text = "SQLite im Datenverzeichnis, Konfiguration über Umgebungsvariablen. Reverse-Proxy mit TLS davor, fertig." },
   { title = "Barrierefreiheit geprüft", text = "Startseite und Ideensammlung werden in jedem Theme mit axe gegen WCAG 2.2 AA geprüft, hell und dunkel, bei jedem Testlauf. Bedienflächen sind mindestens 44 px groß." },

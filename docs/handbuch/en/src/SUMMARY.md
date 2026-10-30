@@ -1,0 +1,28 @@
+# Summary
+
+[About this manual](README.md)
+
+# Getting started
+
+- [Open a pad]()
+
+# Guides
+
+- [Quiz grid](quiz/README.md)
+    - [Create a quiz](quiz/create.md)
+    - [Measure the buzzer](quiz/measure-buzzer.md)
+    - [Run the quiz](quiz/run.md)
+- [Idea collection]()
+- [Embed in Moodle]()
+
+# Teaching scenarios
+
+- [Seminar with a projector]()
+
+# Reference
+
+- [Keyboard shortcuts]()
+
+# Operation
+
+- [Installation]()
