@@ -40,6 +40,7 @@ pub const TEXTE: &[(&str, &str)] = &[
     ("frei.zu_viele", "Too many new pads in a short time. Please try again later."),
     ("frei.anlegen", "The pad could not be created."),
     // Export, extending
+    ("export.pdf_nicht_eingebaut", "PDF export is not built into this server. The print view under Export, Print creates a PDF through the browser."),
     ("export.pdf_fehler", "The PDF could not be created. The print view is still available under Export, Print."),
     ("verlaengern.link_abgelaufen", "This link is no longer valid. The pad may already have been extended or opened."),
     ("verlaengern.link_ungueltig", "This link is no longer valid."),
@@ -244,11 +245,12 @@ pub const TEXTE: &[(&str, &str)] = &[
     ("mail.englisch_unten", "English version below."),
     // Verwaltungsseite Erscheinungsbild
     ("look.untertitel", "Writing together at HSD"),
+    ("look.untertitel_frei", "Writing together in the browser"),
     ("look.titel", "Appearance"),
     ("look.nur_admins", "This page is for admins only. Please sign in through Moodle with an administration account and reload the page."),
     ("look.zur_startseite", "To the start page"),
     ("look.verwaltung", "Administration"),
-    ("look.einleitung", "Applies to the start page, help, pads and idea collections in the “hsd” look. The house colours are starting values; NextPad derives lines and tints from them and checks the contrast."),
+    ("look.einleitung", "Applies to the start page, help, pads and idea collections in the “nextpad”, “rund” and “hsd” looks. The house colours are starting values; NextPad derives lines and tints from them and checks the contrast."),
     ("look.name", "Name"),
     ("look.name_kopf", "Name in the header"),
     ("look.untertitel_feld", "Subtitle"),

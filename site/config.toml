@@ -1,0 +1,64 @@
+# Projektseite NextPad (GitHub Pages), gebaut mit Zola. Deutsch ist Vorgabe, Englisch unter /en/.
+base_url = "https://nextpad.github.io"
+title = "NextPad"
+description = "Pad mit Zeitleiste, Ideensammlung, Quiz und Zeichenbrett für die Lehre. Freie Software, für sich allein oder in Moodle und ILIAS."
+default_language = "de"
+compile_sass = false
+build_search_index = false
+generate_feeds = false
+
+[extra]
+version = "0.18.0"
+repo = "https://github.com/NextPad/NextPad"
+
+[translations]
+skip = "Zum Inhalt"
+nav_label = "Seiten"
+nav_lehre = "Lehre"
+nav_funktionen = "Funktionen"
+nav_moodle = "Lernplattformen"
+nav_themes = "Themes"
+standard = "Standard"
+nav_betrieb = "Betrieb"
+nav_installieren = "Installieren"
+other_lang = "English"
+other_lang_label = "English version"
+download = "Version {v} laden"
+source = "Quellcode ansehen"
+version_label = "Aktuelle Version"
+footer_author = "Idee, Konzept und Entwicklung: Christian-Maximilian Steier"
+footer_origin = "Entstanden am ZWEK der Hochschule Düsseldorf als Nachfolger eines Etherpad-Dienstes."
+license = "EUPL-1.2"
+citation = "Zitation"
+changelog = "Änderungen"
+contributing = "Mitwirken"
+other_hint = "This page is also available in English."
+
+[languages.en]
+title = "NextPad"
+description = "Pad with timeline, idea collection, quiz and drawing board for teaching. Free software, on its own or in Moodle and ILIAS."
+generate_feeds = false
+build_search_index = false
+
+[languages.en.translations]
+skip = "Skip to content"
+nav_label = "Pages"
+nav_lehre = "Teaching"
+nav_funktionen = "Features"
+nav_moodle = "Learning platforms"
+nav_betrieb = "Operation"
+nav_themes = "Looks"
+standard = "Default"
+nav_installieren = "Install"
+other_lang = "Deutsch"
+other_lang_label = "Deutsche Fassung"
+download = "Download version {v}"
+source = "View the source"
+version_label = "Current version"
+footer_author = "Idea, concept and development: Christian-Maximilian Steier"
+footer_origin = "Created at the ZWEK of Hochschule Düsseldorf as the successor of an Etherpad service."
+license = "EUPL-1.2"
+citation = "Citation"
+changelog = "Changes"
+contributing = "Contributing"
+other_hint = "Diese Seite gibt es auch auf Deutsch."

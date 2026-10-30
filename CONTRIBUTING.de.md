@@ -8,7 +8,7 @@ Dieses Dokument beschreibt den Entwicklungsablauf.
 ## Entwicklungsumgebung
 
 ```bash
-git clone https://github.com/christiansteier/NextPad.git
+git clone https://github.com/NextPad/NextPad.git
 cd NextPad
 bash web/build.sh          # Editor- und Zeichenbrett-Bündel, vor dem ersten Rust-Bau nötig
 cd server

@@ -5,10 +5,10 @@ English version: [README.md](README.md)
 YunoHost-Paket für NextPad. Installation aus diesem Ordner:
 
 ```bash
-sudo yunohost app install ./nextpad_ynh --args "domain=pads.example.org&path=/np&init_main_permission=visitors&theme=colibris&allow_free_pads=1&addon_ideen=1&addon_quiz=1&addon_zeichenbrett=1"
+sudo yunohost app install ./nextpad_ynh --args "domain=pads.example.org&path=/np&init_main_permission=visitors&theme=nextpad&allow_free_pads=1&addon_ideen=1&addon_quiz=1&addon_zeichenbrett=1"
 ```
 
-Die Installation lädt das Programm aus den GitHub-Releases (https://github.com/christiansteier/nextpad/releases),
+Die Installation lädt das Programm aus den GitHub-Releases (https://github.com/NextPad/NextPad/releases),
 Datei `nextpad-<version>-amd64`; Version, Adresse und Prüfsumme stehen im `manifest.toml`.
 
 Neues Release: Binary für Debian 12 bauen (`cargo build --release` in einem

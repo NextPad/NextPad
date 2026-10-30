@@ -341,7 +341,7 @@ const exportPopup = document.createElement('div'); exportPopup.className = 'popu
 // Einladen nur bei freien Pads: Gruppenpads aus Moodle erreicht nur, wer im Kurs ist
 if (cfg.free) exportPopup.appendChild(einladen())
 exportPopup.insertAdjacentHTML('beforeend', `<h2>${tx('export_titel')}</h2>`)
-for (const [label, fmt, icon, title] of [['HTML', 'html', I.code, tx('export_als', { format: 'HTML' })], ['Markdown', 'md', I.md, tx('export_als', { format: 'Markdown' })], [tx('export_text'), 'txt', I.file, tx('export_als', { format: tx('export_text') })], ['PDF', 'pdf', I.pdf, tx('export_als', { format: 'PDF' })], [tx('drucken'), 'print', I.pdf, tx('druckansicht')]]) {
+for (const [label, fmt, icon, title] of [['HTML', 'html', I.code, tx('export_als', { format: 'HTML' })], ['Markdown', 'md', I.md, tx('export_als', { format: 'Markdown' })], [tx('export_text'), 'txt', I.file, tx('export_als', { format: tx('export_text') })], ['PDF', 'pdf', I.pdf, tx('export_als', { format: 'PDF' })], [tx('drucken'), 'print', I.pdf, tx('druckansicht')]].filter(([, fmt]) => fmt !== 'pdf' || cfg.pdf !== false)) {
   const a = document.createElement('a'); a.href = `${cfg.basePath}/p/${encodeURIComponent(cfg.urlId)}/export/${fmt}`; a.target = '_blank'; a.rel = 'noopener'; a.title = title
   a.innerHTML = `<span class="buttonicon" aria-hidden="true">${icon}</span> ${label}`; exportPopup.appendChild(a)
 }

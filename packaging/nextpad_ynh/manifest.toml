@@ -7,13 +7,13 @@ name = "NextPad"
 description.en = "Collaborative pads with timeline, whiteboard and Moodle login; Etherpad API compatible"
 description.de = "Gemeinsam schreiben und zeichnen mit Zeitleiste und Moodle-Anmeldung; Etherpad-kompatibel"
 
-version = "0.17.2~ynh1"
+version = "0.18.0~ynh1"
 
 maintainers = ["ZWEK der Hochschule Düsseldorf"]
 
 [upstream]
 license = "EUPL-1.2"
-code = "https://github.com/christiansteier/nextpad"
+code = "https://github.com/NextPad/NextPad"
 
 [integration]
 yunohost = ">= 12.0"
@@ -43,11 +43,11 @@ ram.runtime = "100M"
     [install.theme]
     ask.de = "Erscheinungsbild"
     ask.en = "Theme"
-    help.de = "„hsd“ braucht Logo und Hausschrift in /home/yunohost.app/nextpad/theme (nicht im Paket)."
-    help.en = "'hsd' needs the logo and house font in /home/yunohost.app/nextpad/theme (not in the package)."
+    help.de = "„nextpad“ eckig, „rund“ mit großen Rundungen, „colibris“ wie Etherpad. „hsd“ braucht Logo und Hausschrift in /home/yunohost.app/nextpad/theme (nicht im Paket)."
+    help.en = "'nextpad' square, 'rund' rounded, 'colibris' like Etherpad. 'hsd' needs the logo and house font in /home/yunohost.app/nextpad/theme (not in the package)."
     type = "select"
-    choices = ["colibris", "hsd"]
-    default = "colibris"
+    choices = ["nextpad", "rund", "colibris", "hsd"]
+    default = "nextpad"
 
     [install.allow_free_pads]
     ask.de = "Freie Pads von der Startseite erlauben?"
@@ -75,8 +75,8 @@ ram.runtime = "100M"
 
 [resources]
     [resources.sources.main]
-    url = "https://github.com/christiansteier/nextpad/releases/download/v0.17.2/nextpad-0.17.2-amd64"
-    sha256 = "9e2ef62289cc7e56f9bf706c9495bbc077c01e61cb1e682cf3560d7d374cf72c"
+    url = "https://github.com/NextPad/NextPad/releases/download/v0.18.0/nextpad-0.18.0-amd64"
+    sha256 = "60c2edafb7f2dc28cb7c86084e3e67f162560a2a44f87db0bc0673ef41d93bd8"
     extract = false
     rename = "nextpad"
 

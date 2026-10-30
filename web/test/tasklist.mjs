@@ -6,6 +6,8 @@ const [base, keyFile] = process.argv.slice(2)
 const key = readFileSync(keyFile, 'utf8').split('\n').find(l => l.trim() && !l.startsWith('#')).trim().split(/\s+/)[0]
 let pass = 0, fail = 0
 const check = (n, ok, x = '') => { ok ? pass++ : fail++; console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${ok ? '' : ' ' + x}`) }
+// Server ohne PDF-Satz (Container-Image): /export/pdf antwortet 404, browsertests.sh setzt NEXTPAD_OHNE_PDF
+const ohnePdf = process.env.NEXTPAD_OHNE_PDF === '1'
 const api = async (fn, p) => (await (await fetch(`${base}/api/1.2.15/${fn}`, { method: 'POST', body: new URLSearchParams({ apikey: key, ...p }) })).json())
 const b = await chromium.launch()
 const A = await (await b.newContext()).newPage(), B = await (await b.newContext()).newPage()
@@ -34,7 +36,8 @@ check('Text-Export', txt.includes('- [x] Folien') && txt.includes('- [ ] Quellen
 const html = (await api('getHTML', { padID: pad })).data?.html || ''
 check('HTML-Export mit Kontrollkästchen', html.includes('data-type="taskList"') && html.includes('data-checked="true"') && html.includes('type="checkbox"'))
 const pdf = await fetch(`${base}/p/${encodeURIComponent(pad)}/export/pdf`)
-check('PDF-Export', pdf.status === 200 && (await pdf.arrayBuffer()).byteLength > 5000)
+if (ohnePdf) check('ohne PDF-Satz: PDF-Export 404', pdf.status === 404, String(pdf.status))
+else check('PDF-Export', pdf.status === 200 && (await pdf.arrayBuffer()).byteLength > 5000)
 // Rückweg wie bei Moodle-Sicherung: HTML in neues Pad
 const pad2 = 'tasklist-roundtrip-' + Date.now()
 await api('createPad', { padID: pad2 }); const sr = await api('setHTML', { padID: pad2, html })

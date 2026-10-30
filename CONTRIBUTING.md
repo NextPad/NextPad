@@ -8,7 +8,7 @@ describes how development works.
 ## Development environment
 
 ```bash
-git clone https://github.com/christiansteier/NextPad.git
+git clone https://github.com/NextPad/NextPad.git
 cd NextPad
 bash web/build.sh          # editor and whiteboard bundles, needed before the first Rust build
 cd server

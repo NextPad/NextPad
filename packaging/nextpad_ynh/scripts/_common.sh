@@ -5,7 +5,7 @@
 nextpad_settings_defaults() {
     ynh_app_setting_set_default --key=api_allowed --value="127.0.0.1,::1"
     ynh_app_setting_set_default --key=frame_ancestors --value="'self'"
-    ynh_app_setting_set_default --key=theme --value="colibris"
+    ynh_app_setting_set_default --key=theme --value="nextpad"
     ynh_app_setting_set_default --key=allow_free_pads --value="1"
     ynh_app_setting_set_default --key=free_pads_per_hour --value="20"
     ynh_app_setting_set_default --key=retention --value="off"

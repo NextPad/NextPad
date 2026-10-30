@@ -1,11 +1,17 @@
 [package]
 name = "nextpad"
-version = "0.17.3"
+version = "0.18.0"
 authors = ["Christian-Maximilian Steier"]
 edition = "2021"
 description = "Etherpad-kompatibler Pad-Server auf Yjs/yrs für mod_etherpadlite"
 license = "EUPL-1.2"
 publish = false
+
+[features]
+# PDF-Satz mit Typst und eingebetteten Schriften. Das Container-Image baut ohne (--no-default-features),
+# dort bleibt nur das schlichte PDF für die Mail vor dem Löschen.
+default = ["pdf"]
+pdf = ["dep:typst", "dep:typst-pdf", "dep:typst-layout"]
 
 [dependencies]
 axum = { version = "0.8", features = ["ws", "multipart", "macros"] }
@@ -31,9 +37,9 @@ tower-http = { version = "0.7", features = ["trace"] }
 jsonwebtoken = { version = "11", default-features = false, features = ["rust_crypto"] }
 ureq = { version = "3", default-features = false, features = ["rustls"] }
 lettre = { version = "0.11", default-features = false, features = ["smtp-transport", "builder", "rustls", "ring", "webpki-roots"] }
-typst = "0.15"
-typst-pdf = "0.15"
-typst-layout = "0.15"
+typst = { version = "0.15", optional = true }
+typst-pdf = { version = "0.15", optional = true }
+typst-layout = { version = "0.15", optional = true }
 include_dir = "0.7"
 qrcode = { version = "0.14", default-features = false, features = ["svg"] }
 mimalloc = { version = "0.1.52", default-features = false }

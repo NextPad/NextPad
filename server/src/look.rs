@@ -66,6 +66,20 @@ const D_TINTS: [&str; 3] = ["#e0f5fa", "#ecf6e6", "#fff9b2"];
 const D_LINES_DARK: [&str; 2] = ["#00afd7", "#64b432"];
 const D_TINTS_DARK: [&str; 3] = ["#16424c", "#304423", "#565116"];
 const D_ACCENT_DARK: &str = "#ff4d6a";
+/// Vorgabe je Theme (Akzent hell, Akzent dunkel, Textschlüssel des Untertitels), gesetzt beim Start;
+/// ohne Aufruf (Tests) die der HSD. Nur das Theme hsd nennt die Hochschule im Untertitel.
+static VORGABE: std::sync::OnceLock<(&'static str, &'static str, &'static str)> = std::sync::OnceLock::new();
+pub fn vorgabe_setzen(theme: &str) {
+    let _ = VORGABE.set(match theme {
+        "nextpad" => ("#007a96", "#3fb4d0", "look.untertitel_frei"),
+        "rund" => ("#3a55c8", "#8ea2ff", "look.untertitel_frei"),
+        "colibris" => (D_ACCENT, D_ACCENT_DARK, "look.untertitel_frei"),
+        _ => (D_ACCENT, D_ACCENT_DARK, "look.untertitel"),
+    });
+}
+fn d_untertitel() -> &'static str { VORGABE.get().map(|v| v.2).unwrap_or("look.untertitel") }
+fn d_accent() -> &'static str { VORGABE.get().map(|v| v.0).unwrap_or(D_ACCENT) }
+fn d_accent_dark() -> &'static str { VORGABE.get().map(|v| v.1).unwrap_or(D_ACCENT_DARK) }
 const WHITE: Rgb = (255, 255, 255);
 const BLACK: Rgb = (0, 0, 0);
 const DARK: Rgb = (0x1e, 0x1e, 0x1e);
@@ -73,9 +87,9 @@ const DARK: Rgb = (0x1e, 0x1e, 0x1e);
 impl Look {
     pub fn product(&self) -> &str { if self.product.is_empty() { "NextPad" } else { &self.product } }
     /// Eingetragener Untertitel (Inhalt, nicht übersetzt), sonst die Vorgabe in der Sprache der Seite
-    pub fn tagline(&self, sp: Sprache) -> &str { if self.tagline.is_empty() { t(sp, "look.untertitel") } else { &self.tagline } }
+    pub fn tagline(&self, sp: Sprache) -> &str { if self.tagline.is_empty() { t(sp, d_untertitel()) } else { &self.tagline } }
     pub fn institution(&self) -> &str { if self.institution.is_empty() { "Hochschule Düsseldorf" } else { &self.institution } }
-    fn accent(&self) -> &str { or(&self.accent, D_ACCENT) }
+    fn accent(&self) -> &str { or(&self.accent, d_accent()) }
     fn color(&self, i: usize) -> &str { or([&self.color1, &self.color2, &self.color3][i], D_COLORS[i]) }
     fn colors_changed(&self) -> bool { !(self.accent.is_empty() && self.color1.is_empty() && self.color2.is_empty() && self.color3.is_empty() && !self.custom_shades) }
 
@@ -83,9 +97,9 @@ impl Look {
     pub fn palette(&self) -> Palette {
         let same = |v: &str, d: &str| v.eq_ignore_ascii_case(d);
         let own = |v: &str| if self.custom_shades { parse(v) } else { None };
-        let mut p = Palette { accent: self.accent().into(), accent_dark: D_ACCENT_DARK.into(), colors: D_COLORS.map(String::from), lines: D_LINES.map(String::from),
+        let mut p = Palette { accent: self.accent().into(), accent_dark: d_accent_dark().into(), colors: D_COLORS.map(String::from), lines: D_LINES.map(String::from),
             tints: D_TINTS.map(String::from), lines_dark: D_LINES_DARK.map(String::from), tints_dark: D_TINTS_DARK.map(String::from) };
-        if let Some(a) = parse(self.accent()).filter(|_| !same(self.accent(), D_ACCENT)) { p.accent_dark = hex(lift(a, DARK, 4.5)); }
+        if let Some(a) = parse(self.accent()).filter(|_| !same(self.accent(), d_accent())) { p.accent_dark = hex(lift(a, DARK, 4.5)); }
         #[allow(clippy::needless_range_loop)] // i greift auf vier gleich lange Felder zugleich zu
         for i in 0..3 {
             p.colors[i] = self.color(i).into();
@@ -317,7 +331,7 @@ fn form(state: &AppState, sp: Sprache, l: &Look, notice: &str) -> String {
 <form method="post" action="{base}/admin/erscheinungsbild/vorgabe" class="reset-form"><button type="submit" class="btn btn-secondary">{zuruecksetzen}</button></form>
 </main>"##,
         start = t(sp, "look.zur_startseite"), verwaltung = t(sp, "look.verwaltung"), titel = t(sp, "look.titel"), einleitung = t(sp, "look.einleitung"),
-        name = t(sp, "look.name"), name_kopf = t(sp, "look.name_kopf"), untertitel_feld = t(sp, "look.untertitel_feld"), untertitel = t(sp, "look.untertitel"),
+        name = t(sp, "look.name"), name_kopf = t(sp, "look.name_kopf"), untertitel_feld = t(sp, "look.untertitel_feld"), untertitel = t(sp, d_untertitel()),
         einrichtung = t(sp, "look.einrichtung"), einrichtung_hinweis = t(sp, "look.einrichtung_hinweis"),
         logo_titel = t(sp, "look.logo_titel"), logo_hoch = t(sp, "look.logo_hoch"), logo_hinweis = t(sp, "look.logo_hinweis"),
         bild_titel = t(sp, "look.bild_titel"), bild_hoch = t(sp, "look.bild_hoch"), bild_hinweis = t(sp, "look.bild_hinweis"),
@@ -326,7 +340,7 @@ fn form(state: &AppState, sp: Sprache, l: &Look, notice: &str) -> String {
         product = esc(&l.product), tagline = esc(&l.tagline), institution = esc(&l.institution), credit = esc(&l.credit), credit_url = esc(&l.credit_url),
         logo_radios = radios(sp, "logo", l.logo, default_exists(state, "logo.png"), has_own_logo, "look.r.eigenes_logo", "look.r.kein_logo"),
         bg_radios = radios(sp, "background", l.background, default_exists(state, "background.jpg"), has_own_bg, "look.r.eigenes_bild", "look.r.kein_bild"),
-        accent = color_field(sp, "accent", t(sp, "look.akzentfarbe"), &l.accent, D_ACCENT, t(sp, "look.h.akzent")),
+        accent = color_field(sp, "accent", t(sp, "look.akzentfarbe"), &l.accent, d_accent(), t(sp, "look.h.akzent")),
         c1 = color_field(sp, "color1", &farbe("look.farbe_n", 1), &l.color1, D_COLORS[0], t(sp, "look.h.farbe1")),
         c2 = color_field(sp, "color2", &farbe("look.farbe_n", 2), &l.color2, D_COLORS[1], t(sp, "look.h.farbe2")),
         c3 = color_field(sp, "color3", &farbe("look.farbe_n", 3), &l.color3, D_COLORS[2], t(sp, "look.h.farbe3")),

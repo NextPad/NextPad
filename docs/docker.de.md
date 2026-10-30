@@ -8,6 +8,15 @@ Aufbau nach dem Muster der Images von linuxserver.io: Basis `ghcr.io/linuxserver
 
 ## docker compose (empfohlen)
 
+Im Repo liegt eine fertige `docker-compose.yml` mit Grenzen und Gesundheitsprüfung. Einstellungen kommen in `.env`:
+
+```bash
+cp .env.example .env    # Werte anpassen
+docker compose up -d --build
+```
+
+Dieselbe Datei läuft mit `podman compose`. Daten, Schlüssel und Theme-Ordner landen in `./config`. Die Kurzform:
+
 ```yaml
 services:
   nextpad:
@@ -21,7 +30,7 @@ services:
       - NEXTPAD_TRUST_PROXY=true
       - NEXTPAD_TRUSTED_PROXIES=192.0.2.1
       - NEXTPAD_API_ALLOWED=192.0.2.10
-      - NEXTPAD_THEME=colibris
+      - NEXTPAD_THEME=nextpad
     volumes:
       - /pfad/zu/nextpad/config:/config
     ports:
@@ -74,6 +83,10 @@ Empfohlen für den Betrieb neben anderen Diensten:
 ```
 
 Die fünf Capabilities braucht s6-overlay beim Start (Nutzer anpassen, Rechte unter `/config` setzen, Rechte abgeben); der Dienst selbst läuft danach ohne Rechte als `abc`. Ein schreibgeschütztes Dateisystem unterstützt dieses Muster nicht ohne Weiteres.
+
+## Ohne PDF-Export
+
+Das Image wird ohne PDF-Satz gebaut (Cargo-Feature `pdf` aus), damit es klein bleibt. Im Pad fehlt deshalb der Export „PDF“. Die Druckansicht unter Export, Drucken erzeugt ein PDF über den Browser. Die Mail vor dem Löschen hängt weiterhin ein schlichtes PDF an. Release-Datei und YunoHost-Paket enthalten den PDF-Export.
 
 ## Aktualisieren
 

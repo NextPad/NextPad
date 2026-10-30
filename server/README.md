@@ -29,7 +29,7 @@ Configuration through environment variables:
 | `NEXTPAD_ADDONS` | all | Enabled add-ons, comma-separated from `ideen`, `quiz`, `zeichenbrett`; empty = none, unknown name = start error. Disabled: no tile, no routes, no help, no Moodle type; existing pads show a notice, their data stays and goes with the pad when it is deleted |
 | `NEXTPAD_FREE_PADS_PER_HOUR` | `20` | At most this many new free pads per source address and hour |
 | `NEXTPAD_AUTHOR_COOKIE` | `nextpad_author` | Name of the guest cookie |
-| `NEXTPAD_THEME` | `colibris` | Look: `colibris` (like Etherpad) or `hsd` (corporate design of Hochschule Düsseldorf) |
+| `NEXTPAD_THEME` | `nextpad` | Look: `nextpad` (square, petrol), `rund` (rounded, Lexend), `colibris` (slightly rounded, like Etherpad) or `hsd` (corporate design of Hochschule Düsseldorf). Fonts ship with the program; nothing is loaded from the network |
 | `NEXTPAD_THEME_DIR` | empty | Default directory with `logo.png`, `background.jpg` and `font.ttf` for the look; brand and house font are deliberately not in the repository |
 | `NEXTPAD_BACKGROUND_CREDIT` | empty | Image credit for `background.jpg` in the theme directory (background of the HSD start page), e.g. `Photo: Jula2812, CC BY-SA 4.0, Wikimedia Commons`; required for images under a CC licence |
 | `NEXTPAD_BACKGROUND_CREDIT_URL` | empty | Link of the image credit (file page on Commons) |

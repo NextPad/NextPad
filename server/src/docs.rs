@@ -188,11 +188,13 @@ impl Rooms {
     pub async fn html(&self, pad_id: &str) -> Result<String> { self.read(pad_id, |t, f| render::to_html(t, f)).await }
     pub async fn text(&self, pad_id: &str) -> Result<String> { self.read(pad_id, |t, f| render::to_text(t, f)).await }
     pub async fn markdown(&self, pad_id: &str) -> Result<String> { self.read(pad_id, |t, f| render::to_markdown(t, f)).await }
+    #[cfg(feature = "pdf")]
     pub async fn typst(&self, pad_id: &str) -> Result<String> { self.read(pad_id, |t, f| render::to_typst(t, f)).await }
     /// Exporte in der Sprache der Anfrage: `toc` ist der Titel des Inhaltsverzeichnisses.
     pub async fn html_mit(&self, pad_id: &str, toc: &'static str) -> Result<String> { self.read(pad_id, |t, f| render::to_html_mit(t, f, toc)).await }
     pub async fn text_mit(&self, pad_id: &str, toc: &'static str) -> Result<String> { self.read(pad_id, |t, f| render::to_text_mit(t, f, toc)).await }
     pub async fn markdown_mit(&self, pad_id: &str, toc: &'static str) -> Result<String> { self.read(pad_id, |t, f| render::to_markdown_mit(t, f, toc)).await }
+    #[cfg(feature = "pdf")]
     pub async fn typst_mit(&self, pad_id: &str, toc: &'static str) -> Result<String> { self.read(pad_id, |t, f| render::to_typst_mit(t, f, toc)).await }
 
     async fn write(&self, pad_id: &str, label: &str, f: impl FnOnce(&mut TransactionMut, &yrs::XmlFragmentRef)) -> Result<()> {

@@ -31,6 +31,9 @@ jobs:
       - run: cargo build --locked
       - run: cargo test --locked
       - run: cargo clippy --locked -- -D warnings
+      # Fassung des Container-Images: ohne PDF-Satz
+      - run: cargo clippy --locked --all-targets --no-default-features -- -D warnings
+      - run: cargo test --locked --no-default-features
       # Browser- und API-Tests gegen frisch gestartete Server, dasselbe Skript wie lokal
       - run: pnpm exec playwright install --with-deps chromium
         working-directory: ${{ runner.temp }}/web
@@ -50,3 +53,18 @@ jobs:
         with:
           tool: cargo-audit
       - run: cargo audit
+
+  # Container-Image bauen und starten (ohne PDF-Satz)
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t nextpad:ci .
+      - name: Start und API
+        run: |
+          docker run -d --name nextpad -p 127.0.0.1:5090:5090 nextpad:ci
+          for _ in $(seq 60); do curl -fs -o /dev/null http://127.0.0.1:5090/api && break; sleep 1; done
+          curl -fs http://127.0.0.1:5090/api | grep -q currentVersion
+          curl -fs http://127.0.0.1:5090/ > /dev/null
+      - if: always()
+        run: docker logs nextpad

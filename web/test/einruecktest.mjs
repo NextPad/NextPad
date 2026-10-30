@@ -6,6 +6,8 @@ const base = process.env.NEXTPAD_URL || 'http://127.0.0.1:5090'
 const key = readFileSync(process.env.NEXTPAD_KEY_FILE || process.env.HOME + '/.cache/nextpad-data/api-keys.txt', 'utf8').trim()
 let pass = 0, fail = 0
 const check = (n, ok, x = '') => { ok ? pass++ : fail++; console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${ok ? '' : ' ' + x}`) }
+// Server ohne PDF-Satz (Container-Image): /export/pdf antwortet 404, browsertests.sh setzt NEXTPAD_OHNE_PDF
+const ohnePdf = process.env.NEXTPAD_OHNE_PDF === '1'
 const api = async (fn, args) => (await (await fetch(`${base}/api/1.2/${fn}`, { method: 'POST', body: new URLSearchParams({ apikey: key, ...args }) })).json()).data
 const G = (await api('createGroup', {})).groupID
 const P = (await api('createGroupPad', { groupID: G, padName: 'einr' + Date.now() })).padID
@@ -57,7 +59,8 @@ const txt = await (await fetch(`${base}/p/${encodeURIComponent(P)}/export/txt`, 
 check('Text-Export rückt mit Leerzeichen ein', txt.includes('        Zweiter Absatz'), JSON.stringify(txt.slice(0, 120)))
 const pdf = await fetch(`${base}/p/${encodeURIComponent(P)}/export/pdf`, { headers: { Cookie: 'sessionID=' + S } })
 const head = Buffer.from(await pdf.arrayBuffer()).subarray(0, 5).toString()
-check('PDF-Export mit Einrückung gelingt', pdf.ok && head === '%PDF-', `${pdf.status} ${head}`)
+if (ohnePdf) check('ohne PDF-Satz: PDF-Export 404', pdf.status === 404, String(pdf.status))
+else check('PDF-Export mit Einrückung gelingt', pdf.ok && head === '%PDF-', `${pdf.status} ${head}`)
 check('keine Fehler auf der Seite', !errors.length, errors.join(' / '))
 await browser.close()
 console.log(`\n${pass} ok, ${fail} fehlgeschlagen`); process.exit(fail ? 1 : 0)

@@ -40,6 +40,7 @@ pub const TEXTE: &[(&str, &str)] = &[
     ("frei.zu_viele", "Zu viele neue Pads in kurzer Zeit. Bitte später noch einmal."),
     ("frei.anlegen", "Pad konnte nicht angelegt werden."),
     // Export, Verlängern
+    ("export.pdf_nicht_eingebaut", "Der PDF-Export ist auf diesem Server nicht eingebaut. Die Druckansicht unter Export, Drucken erzeugt ein PDF über den Browser."),
     ("export.pdf_fehler", "Das PDF konnte nicht erzeugt werden. Die Druckansicht geht weiter über Export, Drucken."),
     ("verlaengern.link_abgelaufen", "Dieser Link gilt nicht mehr. Vielleicht wurde das Pad schon verlängert oder geöffnet."),
     ("verlaengern.link_ungueltig", "Dieser Link gilt nicht mehr."),
@@ -244,11 +245,12 @@ pub const TEXTE: &[(&str, &str)] = &[
     ("mail.englisch_unten", "English version below."),
     // Verwaltungsseite Erscheinungsbild
     ("look.untertitel", "Gemeinsam schreiben an der HSD"),
+    ("look.untertitel_frei", "Gemeinsam schreiben im Browser"),
     ("look.titel", "Erscheinungsbild"),
     ("look.nur_admins", "Diese Seite ist nur für Admins. Bitte über Moodle mit einem Administrationskonto anmelden und die Seite neu laden."),
     ("look.zur_startseite", "Zur Startseite"),
     ("look.verwaltung", "Verwaltung"),
-    ("look.einleitung", "Gilt für Startseite, Hilfe, Pads und Ideensammlungen im Design „hsd“. Die Hausfarben sind Ausgangswerte; Linien und Tönungen leitet NextPad daraus ab und prüft den Kontrast."),
+    ("look.einleitung", "Gilt für Startseite, Hilfe, Pads und Ideensammlungen in den Designs „nextpad“, „rund“ und „hsd“. Die Hausfarben sind Ausgangswerte; Linien und Tönungen leitet NextPad daraus ab und prüft den Kontrast."),
     ("look.name", "Name"),
     ("look.name_kopf", "Name im Kopf"),
     ("look.untertitel_feld", "Untertitel"),

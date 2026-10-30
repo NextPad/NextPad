@@ -4,6 +4,8 @@ import { chromium } from 'playwright'
 const base = process.argv[2] || 'http://127.0.0.1:5095'
 let pass = 0, fail = 0
 const check = (n, ok, x = '') => { ok ? pass++ : fail++; console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${ok ? '' : ' ' + x}`) }
+// Server ohne PDF-Satz (Container-Image): /export/pdf antwortet 404, browsertests.sh setzt NEXTPAD_OHNE_PDF
+const ohnePdf = process.env.NEXTPAD_OHNE_PDF === '1'
 const get = async (p, headers = {}) => { const r = await fetch(base + p, { headers, redirect: 'manual' }); return { r, text: await r.text() } }
 const pfad = new URL(base).pathname.replace(/\/$/, '')
 
@@ -133,7 +135,8 @@ const ctx3 = await b.newContext({ locale: 'de-DE' }); await ctx3.grantPermission
 const csvDe = await p3.request.get(base + ideenPfad.replace(pfad, '') + '/export/csv')
 check('Ideen-CSV deutsch, mit Semikolon', (await csvDe.text()).startsWith('\ufeffNr;Beitrag;Stimmen;Erledigt\r\n1;"Erste Idee";0;nein') && /ideen\.csv/.test(csvDe.headers()['content-disposition']), await csvDe.text())
 const pdfEn = await p4.request.get(base + new URL(padUrl).pathname.replace(pfad, '') + '/export/pdf', { headers: { 'accept-language': 'en-GB' } })
-check('PDF-Export englisch liefert PDF', pdfEn.status() === 200 && (await pdfEn.body()).subarray(0, 5).toString() === '%PDF-', String(pdfEn.status()))
+if (ohnePdf) check('ohne PDF-Satz: Hinweis englisch', pdfEn.status() === 404 && (await pdfEn.text()).includes('PDF export is not built into this server'), String(pdfEn.status()))
+else check('PDF-Export englisch liefert PDF', pdfEn.status() === 200 && (await pdfEn.body()).subarray(0, 5).toString() === '%PDF-', String(pdfEn.status()))
 await p3.goto(base + '/open?padname=sprachtest-editor'); await p3.waitForSelector('.ProseMirror')
 check('Editor deutsch', await p3.getAttribute('html', 'lang') === 'de' && await p3.locator('button[title="Fett (Strg+B)"]').count() === 1 && await p3.locator('button[title="Teilnehmende"]').count() === 1)
 await p3.click('button[title="Teilen und exportieren"]'); await p3.click('.einladen button:has-text("Link kopieren")')

@@ -1,6 +1,7 @@
 # Secrets: die Sync-Kette zur Storagebox ist ungefiltert
 .env
 .env.*
+!.env.example
 *.token
 token.json
 *.pem
@@ -20,3 +21,6 @@ api-keys.txt
 web/dist/
 # Zeichenbrett-Bündel entsteht beim Bau (web/build.sh, Dockerfile)
 server/static/board/
+
+# Bau der Projektseite (zola)
+site/public/

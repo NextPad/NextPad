@@ -20,6 +20,7 @@ mod sperre;
 mod texte;
 mod store;
 mod sync;
+#[cfg(feature = "pdf")]
 mod typeset;
 mod web;
 
@@ -70,6 +71,7 @@ async fn main() -> anyhow::Result<()> {
         return Ok(());
     }
     let config = config::Config::from_env()?;
+    look::vorgabe_setzen(&config.theme);
     let _ = web::BASE_PATH.set(config.base_path.clone());
     std::fs::create_dir_all(&config.data_dir)?;
     let store = Arc::new(store::Store::open(&config::db_path(&config.data_dir), &addons::daten())?);
@@ -124,6 +126,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/static/favicon-32.png", get(web::static_favicon))
         .route("/static/apple-touch-icon.png", get(web::static_touch_icon))
         .route("/static/quicksand.ttf", get(web::static_quicksand))
+        .route("/static/themes.css", get(web::static_themes))
+        .route("/static/fonts/{datei}", get(web::static_webfont))
         .route("/static/theme-hsd.css", get(web::static_theme_hsd))
         .route("/theme/logo.png", get(look::logo_file))
         .route("/theme/font.ttf", get(web::theme_font))

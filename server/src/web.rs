@@ -19,6 +19,15 @@ pub const FAVICON_PNG: &[u8] = include_bytes!("../static/favicon-32.png");
 pub const TOUCH_ICON_PNG: &[u8] = include_bytes!("../static/apple-touch-icon.png");
 pub const QUICKSAND_TTF: &[u8] = include_bytes!("../static/quicksand.ttf");
 pub const THEME_HSD_CSS: &str = include_str!("../static/theme-hsd.css");
+pub const THEMES_CSS: &str = include_str!("../static/themes.css");
+/// Webschriften der Themes: im Programm, auf lateinische Zeichen verkleinert, keine fremden Dienste.
+/// „NextPad Sans“ ist Liberation Sans 2.1.5 unter eigenem Namen (OFL, reservierter Name).
+const WEBFONTS: [(&str, &[u8]); 4] = [
+    ("nextpad-sans-400.woff2", include_bytes!("../static/fonts/web/nextpad-sans-400.woff2")),
+    ("nextpad-sans-700.woff2", include_bytes!("../static/fonts/web/nextpad-sans-700.woff2")),
+    ("nextpad-sans-400i.woff2", include_bytes!("../static/fonts/web/nextpad-sans-400i.woff2")),
+    ("lexend.woff2", include_bytes!("../static/fonts/web/lexend.woff2")),
+];
 /// Inhaltskennung des Bundles für versionierte URLs: Browser-Caches zeigen nach jedem Bau sofort die neue Fassung.
 pub fn bundle_version() -> &'static str {
     static V: std::sync::OnceLock<String> = std::sync::OnceLock::new();
@@ -187,12 +196,13 @@ pub async fn page(State(state): State<Arc<AppState>>, Path(id): Path<String>, he
         "basePath": state.config.base_path,
         "palette": PALETTE,
         "free": access.free,
+        "pdf": PDF_SATZ,
         "login": access.login,
         "owner": owner,
         "restore": may_restore(&state, &access),
         "expires": expires,
         "theme": state.config.theme,
-        "logo": if theme_hsd(&state) && has_logo(&state) { serde_json::Value::String(theme_url(&state, "logo.png")) } else { serde_json::Value::Null },
+        "logo": if theme_rahmen(&state) && has_logo(&state) { serde_json::Value::String(theme_url(&state, "logo.png")) } else { serde_json::Value::Null },
         "logoAlt": crate::look::get(&state).institution(),
         "course": if access.free { None } else { state.store.course_url(&access.pad.id) },
         "lang": sp.kuerzel(),
@@ -205,8 +215,9 @@ pub async fn page(State(state): State<Arc<AppState>>, Path(id): Path<String>, he
         let resp = (addon.seite)(crate::addons::Seite { state: &state, headers: &headers, url_id: &id, pad_id: &access.pad.id, free: access.free, readonly_id, cfg });
         return with_cookie(resp, access.set_cookie.clone());
     }
-    let theme_link = if theme_hsd(&state) { format!(r#"<link rel="stylesheet" href="{}/static/theme-hsd.css?v={}">"#, state.config.base_path, bundle_version()) } else { String::new() };
-    let body_class = if theme_hsd(&state) { "theme-hsd" } else { "theme-colibris" };
+    let theme_link = if theme_rahmen(&state) { format!(r#"<link rel="stylesheet" href="{}/static/theme-hsd.css?v={}">"#, state.config.base_path, bundle_version()) } else { String::new() };
+    let theme_link = theme_link + &themes_link(&state);
+    let body_class = if theme_rahmen(&state) { format!("theme-hsd {}", theme_klasse(&state)).trim_end().to_string() } else { "theme-colibris".to_string() };
     let icons = icon_links();
     let body = format!(
         r#"<!doctype html><html lang="{lang}"><head><meta charset="utf-8">{icons}<meta name="viewport" content="width=device-width, initial-scale=1"><title>NextPad</title>
@@ -294,6 +305,7 @@ async fn export_inner(State(state): State<Arc<AppState>>, Path((id, format)): Pa
             Ok(t) => ([(header::CONTENT_TYPE, "text/markdown; charset=utf-8"), (header::CONTENT_DISPOSITION, "inline; filename=\"pad.md\"")], t).into_response(),
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         },
+        "pdf" if !PDF_SATZ => fehler(&headers, StatusCode::NOT_FOUND, "export.pdf_nicht_eingebaut"),
         "pdf" => match pad_pdf(&state, &access.pad.id, &id, sp).await {
             Ok(bytes) => {
                 let name = format!("pad-{}.pdf", id.chars().map(|c| if c.is_ascii_alphanumeric() || c == '-' || c == '_' { c } else { '_' }).collect::<String>());
@@ -473,7 +485,7 @@ pub async fn rename_me(State(state): State<Arc<AppState>>, headers: HeaderMap, a
 /// Startseite. Mit freien Pads: wie Etherpads Startseite (neues Pad, Pad per Name); sonst nur Hinweis.
 pub async fn index(State(state): State<Arc<AppState>>, headers: HeaderMap) -> Response {
     let sp = Sprache::aus_anfrage(&headers);
-    if state.config.allow_free_pads && theme_hsd(&state) {
+    if state.config.allow_free_pads && theme_rahmen(&state) {
         return start_page_hsd(&state, &headers);
     }
     if state.config.allow_free_pads {
@@ -482,19 +494,19 @@ pub async fn index(State(state): State<Arc<AppState>>, headers: HeaderMap) -> Re
         let body = format!(r#"<!doctype html><html lang="{lang}"><head><meta charset="utf-8">{icons}<meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>NextPad</title>
 <style>@font-face{{font-family:Quicksand;src:url("{base}/static/quicksand.ttf") format("truetype");font-weight:300 700}}
 html,body{{height:100%;margin:0}} body{{background:url("{base}/static/fond.jpg") center center no-repeat fixed #64d29b;background-size:cover;font-family:Quicksand,Cantarell,"Open Sans","Helvetica Neue",sans-serif;font-size:16px;line-height:1.43;color:#333;display:flex;align-items:center;justify-content:center}}
-#inner{{width:350px;max-width:92vw;text-align:center;color:#fff}}
-#button{{display:block;width:100%;height:53px;line-height:53px;font:inherit;font-size:23px;color:#64d29b;background:#586a69;border:none;border-radius:3px;text-decoration:none;transition:.2s background}} #button:hover{{background:#4a5d5c;cursor:pointer}}
+#inner{{width:350px;max-width:92vw;text-align:center;color:#fff;background:rgba(58,74,73,.94);padding:28px 24px;border-radius:6px;box-sizing:border-box}}
+#button{{display:block;width:100%;height:53px;line-height:53px;font:inherit;font-size:23px;color:#fff;background:#586a69;border:none;border-radius:3px;text-decoration:none;transition:.2s background}} #button:hover{{background:#4a5d5c;cursor:pointer}}
 #label{{display:block;margin:18px 0 6px;font-weight:400}}
-form.open{{display:flex;flex-wrap:wrap}} #padname{{flex:1 1 220px;height:38px;padding:0 12px;border:none;border-radius:3px 0 0 3px;font:inherit;font-size:14px;color:#4a5d5c;min-width:0}} form.open button{{height:38px;padding:0 14px;border:none;border-radius:0 3px 3px 0;background:#586a69;color:#64d29b;font:inherit;font-weight:700;cursor:pointer;transition:.2s background}} form.open button:hover{{background:#4a5d5c}}
+form.open{{display:flex;flex-wrap:wrap}} #padname{{flex:1 1 220px;height:44px;padding:0 12px;border:none;border-radius:3px 0 0 3px;font:inherit;font-size:16px;color:#4a5d5c;min-width:0}} form.open button{{height:44px;padding:0 14px;border:none;border-radius:0 3px 3px 0;background:#586a69;color:#fff;font:inherit;font-weight:700;cursor:pointer;transition:.2s background}} form.open button:hover{{background:#4a5d5c}}
 .account{{margin-top:22px}} .account a.secondary,.account button{{display:inline-block;padding:9px 16px;border:2px solid #fff;border-radius:3px;color:#fff;background:transparent;font:inherit;text-decoration:none;cursor:pointer}} .account .me{{display:flex;align-items:center;gap:10px;justify-content:center}} .account img{{width:32px;height:32px;border-radius:50%}} .account form{{display:inline}} .account p{{margin:0 0 8px}}
-p.hint{{font-size:13px;margin:26px 0 0;color:#fff;opacity:.9}} p.hint a{{color:#fff}} .sprachwahl a{{display:inline-block;min-width:44px;line-height:44px}} .sprachwahl a[aria-current]{{font-weight:700}}</style></head>
-<body><div id="wrapper"><div id="inner">
+p.hint{{font-size:14px;margin:26px 0 0;color:#fff}} p.hint a{{color:#fff}} .sprachwahl a{{display:inline-block;min-width:44px;line-height:44px}} .sprachwahl a[aria-current]{{font-weight:700}} .vh{{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}}</style></head>
+<body><div id="wrapper"><main id="inner"><h1 class="vh">NextPad</h1>
 <a id="button" href="{base}/new">{neu}</a>
 <form class="open" action="{base}/open" method="get"><label id="label" for="padname" style="flex-basis:100%">{oder}</label>
 <input type="text" id="padname" name="padname" maxlength="50" autofocus><button type="submit">{ok}</button></form>
 {account}<p class="hint">NextPad{site}. {hinweis}</p>
 <p class="hint">{wahl}</p>
-</div></div></body></html>"#, account = account_block(&state, &headers, "colibris"), wahl = sprachwahl(&state, sp, "/"), site = site_suffix(&state), lang = sp.kuerzel(),
+</main></div></body></html>"#, account = account_block(&state, &headers, "colibris"), wahl = sprachwahl(&state, sp, "/"), site = site_suffix(&state), lang = sp.kuerzel(),
             neu = texte::t(sp, "start.c.neues_pad"), oder = texte::t(sp, "start.c.oder_name"), ok = texte::t(sp, "start.c.ok"), hinweis = texte::t(sp, "start.c.hinweis"));
         let mut resp = Html(body).into_response();
         resp.headers_mut().insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
@@ -591,7 +603,17 @@ pub async fn history(State(state): State<Arc<AppState>>, Path(id): Path<String>,
 pub async fn static_js() -> Response {
     ([(header::CONTENT_TYPE, "application/javascript; charset=utf-8"), (header::CACHE_CONTROL, "public, max-age=31536000, immutable")], EDITOR_JS).into_response()
 }
-fn theme_hsd(state: &AppState) -> bool { state.config.theme == "hsd" }
+/// Rahmen aus start.css (Startseite, Seiten, Editor mit theme-hsd.css): alle Themes außer colibris.
+pub fn theme_rahmen(state: &AppState) -> bool { state.config.theme != "colibris" }
+/// Klasse für `<body>`, mit der themes.css die Themes nextpad und rund über den Rahmen legt; leer für hsd und colibris.
+pub fn theme_klasse(state: &AppState) -> &'static str {
+    match state.config.theme.as_str() { "nextpad" => "theme-nextpad", "rund" => "theme-rund", _ => "" }
+}
+/// Verweis auf themes.css, nur für nextpad und rund; steht vor den Farben aus dem Erscheinungsbild, damit diese gewinnen.
+pub fn themes_link(state: &AppState) -> String {
+    if theme_klasse(state).is_empty() { return String::new(); }
+    format!(r#"<link rel="stylesheet" href="{}/static/themes.css?v={}">"#, state.config.base_path, start_version())
+}
 fn theme_file(state: &AppState, name: &str) -> Option<Vec<u8>> {
     let dir = state.config.theme_dir.as_ref()?;
     std::fs::read(dir.join(name)).ok()
@@ -603,7 +625,7 @@ fn has_background(state: &AppState) -> bool { crate::look::has_background(state)
 /// Adresse eines Theme-Bilds mit Stand, damit ein neues Bild sofort erscheint.
 pub fn theme_url(state: &AppState, file: &str) -> String { format!("{}/theme/{file}?v={}", state.config.base_path, crate::look::get(state).version) }
 /// Stilangaben aus dem Erscheinungsbild, nur im Design hsd.
-pub fn look_css(state: &AppState) -> String { if theme_hsd(state) { crate::look::get(state).css() } else { String::new() } }
+pub fn look_css(state: &AppState) -> String { if theme_rahmen(state) { crate::look::get(state).css() } else { String::new() } }
 /// Admin: über Moodle angemeldet mit Admin-Recht.
 pub fn login_admin(state: &AppState, headers: &HeaderMap) -> Option<crate::store::Author> {
     let now_s = ids::now_ms() / 1000;
@@ -633,6 +655,13 @@ pub fn logo_mark(class: &str) -> String {
 pub async fn static_logo() -> Response { ([(header::CONTENT_TYPE, "image/svg+xml"), (header::CACHE_CONTROL, "public, max-age=604800")], LOGO_SVG).into_response() }
 pub async fn static_favicon() -> Response { ([(header::CONTENT_TYPE, "image/png"), (header::CACHE_CONTROL, "public, max-age=604800")], FAVICON_PNG).into_response() }
 pub async fn static_touch_icon() -> Response { ([(header::CONTENT_TYPE, "image/png"), (header::CACHE_CONTROL, "public, max-age=604800")], TOUCH_ICON_PNG).into_response() }
+pub async fn static_themes() -> Response { ([(header::CONTENT_TYPE, "text/css; charset=utf-8"), (header::CACHE_CONTROL, "public, max-age=31536000, immutable")], THEMES_CSS).into_response() }
+pub async fn static_webfont(axum::extract::Path(datei): axum::extract::Path<String>) -> Response {
+    match WEBFONTS.iter().find(|(n, _)| *n == datei) {
+        Some((_, b)) => ([(header::CONTENT_TYPE, "font/woff2"), (header::CACHE_CONTROL, "public, max-age=604800")], *b).into_response(),
+        None => StatusCode::NOT_FOUND.into_response(),
+    }
+}
 pub async fn static_quicksand() -> Response { ([(header::CONTENT_TYPE, "font/ttf"), (header::CACHE_CONTROL, "public, max-age=604800, immutable")], QUICKSAND_TTF).into_response() }
 pub async fn static_print() -> Response {
     ([(header::CONTENT_TYPE, "application/javascript; charset=utf-8")], "window.addEventListener('load', function () { setTimeout(function () { window.print() }, 200) })").into_response()
@@ -715,7 +744,7 @@ fn sprachwahl(state: &AppState, sp: Sprache, pfad: &str) -> String {
 /// Seitenrahmen im eingestellten Design; im Design colibris ohne Dachmarke. `wahl`: Pfad für den Sprachumschalter,
 /// `None` auf Seiten, die es noch nicht in beiden Sprachen gibt.
 pub fn page_frame(state: &AppState, sp: Sprache, wahl: Option<&str>, title: &str, head: &str, content: &str, scripts: &str) -> String {
-    if theme_hsd(state) { return hsd_page_with(state, sp, wahl, title, head, "", "", content, scripts); }
+    if theme_rahmen(state) { return hsd_page_with(state, sp, wahl, title, head, "", "", content, scripts); }
     let base = &state.config.base_path;
     let icons = icon_links();
     let t = |k| texte::t(sp, k);
@@ -753,12 +782,12 @@ fn hsd_page_with(state: &AppState, sp: Sprache, wahl: Option<&str>, title: &str,
     let site = site_suffix(state);
     let icons = icon_links();
     format!(r##"<!doctype html><html lang="{lang}" data-base="{base}"><head><meta charset="utf-8">{icons}<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="robots" content="noindex"><meta name="color-scheme" content="light dark"><title>{title}</title>
-<link rel="stylesheet" href="{base}/static/start.css?v={v}"><style>@font-face{{font-family:"HSD Sans";src:url("{base}/theme/font.ttf") format("truetype");font-weight:400;font-display:swap}}</style>{css}{head}</head>
+<link rel="stylesheet" href="{base}/static/start.css?v={v}">{themes}<style>@font-face{{font-family:"HSD Sans";src:url("{base}/theme/font.ttf") format("truetype");font-weight:400;font-display:swap}}</style>{css}{head}</head>
 <body class="{body_class}"{style_attr}><a class="skip-link" href="#inhalt">{zum_inhalt}</a>
 <header class="site-header">{brand}<nav aria-label="{service}"><a href="{base}/hilfe">{hilfe}</a>{wahl}</nav></header>
 {content}
 <footer class="site-footer">{links}<span class="site">NextPad{site}</span></footer>
-{scripts}</body></html>"##, v = start_version(), css = look.css(), lang = sp.kuerzel(), zum_inhalt = t("rahmen.zum_inhalt"), service = t("rahmen.service"), hilfe = t("rahmen.hilfe"),
+{scripts}</body></html>"##, v = start_version(), css = look.css(), themes = themes_link(state), body_class = format!("{} {body_class}", theme_klasse(state)).trim(), lang = sp.kuerzel(), zum_inhalt = t("rahmen.zum_inhalt"), service = t("rahmen.service"), hilfe = t("rahmen.hilfe"),
         wahl = wahl.map(|p| sprachwahl(state, sp, p)).unwrap_or_default())
 }
 
@@ -767,7 +796,7 @@ pub fn start_version() -> &'static str {
     static V: std::sync::OnceLock<String> = std::sync::OnceLock::new();
     V.get_or_init(|| {
         let mut h: u64 = 1469598103934665603;
-        for b in START_CSS.bytes().chain(START_JS.bytes()) { h ^= b as u64; h = h.wrapping_mul(1099511628211); }
+        for b in START_CSS.bytes().chain(START_JS.bytes()).chain(THEMES_CSS.bytes()) { h ^= b as u64; h = h.wrapping_mul(1099511628211); }
         format!("{h:016x}")
     })
 }
@@ -932,7 +961,11 @@ pub async fn extend_by_token(State(state): State<Arc<AppState>>, headers: Header
 }
 
 
+/// Mit PDF-Satz gebaut (Feature `pdf`); ohne bietet der Editor keinen PDF-Export an.
+pub const PDF_SATZ: bool = cfg!(feature = "pdf");
+
 /// PDF eines Pads im eingestellten Design (Typst), Rückfall auf das schlichte PDF.
+#[cfg(feature = "pdf")]
 pub async fn pad_pdf(state: &Arc<AppState>, pad_id: &str, shown_id: &str, sp: Sprache) -> anyhow::Result<Vec<u8>> {
     let body = state.rooms.typst_mit(pad_id, texte::t(sp, "export.verzeichnis")).await?;
     let md = state.rooms.markdown(pad_id).await?;
@@ -944,13 +977,20 @@ pub async fn pad_pdf(state: &Arc<AppState>, pad_id: &str, shown_id: &str, sp: Sp
     let res = tokio::task::spawn_blocking(move || {
         let look = crate::look::get(&st);
         let accent = look.palette().accent;
-        let o = crate::typeset::Options { hsd: theme_hsd(&st), theme_dir: st.config.theme_dir.as_deref(), logo: crate::look::logo(&st), accent: &accent, product: look.product(), header: &header, footer: &footer, title: &title, sprache: sp };
+        let o = crate::typeset::Options { hsd: theme_rahmen(&st), theme_dir: st.config.theme_dir.as_deref(), logo: crate::look::logo(&st), accent: &accent, product: look.product(), header: &header, footer: &footer, title: &title, sprache: sp };
         crate::typeset::pdf(&o, &body)
     }).await.map_err(|e| anyhow::anyhow!("{e}"))?;
     match res {
         Ok(b) => Ok(b),
         Err(e) => { tracing::warn!("Typst-Satz gescheitert, schlichtes PDF: {e}"); Ok(crate::pdf::from_markdown(&format!("NextPad · Pad {shown_id}"), &md, sp)) }
     }
+}
+
+/// Ohne PDF-Satz: schlichtes PDF, gebraucht für den Anhang der Mail vor dem Löschen.
+#[cfg(not(feature = "pdf"))]
+pub async fn pad_pdf(state: &Arc<AppState>, pad_id: &str, shown_id: &str, sp: Sprache) -> anyhow::Result<Vec<u8>> {
+    let md = state.rooms.markdown(pad_id).await?;
+    Ok(crate::pdf::from_markdown(&format!("NextPad · Pad {shown_id}"), &md, sp))
 }
 
 pub const START_CSS: &str = include_str!("../static/start.css");

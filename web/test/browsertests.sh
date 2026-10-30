@@ -7,12 +7,13 @@
 #   <nextpad-programm>  Vorgabe: server/target/debug/nextpad (bzw. $CARGO_TARGET_DIR/debug/nextpad)
 #   <test>              nur diese Tests, z. B. synctest darktest; Vorgabe: alle
 #   NEXTPAD_WEB_BUILD   Bau-Verzeichnis von web/build.sh (node_modules), Vorgabe ~/.cache/nextpad-web
-#   NEXTPAD_TEST_PORT   erster von vier freien Ports, Vorgabe 5195
+#   NEXTPAD_TEST_PORT   erster von fünf freien Ports, Vorgabe 5195
 #   NEXTPAD_TEST_LOGS   bei Fehlschlag Serverprotokolle und Testausgaben hierhin kopieren (CI-Artefakt)
 #
 # Vier Server: Hauptserver (Erscheinungsbild hsd, freie Pads, alle Addons), LTI mit
 # nachgespielter Plattform, Addon-Server (erst alle Addons, dann nur die Ideensammlung),
-# Verwaltung Erscheinungsbild (LTI wie oben, mit NEXTPAD_ADMINS).
+# Verwaltung Erscheinungsbild (LTI wie oben, mit NEXTPAD_ADMINS). Dazu nacheinander je Theme ein
+# Server für die axe-Prüfungen von Startseite und Ideensammlung (Test „themes“).
 # Ohne Theme-Ordner: Schriften und Logo der HSD gehören nicht ins Repo.
 # Hohe Grenze für neue freie Pads: alle Tests kommen von derselben Adresse und legen zusammen mehr als 20 an.
 set -uo pipefail
@@ -58,18 +59,24 @@ stoppe_letzten() { local p="${pids[-1]}"; kill "$p"; wait "$p" 2>/dev/null; unse
 gesamt=0
 # pruefe <test> [argumente ...]
 pruefe() {
-  local t="$1"; shift
-  case "$NUR" in "  ") ;; *" $t "*) ;; *) return 0 ;; esac
+  case "$NUR" in "  ") ;; *" $1 "*) ;; *) return 0 ;; esac
+  lauf "$1" "$@"
+}
+# lauf <name im Bericht> <test> [argumente ...]: ohne Filter, für Tests unter einem Sammelnamen
+lauf() {
+  local n="$1" t="$2"; shift 2
   gesamt=$((gesamt + 1))
   if timeout 300 node "$WEB/test/$t.mjs" "$@" > "$TMP/out" 2>&1; then
-    echo "ok    $t  $(grep -E 'ok, ' "$TMP/out" | tail -1)"
+    echo "ok    $n  $(grep -E 'ok, ' "$TMP/out" | tail -1)"
   else
-    echo "FAIL  $t"; sed 's/^/      /' "$TMP/out"; cp "$TMP/out" "$TMP/$t.out"; fehler+=("$t")
+    echo "FAIL  $n"; sed 's/^/      /' "$TMP/out"; cp "$TMP/out" "$TMP/$n.out"; fehler+=("$n")
   fi
 }
 
 U="http://127.0.0.1:$PORT"
 starte haupt "$PORT"
+# Ohne Cargo-Feature pdf (wie im Container-Image) meldet die Pad-Seite "pdf":false; Tests prüfen dann die 404
+curl -fsL "$U/new" | grep -q '"pdf":false' && export NEXTPAD_OHNE_PDF=1 && echo "Server ohne PDF-Satz: PDF-Prüfungen erwarten 404"
 export NEXTPAD_URL="$U" NEXTPAD_KEY_FILE="$TMP/haupt/api-keys.txt" SHOT="$TMP/board.png"
 IDS="$TMP/ids.txt"
 pruefe apitest "$IDS"
@@ -110,6 +117,16 @@ case "$NUR" in "  "|*" admintest "*)
   M="$TMP/admin"; node "$WEB/test/ltitest.mjs" setup "$M" > /dev/null
   starte admin $((PORT + 3)) NEXTPAD_PUBLIC_URL=https://nextpad.test NEXTPAD_ADMINS=admin@example.org
   pruefe admintest "$M" "http://127.0.0.1:$((PORT + 3))" ;;
+esac
+
+case "$NUR" in "  "|*" themes "*)
+  T="http://127.0.0.1:$((PORT + 4))"
+  for th in nextpad rund colibris hsd; do
+    starte "theme-$th" $((PORT + 4)) NEXTPAD_THEME="$th"
+    lauf "a11y-start-$th" a11y-start "$T/" "$TMP/a11y-$th"
+    lauf "ideen-a11y-$th" ideen-a11y "$T" "$TMP/a11y-$th"
+    stoppe_letzten
+  done ;;
 esac
 
 echo

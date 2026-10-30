@@ -6,6 +6,36 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-10-30
+
+### Added
+
+- Three looks for schools and universities: `nextpad` (square, petrol), `rund` (rounded, Lexend) and the
+  existing `colibris` (slightly rounded). `hsd` stays. Fonts ship with the program as Latin WOFF2 subsets; nothing is
+  loaded from the network. The subset of Liberation Sans is called "NextPad Sans" because the font licence reserves
+  the original name.
+- Cargo feature `pdf` (on by default) for PDF typesetting with Typst. The container image builds without it and
+  stays small; pads there offer no PDF export, `/export/pdf` answers 404 with a note in both languages, and the email
+  before deletion attaches the plain PDF. CI checks both builds and starts the image.
+- `docker-compose.yml` and `.env.example` following linuxserver.io.
+- Project site at https://nextpad.github.io (Zola), with the three looks.
+- `web/test/browsertests.sh themes`: axe checks of the start page and the idea collection for every look, light and
+  dark.
+
+### Changed
+
+- The repository moved to https://github.com/NextPad/NextPad; releases from 0.17.3 on are published there.
+- **The default look is now `nextpad` instead of `colibris`.** Set `NEXTPAD_THEME=colibris` to keep the old look.
+  YunoHost installations keep their stored choice.
+- An unknown `NEXTPAD_THEME` stops the start with an error.
+- Only the `hsd` look names the university in the subtitle; the others say "Writing together in the browser".
+
+### Fixed
+
+- `colibris` start page has a heading and a main landmark for screen readers.
+- `colibris` start page meets WCAG 2.2 AA: dark panel behind the form, white button text, 44 px targets, 16 px input
+  text (contrast was 1.87:1 and 3.05:1 before).
+
 ## [0.17.3] - 2026-10-29
 
 ### Changed

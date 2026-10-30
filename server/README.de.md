@@ -29,7 +29,7 @@ Konfiguration über Umgebungsvariablen:
 | `NEXTPAD_ADDONS` | alle | eingeschaltete Addons, kommagetrennt aus `ideen`, `quiz`, `zeichenbrett`; leer = keins, unbekannte Kennung = Startfehler. Ausgeschaltet: keine Kachel, keine Routen, keine Hilfe, kein Moodle-Typ; bestehende Pads zeigen einen Hinweis, ihre Daten bleiben und gehen beim Löschen des Pads mit |
 | `NEXTPAD_FREE_PADS_PER_HOUR` | `20` | höchstens so viele neue freie Pads je Quelladresse und Stunde |
 | `NEXTPAD_AUTHOR_COOKIE` | `nextpad_author` | Name des Gast-Cookies |
-| `NEXTPAD_THEME` | `colibris` | Erscheinungsbild: `colibris` (wie Etherpad) oder `hsd` (Corporate Design der Hochschule Düsseldorf) |
+| `NEXTPAD_THEME` | `nextpad` | Erscheinungsbild: `nextpad` (eckig, Petrol), `rund` (große Rundungen, Lexend), `colibris` (leicht rund, wie Etherpad) oder `hsd` (Corporate Design der Hochschule Düsseldorf). Schriften liegen im Programm, nichts wird aus dem Netz geladen |
 | `NEXTPAD_THEME_DIR` | leer | Vorgabe-Verzeichnis mit `logo.png`, `background.jpg` und `font.ttf` für das Design; Marke und Hausschrift liegen bewusst nicht im Repo |
 | `NEXTPAD_BACKGROUND_CREDIT` | leer | Bildnachweis für `background.jpg` im Design-Verzeichnis (Hintergrund der HSD-Startseite), z. B. `Foto: Jula2812, CC BY-SA 4.0, Wikimedia Commons`; bei Bildern unter CC-Lizenz Pflicht |
 | `NEXTPAD_BACKGROUND_CREDIT_URL` | leer | Link des Bildnachweises (Dateiseite auf Commons) |

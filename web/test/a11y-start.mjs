@@ -25,7 +25,8 @@ for (const scheme of ['light', 'dark']) {
     const spacingOverflow = await p.evaluate(() => {
       const bad = []
       for (const el of document.querySelectorAll('a,button,label,input,h1,h2,p,span')) {
-        if (el.scrollWidth > el.clientWidth + 2 && getComputedStyle(el).overflow !== 'visible') bad.push((el.textContent || el.getAttribute('placeholder') || '').trim().slice(0, 30))
+        // nur sichtbare Elemente; nur für Screenreader versteckter Text (1 px breit) läuft absichtlich über
+        if (el.clientWidth > 1 && el.scrollWidth > el.clientWidth + 2 && getComputedStyle(el).overflow !== 'visible') bad.push((el.textContent || el.getAttribute('placeholder') || '').trim().slice(0, 30))
       }
       return { bad: bad.slice(0, 8), pageOverflow: document.documentElement.scrollWidth - window.innerWidth }
     })

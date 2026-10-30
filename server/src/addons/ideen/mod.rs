@@ -455,17 +455,17 @@ pub async fn wall(State(state): State<Arc<AppState>>, Path(id): Path<String>, he
             None => format!(r#"<aside class="wall-join"><p>{}</p></aside>"#, t("ideen.s.mitmachen_kurs")),
         }
     } else { String::new() };
-    let brand = if state.config.theme == "hsd" && web::has_logo(&state) { format!(r#"<img class="wall-logo" src="{}" alt="{}">"#, web::theme_url(&state, "logo.png"), html_escape::encode_double_quoted_attribute(crate::look::get(&state).institution())) } else { format!(r#"<span class="wall-brand">{}{}</span>"#, web::logo_mark("wall-mark"), html_escape::encode_text(crate::look::get(&state).product())) };
+    let brand = if web::theme_rahmen(&state) && web::has_logo(&state) { format!(r#"<img class="wall-logo" src="{}" alt="{}">"#, web::theme_url(&state, "logo.png"), html_escape::encode_double_quoted_attribute(crate::look::get(&state).institution())) } else { format!(r#"<span class="wall-brand">{}{}</span>"#, web::logo_mark("wall-mark"), html_escape::encode_text(crate::look::get(&state).product())) };
     let cfg = json!({ "urlId": id, "basePath": base, "lang": sp.kuerzel(), "texte": texte::texte_mit(sp, "ideenjs.") });
     let icons = web::icon_links();
     let css = web::look_css(&state);
     let body = format!(r#"<!doctype html><html lang="{lang}"><head><meta charset="utf-8">{icons}<meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><meta name="color-scheme" content="light dark"><title>{leinwand_titel}</title>
-<link rel="stylesheet" href="{base}/static/start.css?v={sv}"><link rel="stylesheet" href="{base}/static/ideen.css?v={v}">{css}</head>
-<body class="wall"><main class="wall-main"><header class="wall-head"><div><p class="kicker">{name}</p><h1 id="prompt">{titel}</h1></div>{brand}</header>
+<link rel="stylesheet" href="{base}/static/start.css?v={sv}">{themes}<link rel="stylesheet" href="{base}/static/ideen.css?v={v}">{css}</head>
+<body class="wall {klasse}"><main class="wall-main"><header class="wall-head"><div><p class="kicker">{name}</p><h1 id="prompt">{titel}</h1></div>{brand}</header>
 <div class="wall-body"><ol class="wall-list" id="wall-list"></ol>{join}</div>
 <p class="wall-empty" id="wall-empty" hidden>{leer}</p><p class="wall-count" id="wall-count"></p></main>
 <script type="application/json" id="nextpad-config">{cfg}</script><script src="{base}/static/ideen-wand.js?v={v}"></script></body></html>"#,
-        sv = web::start_version(), v = version(), cfg = cfg.to_string().replace("</", "<\\/"),
+        sv = web::start_version(), v = version(), themes = web::themes_link(&state), klasse = web::theme_klasse(&state), cfg = cfg.to_string().replace("</", "<\\/"),
         lang = sp.kuerzel(), leinwand_titel = t("ideen.s.leinwand_titel"), name = t("ideen.name"), titel = t("ideen.s.titel"), leer = t("ideen.s.leer"));
     let mut resp = Html(body).into_response();
     let csp = format!("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; form-action 'none'; frame-ancestors {}; base-uri 'none'", state.config.frame_ancestors);

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{#- Startseite: alle Texte stehen im Front Matter von content/_index*.md, die Vorlage ordnet sie nur an. -#}
+{% block title %}{{ section.title }}{% endblock %}
+{% block description %}{{ section.description }}{% endblock %}
+{% block og_title %}{{ section.title }}{% endblock %}
+{% block og_description %}{{ section.description }}{% endblock %}
+{% block jsonld %}<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"NextPad","url":"{{ current_url }}","description":"{{ section.description }}","applicationCategory":"EducationalApplication","operatingSystem":"Linux","softwareVersion":"{{ config.extra.version }}","license":"https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12","inLanguage":["de","en"],"isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"codeRepository":"{{ config.extra.repo }}","author":{"@type":"Person","name":"Christian-Maximilian Steier"},"screenshot":"{{ config.base_url }}/bilder/pad.webp"}</script>{% endblock %}
+{% block content %}
+{%- set x = section.extra -%}
+{%- set root = "" -%}
+{%- if lang != config.default_language %}{% set root = "../" %}{% endif -%}
+<div class="hero">
+  <div class="wrap">
+    <div>
+      <p class="kicker">{{ x.kicker }}<span class="ver">{{ trans(key="version_label", lang=lang) }} {{ config.extra.version }}</span></p>
+      <h1>{{ x.h1 }}{% if x.h1_em %} <em>{{ x.h1_em }}</em>{% endif %}.</h1>
+      <p class="lead">{{ x.lead | safe }}</p>
+      <div class="actions">
+        <a class="btn main" href="{{ config.extra.repo }}/releases/latest">{{ trans(key="download", lang=lang) | replace(from="{v}", to=config.extra.version) }}</a>
+        <a class="btn ghost" href="{{ config.extra.repo }}">{{ trans(key="source", lang=lang) }}</a>
+      </div>
+      <ul class="facts">{% for f in x.facts %}<li>{{ f }}</li>{% endfor %}</ul>
+    </div>
+    <figure class="shot"><img src="{{ root }}bilder/pad.webp" width="1600" height="1000" fetchpriority="high" alt="{{ x.hero_alt }}"></figure>
+  </div>
+</div>
+
+
+<section id="lehre" class="alt" aria-labelledby="lehre-titel">
+  <div class="wrap">
+    <div class="head"><h2 id="lehre-titel">{{ x.lehre_title }}</h2><p>{{ x.lehre_text }}</p></div>
+    <div class="grid vier">{% for z in x.szenarien %}<div class="card"><span class="tag">{{ z.tool }}</span><h3>{{ z.title }}</h3><p>{{ z.text | safe }}</p></div>{% endfor %}</div>
+  </div>
+</section>
+
+<section id="funktionen" aria-labelledby="funktionen-titel">
+  <div class="wrap">
+    <div class="head"><h2 id="funktionen-titel">{{ x.feat_title }}</h2><p>{{ x.feat_text }}</p></div>
+    {%- for f in x.features %}
+    <div class="feature{% if loop.index is even %} flip{% endif %}">
+      <div class="text">
+        <span class="tag">{{ f.tag }}</span>
+        <h3>{{ f.title }}</h3>
+        {%- for p in f.text %}<p>{{ p | safe }}</p>{% endfor %}
+        {%- if f.items %}<ul>{% for i in f.items %}<li>{{ i | safe }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+      {%- if f.board %}
+      {%- set b = x.board %}
+      <div class="board" role="img" aria-label="{{ b.label }}">
+        <div class="cols">
+          {%- for c in b.cats %}<div class="cat">{{ c }}</div>{% endfor %}
+          {%- for wert in [100, 200, 300] %}{% set reihe = loop.index0 %}
+          {%- for c in b.cats %}{% set nr = reihe * 4 + loop.index0 %}
+          <div class="cell{% if nr in b.done %} done{% elif nr == b.now %} now{% endif %}">{{ wert }}</div>
+          {%- endfor %}{% endfor %}
+        </div>
+        <div class="bar"><span>{{ b.team1 }} <b>400</b> · {{ b.team2 }} <b>300</b></span><span class="buzz">{{ b.buzz }}</span></div>
+      </div>
+      {%- elif f.imgs | length > 1 %}
+      <div class="pair">{% for i in f.imgs %}<figure class="shot"><img src="{{ root }}bilder/{{ i.src }}" width="{{ i.w }}" height="{{ i.h }}" loading="lazy" alt="{{ i.alt }}"></figure>{% endfor %}</div>
+      {%- else %}
+      <figure class="shot">{% for i in f.imgs %}<img{% if i.cls %} class="{{ i.cls }}"{% endif %} src="{{ root }}bilder/{{ i.src }}" width="{{ i.w }}" height="{{ i.h }}" loading="lazy" alt="{{ i.alt }}">{% endfor %}</figure>
+      {%- endif %}
+    </div>
+    {%- endfor %}
+  </div>
+</section>
+
+<section id="warum" class="alt" aria-labelledby="warum-titel">
+  <div class="wrap">
+    <div class="head"><h2 id="warum-titel">{{ x.why_title }}</h2><p>{{ x.why_text | safe }}</p></div>
+    <div class="why">
+      {%- for w in x.why %}
+      <div><span class="big">{{ w.big }}</span><h3>{{ w.title | safe }}</h3><p>{{ w.text | safe }}</p></div>
+      {%- endfor %}
+    </div>
+  </div>
+</section>
+
+<section id="lernplattformen" aria-labelledby="moodle-titel">
+  <div class="wrap">
+    <div class="head"><h2 id="moodle-titel">{{ x.moodle_title }}</h2><p>{{ x.moodle_text }}</p></div>
+    <h3 class="plat">{{ x.moodle_name }} <span>{{ x.moodle_how }}</span></h3>
+    <div class="moodle">
+      <ol class="steps">{% for s in x.steps %}<li><h3>{{ s.title }}</h3><p>{{ s.text | safe }}</p></li>{% endfor %}</ol>
+      <div>
+        <pre class="term" tabindex="0" aria-label="{{ x.api_label }}"><span class="c"># {{ x.api_c1 }}</span>
+<span class="k">POST</span> /api/1.2.15/createGroupPad
+apikey=…&amp;groupID=g.x3Kq…&amp;padName=kurs-4711
+
+<span class="c"># {{ x.api_c2 }}</span>
+{"code":0,"message":"ok",
+ "data":{"padID":"g.x3Kq…$kurs-4711"}}</pre>
+        <p class="caption">{{ x.api_caption | safe }}</p>
+      </div>
+    </div>
+    <div class="card plat-card">
+      <h3 class="plat">{{ x.ilias.name }} <span class="badge">{{ x.ilias.status }}</span></h3>
+      <p>{{ x.ilias.text }}</p>
+    </div>
+  </div>
+</section>
+
+<section id="themes" class="alt" aria-labelledby="themes-titel">
+  <div class="wrap">
+    <div class="head"><h2 id="themes-titel">{{ x.themes_title }}</h2><p>{{ x.themes_text }}</p></div>
+    <div class="grid themes">{% for t in x.themes %}
+      <figure class="card theme"><img src="{{ root }}bilder/theme-{{ t.wert }}.webp" width="900" height="640" loading="lazy" alt="{{ t.alt }}">
+        <figcaption><h3>{{ t.name }} <code>{{ t.wert }}</code>{% if t.standard %} <span class="badge">{{ trans(key="standard", lang=lang) }}</span>{% endif %}</h3><p>{{ t.text }}</p></figcaption></figure>{% endfor %}
+    </div>
+    <p class="note">{{ x.themes_hint | safe }}</p>
+  </div>
+</section>
+
+<section id="betrieb" aria-labelledby="betrieb-titel">
+  <div class="wrap">
+    <div class="head"><h2 id="betrieb-titel">{{ x.ops_title }}</h2></div>
+    <div class="grid">{% for c in x.cards %}<div class="card"><h3>{{ c.title }}</h3><p>{{ c.text | safe }}</p></div>{% endfor %}</div>
+  </div>
+</section>
+
+<section id="installieren" class="alt" aria-labelledby="installieren-titel">
+  <div class="wrap">
+    <div class="head"><h2 id="installieren-titel">{{ x.inst_title }}</h2><p>{{ x.inst_text | safe }}</p></div>
+    <div class="install">
+      {%- for w in x.ways %}
+      <div class="card">
+        <h3>{{ w.title }}</h3>
+        <p>{{ w.text | safe }}</p>
+<pre class="term" tabindex="0">{{ w.code | safe }}</pre>
+        <a href="{{ config.extra.repo }}/{{ w.link }}">{{ w.link_text }}</a>
+      </div>
+      {%- endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -8,6 +8,15 @@ Built after the pattern of the linuxserver.io images: base `ghcr.io/linuxserver/
 
 ## docker compose (recommended)
 
+The repository contains a ready `docker-compose.yml` with limits and a health check. Settings go into `.env`:
+
+```bash
+cp .env.example .env    # adjust the values
+docker compose up -d --build
+```
+
+The same file works with `podman compose`. Data, keys and the theme folder end up in `./config`. The short form:
+
 ```yaml
 services:
   nextpad:
@@ -21,7 +30,7 @@ services:
       - NEXTPAD_TRUST_PROXY=true
       - NEXTPAD_TRUSTED_PROXIES=192.0.2.1
       - NEXTPAD_API_ALLOWED=192.0.2.10
-      - NEXTPAD_THEME=colibris
+      - NEXTPAD_THEME=nextpad
     volumes:
       - /path/to/nextpad/config:/config
     ports:
@@ -74,6 +83,10 @@ Recommended when running next to other services:
 ```
 
 s6-overlay needs these five capabilities at start (adjust the user, set permissions under `/config`, drop privileges); after that the service itself runs without privileges as `abc`. A read-only file system is not easily supported by this pattern.
+
+## Without PDF export
+
+The image is built without PDF typesetting (Cargo feature `pdf` off) to keep it small. Pads therefore offer no "PDF" export. The print view under Export, Print creates a PDF through the browser. The email before deletion still attaches a plain PDF. The release binary and the YunoHost package include PDF export.
 
 ## Update
 

@@ -1,0 +1,46 @@
+# NextPad mit docker compose (oder podman compose), Aufbau nach dem Muster von linuxserver.io.
+# Anleitung: docs/docker.de.md (deutsch), docs/docker.md (English).
+#
+#   cp .env.example .env    # Werte anpassen
+#   docker compose up -d --build
+#
+# Beim ersten Start entsteht ./config mit data/, secrets/ und theme/. Der API-Schlüssel für Moodle
+# steht danach in ./config/secrets/api-keys.txt. Vor jedem Update ./config/data sichern.
+services:
+  nextpad:
+    build: .
+    image: nextpad:local
+    container_name: nextpad
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Europe/Berlin}
+      - NEXTPAD_PUBLIC_URL=${NEXTPAD_PUBLIC_URL:-}
+      - NEXTPAD_THEME=${NEXTPAD_THEME:-nextpad}
+      - NEXTPAD_ALLOW_FREE_PADS=${NEXTPAD_ALLOW_FREE_PADS:-false}
+      - NEXTPAD_TRUST_PROXY=${NEXTPAD_TRUST_PROXY:-false}
+      - NEXTPAD_TRUSTED_PROXIES=${NEXTPAD_TRUSTED_PROXIES:-127.0.0.1,::1}
+      - NEXTPAD_API_ALLOWED=${NEXTPAD_API_ALLOWED:-127.0.0.1,::1}
+    volumes:
+      - ${NEXTPAD_CONFIG:-./config}:/config
+    ports:
+      # nur lokal; davor gehört ein Reverse-Proxy mit TLS
+      - 127.0.0.1:${NEXTPAD_PORT:-5090}:5090
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5090/api"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    # Grenzen wie bei einer kleinen VM. Die fünf Capabilities braucht s6-overlay beim Start,
+    # danach läuft der Dienst ohne Rechte als Nutzer abc.
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETUID, SETGID]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: 1.0
+    pids_limit: 256
+    ulimits:
+      nofile: { soft: 65536, hard: 65536 }

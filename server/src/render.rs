@@ -440,6 +440,7 @@ pub fn to_markdown_mit<T: ReadTxn>(txn: &T, frag: &XmlFragmentRef, toc: &str) ->
 // ---------- Typst (PDF-Satz) ----------
 
 /// Typst-Zeichenkette: alles Inhaltliche geht als String-Literal in den Satz, nie als Markup.
+#[cfg(feature = "pdf")]
 pub fn typst_str(s: &str) -> String {
     let mut o = String::with_capacity(s.len() + 4);
     o.push('"');
@@ -450,6 +451,7 @@ pub fn typst_str(s: &str) -> String {
     o
 }
 
+#[cfg(feature = "pdf")]
 fn typst_color(v: &str) -> Option<String> {
     let v = safe_color(v)?;
     if let Some(h) = v.strip_prefix('#') {
@@ -460,6 +462,7 @@ fn typst_color(v: &str) -> Option<String> {
     Some(match v.as_str() { "brown" => "rgb(\"#8b4513\")".into(), "grey" => "gray".into(), n => n.to_string() })
 }
 
+#[cfg(feature = "pdf")]
 fn text_typst<T: ReadTxn>(txn: &T, t: &XmlTextRef) -> String {
     let mut out = String::new();
     for d in t.diff(txn, YChange::identity) {
@@ -479,6 +482,7 @@ fn text_typst<T: ReadTxn>(txn: &T, t: &XmlTextRef) -> String {
     out
 }
 
+#[cfg(feature = "pdf")]
 fn inline_typst<T: ReadTxn>(txn: &T, el: &XmlElementRef, depth: usize) -> String {
     let mut out = String::new();
     if depth > MAX_DEPTH { return out; }
@@ -500,6 +504,7 @@ fn inline_typst<T: ReadTxn>(txn: &T, el: &XmlElementRef, depth: usize) -> String
     out
 }
 
+#[cfg(feature = "pdf")]
 fn aligned<T: ReadTxn>(txn: &T, el: &XmlElementRef, body: String) -> String {
     let body = match attr_string(el.get_attribute(txn, "textAlign")).as_deref().and_then(safe_align) {
         Some("center") => format!("#align(center)[{body}]"),
@@ -513,6 +518,7 @@ fn aligned<T: ReadTxn>(txn: &T, el: &XmlElementRef, body: String) -> String {
     }
 }
 
+#[cfg(feature = "pdf")]
 fn block_typst<T: ReadTxn>(txn: &T, toc: &str, node: &XmlOut, out: &mut String, depth: usize) {
     if depth > MAX_DEPTH { return; }
     let XmlOut::Element(el) = node else { return };
@@ -590,11 +596,15 @@ fn block_typst<T: ReadTxn>(txn: &T, toc: &str, node: &XmlOut, out: &mut String, 
 
 /// Pad-Inhalt als Typst-Markup (Inhalte nur als String-Literale, keine Ausführung von Nutzertext).
 // Linien der Daumen wie in web/src/rating.js
+#[cfg(feature = "pdf")]
 const THUMB_UP: &str = r#"<path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/>"#;
+#[cfg(feature = "pdf")]
 const THUMB_DOWN: &str = r#"<path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/>"#;
 
+#[cfg(feature = "pdf")]
 pub fn to_typst<T: ReadTxn>(txn: &T, frag: &XmlFragmentRef) -> String { to_typst_mit(txn, frag, VERZEICHNIS) }
 
+#[cfg(feature = "pdf")]
 pub fn to_typst_mit<T: ReadTxn>(txn: &T, frag: &XmlFragmentRef, toc: &str) -> String {
     let mut out = String::new();
     for c in frag.children(txn) { block_typst(txn, toc, &c, &mut out, 0); }
@@ -1048,9 +1058,12 @@ mod tests {
         assert!(md.contains("Idee A 👍 2 · 👎 1 gut"), "{md}");
         let text = to_text(&txn, &frag);
         assert!(text.contains("Name | Wert | Einheit\nTee | 3\n"), "{text}");
-        let typ = to_typst(&txn, &frag);
-        assert!(typ.contains("#outline(") && typ.contains("#table(columns: (1fr,) * 2") && typ.contains("table.header("), "{typ}");
-        assert!(typ.contains("image(bytes(") && typ.contains(r##"#"2"#h(5pt)"##) && typ.contains(r##"#"1"]]"##), "Daumen als Bild, 2 hoch, 1 runter: {typ}");
+        #[cfg(feature = "pdf")]
+        {
+            let typ = to_typst(&txn, &frag);
+            assert!(typ.contains("#outline(") && typ.contains("#table(columns: (1fr,) * 2") && typ.contains("table.header("), "{typ}");
+            assert!(typ.contains("image(bytes(") && typ.contains(r##"#"2"#h(5pt)"##) && typ.contains(r##"#"1"]]"##), "Daumen als Bild, 2 hoch, 1 runter: {typ}");
+        }
     }
 
     #[test]
@@ -1062,9 +1075,12 @@ mod tests {
         assert!(to_html_mit(&txn, &frag, toc).contains(r#"<div class="toc-title">Table of contents</div>"#));
         assert!(to_markdown_mit(&txn, &frag, toc).contains("**Table of contents**\n\n- Planung"));
         assert!(to_text_mit(&txn, &frag, toc).contains("Table of contents\n"));
-        let typ = to_typst_mit(&txn, &frag, toc);
-        assert!(typ.contains("#outline(title: [#\"Table of contents\"]"), "{typ}");
-        assert!(!typ.contains("Inhaltsverzeichnis") && to_typst(&txn, &frag).contains("Inhaltsverzeichnis"));
+        #[cfg(feature = "pdf")]
+        {
+            let typ = to_typst_mit(&txn, &frag, toc);
+            assert!(typ.contains("#outline(title: [#\"Table of contents\"]"), "{typ}");
+            assert!(!typ.contains("Inhaltsverzeichnis") && to_typst(&txn, &frag).contains("Inhaltsverzeichnis"));
+        }
     }
 
     #[test]
@@ -1086,7 +1102,9 @@ mod tests {
         assert!(html.contains(r#"<p style="text-align:center;padding-left:4em">Zwei</p>"#) && html.contains("<p>Normal</p>"), "{html}");
         let text = to_text(&txn, &frag);
         assert!(text.contains("    Titel\n") && text.contains("        Zwei\nNormal"), "{text}");
+        #[cfg(feature = "pdf")]
         let typ = to_typst(&txn, &frag);
+        #[cfg(feature = "pdf")]
         assert!(typ.contains("#pad(left: 2em)[#heading(level: 2)[") && typ.contains("#pad(left: 4em)[#align(center)[#\"Zwei\"]]"), "{typ}");
         let restored = Doc::new();
         let restored_frag = restored.get_or_insert_xml_fragment(FRAGMENT);
@@ -1108,6 +1126,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "pdf")]
     fn pdf_mit_tabelle_und_verzeichnis() {
         let doc = pad();
         let frag = doc.get_or_insert_xml_fragment(FRAGMENT);

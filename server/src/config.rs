@@ -22,7 +22,8 @@ pub struct Config {
     pub free_pads_per_hour: u32,
     pub cookie_name: String,
     pub author_cookie: String,
-    /// Erscheinungsbild: "colibris" (Standard) oder "hsd"
+    /// Erscheinungsbild: "nextpad" (Standard, eckig), "rund", "colibris" (leicht rund, wie Etherpad) oder
+    /// "hsd" (eckig, mit Logo und Hausschrift aus NEXTPAD_THEME_DIR)
     pub theme: String,
     /// Verzeichnis mit logo.png und font.ttf für das Design (außerhalb des Repos, Marke und Hausschrift)
     pub theme_dir: Option<PathBuf>,
@@ -55,6 +56,16 @@ pub struct Config {
 /// Einstellung `NEXTPAD_<name>`.
 pub fn var(name: &str) -> Option<String> {
     std::env::var(format!("NEXTPAD_{name}")).ok()
+}
+
+/// Erlaubte Werte für NEXTPAD_THEME.
+pub const THEMES: [&str; 4] = ["nextpad", "rund", "colibris", "hsd"];
+
+/// NEXTPAD_THEME prüfen; ein unbekannter Wert ist ein Startfehler wie bei NEXTPAD_ADDONS.
+fn theme_wahl() -> anyhow::Result<String> {
+    let t = env("THEME", "nextpad");
+    anyhow::ensure!(THEMES.contains(&t.as_str()), "NEXTPAD_THEME={t}: erlaubt sind {}", THEMES.join(", "));
+    Ok(t)
 }
 
 fn env(name: &str, default: &str) -> String {
@@ -135,7 +146,7 @@ impl Config {
             addons: crate::addons::auswahl(var("ADDONS").as_deref())?,
             free_pads_per_hour: env("FREE_PADS_PER_HOUR", "20").parse().unwrap_or(20),
             author_cookie: env("AUTHOR_COOKIE", "nextpad_author"),
-            theme: env("THEME", "colibris"),
+            theme: theme_wahl()?,
             theme_dir: var("THEME_DIR").filter(|s| !s.is_empty()).map(PathBuf::from),
             site_name: env("SITE_NAME", ""),
             admins: env("ADMINS", "").split(',').map(|s| s.trim().to_ascii_lowercase()).filter(|s| s.contains('@')).collect(),

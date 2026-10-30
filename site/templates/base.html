@@ -1,0 +1,81 @@
+{#- Rahmen jeder Seite. `root` führt relativ zur Wurzel, damit die Seite unter jedem Pfad läuft (Pages, Vorschau). -#}
+{%- set root = "" -%}
+{%- if lang != config.default_language %}{% set root = "../" %}{% endif -%}
+{%- if lang == "de" %}{% set other = "en" %}{% set other_href = root ~ "en/" %}{% else %}{% set other = "de" %}{% set other_href = root %}{% endif -%}
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{% block title %}{{ config.title }}{% endblock %}</title>
+<meta name="description" content="{% block description %}{{ config.description }}{% endblock %}">
+<link rel="canonical" href="{{ current_url }}">
+<link rel="alternate" hreflang="de" href="{{ config.base_url }}/">
+<link rel="alternate" hreflang="en" href="{{ config.base_url }}/en/">
+<link rel="alternate" hreflang="x-default" href="{{ config.base_url }}/">
+<link rel="icon" href="{{ root }}bilder/nextpad-zeichen.svg" type="image/svg+xml">
+<link rel="stylesheet" href="{{ root }}style.css">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ current_url }}">
+<meta property="og:title" content="{% block og_title %}{{ config.title }}{% endblock %}">
+<meta property="og:description" content="{% block og_description %}{{ config.description }}{% endblock %}">
+<meta property="og:image" content="{{ config.base_url }}/bilder/vorschau.png">
+<meta property="og:locale" content="{% if lang == 'de' %}de_DE{% else %}en_GB{% endif %}">
+<meta name="twitter:card" content="summary_large_image">
+{% block jsonld %}{% endblock %}
+</head>
+<body>
+<a class="skip" href="#inhalt">{{ trans(key="skip", lang=lang) }}</a>
+<p class="langhint" id="langhint" lang="{{ other }}" hidden><span class="wrap">{{ trans(key="other_hint", lang=lang) }} <a href="{{ other_href }}" hreflang="{{ other }}" data-lang="{{ other }}">{{ trans(key="other_lang", lang=lang) }}</a></span></p>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="{{ root }}{% if lang != config.default_language %}{{ lang }}/{% endif %}"><img src="{{ root }}bilder/nextpad-zeichen.svg" alt="" width="34" height="34"><span>Next<b>Pad</b></span></a>
+    <nav aria-label="{{ trans(key='nav_label', lang=lang) }}">
+      <a href="#lehre">{{ trans(key="nav_lehre", lang=lang) }}</a>
+      <a href="#funktionen">{{ trans(key="nav_funktionen", lang=lang) }}</a>
+      <a href="#lernplattformen">{{ trans(key="nav_moodle", lang=lang) }}</a>
+      <a href="#themes">{{ trans(key="nav_themes", lang=lang) }}</a>
+      <a href="#betrieb">{{ trans(key="nav_betrieb", lang=lang) }}</a>
+      <a href="#installieren">{{ trans(key="nav_installieren", lang=lang) }}</a>
+      <a href="{{ config.extra.repo }}">GitHub</a>
+      <a class="lang" href="{{ other_href }}" hreflang="{{ other }}" lang="{{ other }}" data-lang="{{ other }}" aria-label="{{ trans(key='other_lang_label', lang=lang) }}">{{ trans(key="other_lang", lang=lang) }}</a>
+    </nav>
+  </div>
+</header>
+
+<main id="inhalt">
+{% block content %}{% endblock %}
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <p><b>NextPad {{ config.extra.version }}</b> · {{ trans(key="footer_author", lang=lang) }}</p>
+      <p>{{ trans(key="footer_origin", lang=lang) }}</p>
+    </div>
+    <div>
+      <p>
+        <a href="{{ config.extra.repo }}/blob/main/LICENSE">{{ trans(key="license", lang=lang) }}</a> ·
+        <a href="{{ config.extra.repo }}/blob/main/CHANGELOG.md">{{ trans(key="changelog", lang=lang) }}</a> ·
+        <a href="{{ config.extra.repo }}/blob/main/{% if lang == 'de' %}CONTRIBUTING.de.md{% else %}CONTRIBUTING.md{% endif %}">{{ trans(key="contributing", lang=lang) }}</a> ·
+        <a href="{{ config.extra.repo }}/blob/main/CITATION.cff">{{ trans(key="citation", lang=lang) }}</a> ·
+        <a href="{{ other_href }}" hreflang="{{ other }}" lang="{{ other }}" data-lang="{{ other }}">{{ trans(key="other_lang", lang=lang) }}</a>
+      </p>
+    </div>
+  </div>
+</footer>
+<script>
+// Sprache: keine Weiterleitung (Suchmaschinen kämen sonst nicht an die deutsche Seite). Ohne eigene Wahl
+// zeigt ein Hinweis die andere Fassung, wenn der Browser sie bevorzugt.
+try {
+  var wahl = localStorage.getItem('nextpad-site-lang')
+  var erste = (navigator.languages || [navigator.language || '']).map(function (l) { return String(l).slice(0, 2).toLowerCase() }).filter(function (l) { return l === 'de' || l === 'en' })[0]
+  if (!wahl && erste && erste !== document.documentElement.lang) document.getElementById('langhint').hidden = false
+} catch (e) {}
+// Wahl der Sprache merken, wenn jemand selbst umschaltet
+document.querySelectorAll('a[data-lang]').forEach(function (a) {
+  a.addEventListener('click', function () { try { localStorage.setItem('nextpad-site-lang', a.dataset.lang) } catch (e) {} })
+})
+</script>
+</body>
+</html>

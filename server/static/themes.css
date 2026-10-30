@@ -1,0 +1,95 @@
+/* Themes „nextpad“ (eckig, Standard) und „rund“ über dem Rahmen aus start.css und theme-hsd.css.
+   Nur Variablen und Formen; Aufbau und Abstände bleiben in start.css. Schriften liegen im Programm (WOFF2, lateinische Zeichen),
+   nichts kommt aus dem Netz: Liberation Sans (OFL, maßgleich zu Arial, deshalb ohne Sprung, wenn Arial einspringt) und Lexend (OFL).
+   Das Subset von Liberation Sans heißt „NextPad Sans“, weil die OFL veränderten Fassungen den reservierten Namen „Liberation“ verbietet;
+   ist Liberation Sans auf dem Gerät installiert, nimmt der Browser das Original.
+   Kontraste nachgerechnet gegen #fff bzw. #1e1e1e: Fließtext ab 7:1, Akzentflächen mit Text ab 4,5:1, Linien und Fokus ab 3:1. */
+@font-face { font-family: "NextPad Sans"; src: local("Liberation Sans"), url("fonts/nextpad-sans-400.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "NextPad Sans"; src: local("Liberation Sans Bold"), local("LiberationSans-Bold"), url("fonts/nextpad-sans-700.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "NextPad Sans"; src: local("Liberation Sans Italic"), local("LiberationSans-Italic"), url("fonts/nextpad-sans-400i.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: Lexend; src: url("fonts/lexend.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+
+/* ---------- eckig: Petrol statt HSD-Rot, Hauptschaltfläche in Petrol, NextPad Sans ---------- */
+.theme-nextpad {
+  --font-text: "NextPad Sans", Arial, Helvetica, sans-serif;
+  --font-display: "NextPad Sans", Arial, Helvetica, sans-serif;
+  --hsd-red: #007a96;               /* Kopflinie und Fokus: 4,97:1 auf Weiß */
+  --primary: #007a96;
+  --focus-ring: 3px solid #007a96;
+  --color-action: #005f75;          /* weißer Text 7,26:1 */
+  --color-action-hover: #004a5c;
+  --color-on-action: #fff;
+}
+@media (prefers-color-scheme: dark) {
+  .theme-nextpad {
+    --hsd-red: #3fb4d0;             /* 6,87:1 auf #1e1e1e */
+    --focus-ring: 3px solid #3fb4d0;
+    --color-action: #7fd4ff;        /* schwarzer Text 12,8:1 */
+    --color-action-hover: #b3e6ff;
+    --color-on-action: #000;
+  }
+}
+html[data-theme="dark"] .theme-hsd.theme-nextpad { --primary: #3fb4d0; }
+.theme-nextpad, .theme-nextpad body { font-family: var(--font-text); }
+.theme-hsd.theme-nextpad #editor .ProseMirror, .theme-hsd.theme-nextpad #timeline .snapshot,
+.theme-hsd.theme-nextpad #editor .ProseMirror :is(h1,h2,h3,h4), .theme-hsd.theme-nextpad #timeline .snapshot :is(h1,h2,h3,h4),
+.theme-hsd.theme-nextpad .tsel { font-family: var(--font-text); }
+
+/* ---------- rund: große Rundungen, Knöpfe als Pillen, Lexend, Blau ---------- */
+.theme-rund {
+  --hsd-red: #3a55c8;               /* 6,34:1 auf Weiß */
+  --primary: #3a55c8;
+  --focus-ring: 3px solid #3a55c8;
+  --line-blue: #3a55c8;
+  --tint-blue: #e3e8fb;             /* schwarzer Text 17,2:1 */
+  --color-action: #3a55c8;          /* weißer Text 6,34:1 */
+  --color-action-hover: #2a3f9e;
+  --color-on-action: #fff;
+  --color-canvas: #eef1fb;
+  --color-border: #d6dbef;
+  --font-text: Lexend, Arial, "NextPad Sans", sans-serif;
+  --font-display: Lexend, Arial, "NextPad Sans", sans-serif;
+  --radius: 20px;
+  --radius-control: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  .theme-rund {
+    --hsd-red: #8ea2ff;             /* 6,96:1 auf #1e1e1e */
+    --focus-ring: 3px solid #8ea2ff;
+    --line-blue: #8ea2ff;
+    --tint-blue: #262f57;           /* heller Text 11,5:1 */
+    --color-action: #8ea2ff;        /* schwarzer Text 8,76:1 */
+    --color-action-hover: #b4c1ff;
+    --color-on-action: #000;
+    --color-canvas: #121212;
+    --color-border: #3a3a3a;
+  }
+}
+html[data-theme="dark"] .theme-hsd.theme-rund { --primary: #8ea2ff; --line-blue: #8ea2ff; --tint-blue: #262f57; }
+
+/* Seiten (Startseite, Hilfe, Ideensammlung, Quiz) */
+.theme-rund, .theme-rund body { font-family: var(--font-text); }
+.theme-rund .site-header { border-bottom: 1px solid var(--color-border); }
+.theme-rund .panel, .theme-rund .entry { border-radius: var(--radius); }
+.theme-rund .entry { border-color: transparent; box-shadow: 0 2px 12px rgba(27, 31, 51, .08); }
+.theme-rund .btn, .theme-rund .quiz-buzzer { border-radius: 999px; }
+.theme-rund .quiz-buzzer { border-radius: 32px; }
+.theme-rund .quiz-cell { border-radius: 16px; }
+.theme-rund .vote, .theme-rund .wall-votes { border-radius: 16px; }
+.theme-rund .icon-btn { border-radius: 50%; }
+
+/* Editor */
+.theme-hsd.theme-rund, .theme-hsd.theme-rund #editor .ProseMirror, .theme-hsd.theme-rund #timeline .snapshot,
+.theme-hsd.theme-rund #editor .ProseMirror :is(h1,h2,h3,h4), .theme-hsd.theme-rund #timeline .snapshot :is(h1,h2,h3,h4),
+.theme-hsd.theme-rund .tsel { font-family: var(--font-text); }
+.theme-hsd.theme-rund #toolbar { border-bottom: 1px solid var(--border); }
+.theme-hsd.theme-rund .popup, .theme-hsd.theme-rund #mddialog { border-radius: 18px; }
+.theme-hsd.theme-rund .collaboration-carets__label { border-radius: 8px; }
+.theme-hsd.theme-rund .ib, .theme-hsd.theme-rund .tsel, .theme-hsd.theme-rund .popup .swatch { border-radius: 12px; }
+.theme-hsd.theme-rund .ib.selected { box-shadow: none; }
+.theme-hsd.theme-rund .popup .owner button, .theme-hsd.theme-rund .popup .login button,
+.theme-hsd.theme-rund .popup .einladen button, .theme-hsd.theme-rund #timeline .tl-controls button,
+.theme-hsd.theme-rund #mddialog button { border-radius: 999px; }
+.theme-hsd.theme-rund .popup .einladen input.link, .theme-hsd.theme-rund #mddialog textarea { border-radius: 12px; }
+.theme-hsd.theme-rund .avatar { border-radius: 50%; }
+.theme-hsd.theme-rund #statusbar .users { border-radius: 999px; }

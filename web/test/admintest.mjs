@@ -16,6 +16,8 @@ const cookiesOf = r => r.headers.getSetCookie().map(c => c.split(';')[0])
 const form = o => new URLSearchParams(o).toString()
 let pass = 0, fail = 0
 const check = (n, ok, x = '') => { ok ? pass++ : fail++; console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${ok ? '' : ' ' + x}`) }
+// Server ohne PDF-Satz (Container-Image): /export/pdf antwortet 404, browsertests.sh setzt NEXTPAD_OHNE_PDF
+const ohnePdf = process.env.NEXTPAD_OHNE_PDF === '1'
 
 /// Anmeldung über die nachgespielte Plattform; liefert das Anmelde-Cookie.
 async function loginAs(sub, email, roles = []) {
@@ -82,7 +84,8 @@ const pad = 'Erscheinungstest' + Date.now().toString().slice(-5)
 const padHtml = await (await fetch(`${base}/open?padname=${pad}`)).text()
 check('Editor übernimmt Farben', padHtml.includes('--primary:#007a96'))
 const pdf = await get(`/p/${pad}/export/pdf`)
-check('PDF mit SVG-Logo', pdf.status === 200 && (await pdf.arrayBuffer()).byteLength > 1000)
+if (ohnePdf) check('ohne PDF-Satz: PDF-Export 404', pdf.status === 404, String(pdf.status))
+else check('PDF mit SVG-Logo', pdf.status === 200 && (await pdf.arrayBuffer()).byteLength > 1000)
 // Logo oben links im Pad führt zur Startseite
 {
   const lb = await chromium.launch(); const lp = await (await lb.newContext({ locale: 'de-DE' })).newPage()

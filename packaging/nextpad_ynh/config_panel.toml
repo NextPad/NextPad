@@ -30,7 +30,7 @@ name = "NextPad"
         ask.de = "Design"
         ask.en = "Look"
         type = "select"
-        choices = ["colibris", "hsd"]
+        choices = ["nextpad", "rund", "colibris", "hsd"]
 
         [main.appearance.admins]
         ask.de = "Admins für das Erscheinungsbild"

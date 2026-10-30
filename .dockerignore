@@ -7,3 +7,7 @@ server/static/editor.js
 server/static/editor.css
 data
 server/static/board
+# Daten und Schlüssel aus docker-compose.yml nie ins Image
+config
+.env
+.env.*
