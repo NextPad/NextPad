@@ -12,7 +12,9 @@
     - [Quiz anlegen](quiz/anlegen.md)
     - [Buzzer messen](quiz/buzzer-messen.md)
     - [Quiz durchführen](quiz/durchfuehren.md)
-- [Ideensammlung]()
+- [Ideensammlung](ideen/README.md)
+    - [Ideensammlung anlegen](ideen/anlegen.md)
+    - [Sammeln und moderieren](ideen/sammeln.md)
 - [In Moodle einbinden]()
 
 # Einsatzszenarien

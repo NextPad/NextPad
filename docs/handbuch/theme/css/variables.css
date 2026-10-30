@@ -469,6 +469,7 @@ html:root .np-site :focus-visible { outline: 3px solid var(--np-primary); outlin
 @media (max-width: 560px) { html:root .np-site .top nav { gap: 14px; } }
 /* Die Seitenleiste beginnt unter dem Kopf und rückt beim Scrollen nach oben (Wert setzt book.js) */
 html:root .sidebar { top: var(--np-oben, 0px); }
-/* mdBook-Leiste: Inhaltsverzeichnis, Suche, Buchtitel */
-html:root .menu-bar { border-block-end: 1px solid var(--np-line); }
-html:root .np-buch { font-weight: 700; font-size: 1.8rem; }
+/* mdBook-Leiste: nur Inhaltsverzeichnis und Suche, ohne Trennlinie zum Kopf */
+html:root #mdbook-menu-bar, html:root #mdbook-menu-bar.bordered { border-block-end-color: transparent; }
+/* Ohne das Hover-Element von mdBook entfällt dessen Ausgleich; sonst schöbe sich die Seite über den Kopf */
+html:root .page { margin-block-start: 0; }

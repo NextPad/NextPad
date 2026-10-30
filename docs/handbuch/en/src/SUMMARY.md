@@ -12,7 +12,9 @@
     - [Create a quiz](quiz/create.md)
     - [Measure the buzzer](quiz/measure-buzzer.md)
     - [Run the quiz](quiz/run.md)
-- [Idea collection]()
+- [Idea collection](ideas/README.md)
+    - [Create an idea collection](ideas/create.md)
+    - [Collect and moderate](ideas/collect.md)
 - [Embed in Moodle]()
 
 # Teaching scenarios

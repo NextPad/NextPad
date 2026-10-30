@@ -131,9 +131,9 @@
         <script>
             let sidebar = null;
             const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
-            if (document.body.clientWidth >= 1080) {
-                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
-                sidebar = sidebar || 'visible';
+            // NextPad: ab Tablet-Breite startet das Inhaltsverzeichnis immer geöffnet, auf dem Handy geschlossen
+            if (document.body.clientWidth >= 760) {
+                sidebar = 'visible';
             } else {
                 sidebar = 'hidden';
                 sidebar_toggle.checked = false;
@@ -160,7 +160,6 @@
 
             <div class="page">
                 {{> header}}
-                <div id="mdbook-menu-bar-hover-placeholder"></div>
                 <div id="mdbook-menu-bar" class="menu-bar sticky">
                     <div class="left-buttons">
                         <label id="mdbook-sidebar-toggle" class="icon-button" role="button" tabindex="0" for="mdbook-sidebar-toggle-anchor" title="{{#if (eq language "de")}}Inhaltsverzeichnis ein- oder ausblenden{{else}}Toggle Table of Contents{{/if}}" aria-label="{{#if (eq language "de")}}Inhaltsverzeichnis ein- oder ausblenden{{else}}Toggle Table of Contents{{/if}}" aria-controls="mdbook-sidebar">
@@ -184,7 +183,7 @@
                         {{/if}}
                     </div>
 
-                    <p class="menu-title np-buch">{{#if (eq language "de")}}Handbuch{{else}}Manual{{/if}}</p>
+                    <div class="menu-title" aria-hidden="true"></div>
 
                     <div class="right-buttons">
                         {{#if print_enable}}

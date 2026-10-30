@@ -6,6 +6,13 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+### Added
+
+- The help page links to the manual on the project site (nextpad.github.io/handbuch, /en/manual) with step-by-step
+  guides and short films. The quiz section links to its three guides.
+- Manual chapter on the idea collection with two guides and films (create, collect and moderate), in German and
+  English. The help section of the idea collection links to them.
+
 ## [0.18.0] - 2026-10-30
 
 ### Added
