@@ -36,6 +36,7 @@ const TEXTE_DE: &[(&str, &str)] = &[
     ("ideen.x.nein", "nein"),
     ("ideen.x.datei", "ideen.csv"),
     ("ideen.s.kicker", "Ideensammlung · Bearbeitungsansicht"),
+    ("ideen.s.kicker_mitmachen", "Ideensammlung · Mitmachen"),
     ("ideen.s.titel", "Ideen und Fragen"),
     ("ideen.s.frage_aendern", "Frage ändern"),
     ("ideen.s.frage_label", "Frage oder Thema der Sammlung"),
@@ -119,6 +120,7 @@ const TEXTE_EN: &[(&str, &str)] = &[
     ("ideen.x.nein", "no"),
     ("ideen.x.datei", "ideas.csv"),
     ("ideen.s.kicker", "Idea collection · Editing view"),
+    ("ideen.s.kicker_mitmachen", "Idea collection · Take part"),
     ("ideen.s.titel", "Ideas and questions"),
     ("ideen.s.frage_aendern", "Change question"),
     ("ideen.s.frage_label", "Question or topic of the collection"),
@@ -226,7 +228,9 @@ fn seite(s: Seite) -> Response {
     cfg["readonlyId"] = json!(s.readonly_id);
     cfg["lang"] = json!(sp.kuerzel());
     cfg["texte"] = texte::texte_mit(sp, "ideenjs.");
-    page(s.state, sp, s.url_id, cfg)
+    // Wer moderiert, sieht die Bearbeitungsansicht; alle anderen machen mit
+    let leitung = viewer(s.state, s.headers, s.url_id).is_ok_and(|v| v.owner);
+    page(s.state, sp, s.url_id, cfg, leitung)
 }
 
 fn export_antwort(state: &AppState, pad: &str, format: &str, sp: Sprache) -> Response {
@@ -382,7 +386,7 @@ pub fn export(state: &AppState, pad: &str, format: &str, sp: Sprache) -> Option<
 }
 
 /// Seite der Sammlung; der Inhalt kommt per Skript, ohne Skript steht ein Hinweis da.
-pub fn page(state: &AppState, sp: Sprache, url_id: &str, cfg: serde_json::Value) -> Response {
+pub fn page(state: &AppState, sp: Sprache, url_id: &str, cfg: serde_json::Value, leitung: bool) -> Response {
     let base = &state.config.base_path;
     let t = |k| texte::t(sp, k);
     let content = format!(r#"<main id="inhalt" class="ideas" tabindex="-1"><div class="wrap">
@@ -414,7 +418,7 @@ pub fn page(state: &AppState, sp: Sprache, url_id: &str, cfg: serde_json::Value)
 </div></main>
 <script type="application/json" id="nextpad-config">{cfg}</script>"#,
         u = web::urlencoding(url_id), cfg = cfg.to_string().replace("</", "<\\/"),
-        kicker = t("ideen.s.kicker"), titel = t("ideen.s.titel"), frage_aendern = t("ideen.s.frage_aendern"), frage_label = t("ideen.s.frage_label"),
+        kicker = t(if leitung { "ideen.s.kicker" } else { "ideen.s.kicker_mitmachen" }), titel = t("ideen.s.titel"), frage_aendern = t("ideen.s.frage_aendern"), frage_label = t("ideen.s.frage_label"),
         speichern = t("ideen.s.speichern"), idee_label = t("ideen.s.idee_label"), abschicken = t("ideen.s.abschicken"), nur_mitlesen = t("ideen.nur_mitlesen"),
         zeichen = texte::tf(sp, "ideen.s.zeichen_html", &[("zaehler", r#"<span id="add-count">0</span>"#), ("max", &MAX_TEXT.to_string())]),
         braucht_js = t("ideen.s.braucht_js"), sortieren = t("ideen.s.sortieren"), beliebt = t("ideen.s.beliebt"), neu = t("ideen.s.neu"), offene = t("ideen.s.offene"),

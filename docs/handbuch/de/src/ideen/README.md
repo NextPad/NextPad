@@ -19,7 +19,8 @@ Die Ideensammlung ist eine Liste, in die alle ohne Namen Ideen oder Fragen eintr
 <dt>Beitrag</dt><dd>eine Idee oder Frage, höchstens 500 Zeichen, ohne Namen.</dd>
 <dt>Stimme</dt><dd>Zustimmung zu einem Beitrag. Jede Person hat je Beitrag eine Stimme und kann sie zurücknehmen.</dd>
 <dt>Leinwand</dt><dd>die große Ansicht für den Beamer mit den sechs beliebtesten offenen Beiträgen und dem QR-Code.</dd>
-<dt>Bearbeitungsansicht</dt><dd>die Seite der Sammlung mit Eingabefeld und Liste. Die Leitung sieht dort zusätzlich die Knöpfe zum Moderieren.</dd>
+<dt>Mitmachen</dt><dd>die Seite der Sammlung mit Eingabefeld und Liste, wie Teilnehmende sie sehen.</dd>
+<dt>Bearbeitungsansicht</dt><dd>dieselbe Seite für die Leitung, zusätzlich mit den Knöpfen zum Moderieren.</dd>
 </dl>
 </aside>
 

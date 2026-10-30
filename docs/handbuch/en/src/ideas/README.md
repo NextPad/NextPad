@@ -19,7 +19,8 @@ The idea collection is a list where everyone adds ideas or questions without a n
 <dt>Entry</dt><dd>an idea or question, at most 500 characters, without a name.</dd>
 <dt>Vote</dt><dd>agreement with an entry. Each person has one vote per entry and can take it back.</dd>
 <dt>Board</dt><dd>the large view for the projector with the six most popular open entries and the QR code.</dd>
-<dt>Editing view</dt><dd>the page of the collection with the input field and the list. The host also sees the moderation buttons there.</dd>
+<dt>Take part</dt><dd>the page of the collection with the input field and the list, as participants see it.</dd>
+<dt>Editing view</dt><dd>the same page for the host, with the moderation buttons in addition.</dd>
 </dl>
 </aside>
 

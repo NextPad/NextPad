@@ -6,6 +6,11 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+### Changed
+
+- Idea collection: participants see "Ideensammlung · Mitmachen" ("Idea collection · Take part") above the
+  collection. Only the person who moderates still sees "Bearbeitungsansicht" ("Editing view").
+
 ### Added
 
 - The help page links to the manual on the project site (nextpad.github.io/handbuch, /en/manual) with step-by-step

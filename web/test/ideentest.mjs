@@ -62,6 +62,8 @@ await w.waitForFunction(() => document.querySelectorAll('.wall-item').length ===
 // Lese-Link
 check('Mitmachen als Knopf, kein Lese-Link mehr', await a.isVisible('#share-copy') && (await a.locator('#share-ro').count()) === 0)
 check('Kopfzeile nennt die Bearbeitungsansicht', (await a.textContent('#view-kicker')).includes('Bearbeitungsansicht'))
+const m = await (await b.newContext()).newPage(); await m.goto(url); await m.waitForSelector('#view-kicker')
+check('Teilnehmende sehen „Mitmachen“ statt Bearbeitungsansicht', (await m.textContent('#view-kicker')).includes('Mitmachen')); await m.context().close()
 const roId = await a.evaluate(() => JSON.parse(document.getElementById('nextpad-config').textContent).readonlyId)
 await g.goto(`${base}/p/${roId}`); await g.waitForFunction(() => document.querySelectorAll('#open-list li').length === 2)
 check('Lese-Link ohne Eingabe und Abstimmung', !(await g.isVisible('#add-form')) && (await g.locator('.vote').count()) === 0)
