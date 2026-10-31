@@ -15,6 +15,7 @@ All notable changes to this project are documented in this file. The format is b
   platform from the `tool_platform` claim and builds the links for Moodle and ILIAS; for other platforms it shows
   neither. Before, both always used Moodle addresses.
 - Idea collection and quiz: the hints for course participants no longer name Moodle.
+- Manual: the films have a sound track with clicks, a buzzer and soft music. They still start muted.
 
 ### Added
 
