@@ -238,12 +238,16 @@ check('Quiz-Aktivität: ohne Start aus Moodle kein Buzzer', (await fetch(quizUrl
 const nr = String(Date.now() % 1000000)
 const tm = await startAct(act('42', 'Instructor', nr, { [C + 'custom']: { typ: 'quiz' } }))
 const qrPage = await (await fetch(base + tm.loc.replace(/^.*?\/p\//, '/p/'), { headers: { cookie: tm.sid } })).text()
-check('Moodle-Quiz: QR-Code zeigt auf die Aktivität in Moodle', qrPage.includes(`${ISS}/mod/lti/view.php?l=${nr}`) && qrPage.includes('Mitmachen über Moodle') && qrPage.includes('<svg'))
+check('Moodle-Quiz: QR-Code zeigt auf die Aktivität in Moodle', qrPage.includes(`${ISS}/mod/lti/view.php?l=${nr}`) && qrPage.includes('Mitmachen über den Kurs') && qrPage.includes('<svg'))
 const qrMess = await (await fetch(base + tm.loc.replace(/^.*?\/p\//, '/p/') + '/messung', { headers: { cookie: tm.sid } })).text()
 check('Moodle-Quiz: auch auf der Messseite', qrMess.includes(`${ISS}/mod/lti/view.php?l=${nr}`))
 const ti = await startAct(act('42', 'Instructor', String(Number(nr) + 1)))
 const wall = await (await fetch(base + ti.loc.replace(/^.*?\/p\//, '/p/') + '/leinwand', { headers: { cookie: ti.sid } })).text()
 check('Moodle-Ideensammlung: Leinwand mit QR zur Aktivität', wall.includes(`${ISS}/mod/lti/view.php?l=${Number(nr) + 1}`))
+// Start aus ILIAS: QR-Code führt zum Objekt in ILIAS, nicht zu einer Moodle-Adresse
+const tl = await startAct(act('42', 'Instructor', String(Number(nr) + 2), { [C + 'tool_platform']: { product_family_code: 'ilias' } }))
+const wallI = await (await fetch(base + tl.loc.replace(/^.*?\/p\//, '/p/') + '/leinwand', { headers: { cookie: tl.sid } })).text()
+check('ILIAS-Ideensammlung: Leinwand mit QR zum Objekt in ILIAS', wallI.includes(`${ISS}/goto.php?target=lti_${Number(nr) + 2}`) && !wallI.includes('/mod/lti/view.php'))
 const s4 = await startAct({ ...act('43', 'Learner', 'x'), [C + 'resource_link']: undefined })
 check('Aktivität ohne Ressourcen-Link 400', s4.r.status === 400, `Status ${s4.r.status}`)
 
