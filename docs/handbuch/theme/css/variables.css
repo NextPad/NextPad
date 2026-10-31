@@ -417,6 +417,10 @@ html:root #mdbook-theme-toggle { display: none; }
 html:root .np-film { margin: 1.5em 0 2em; }
 html:root .np-film video { display: block; width: 100%; height: auto; border: 1px solid var(--np-line); background: var(--np-bg-alt); }
 html:root .np-film figcaption { font-size: .9em; color: var(--np-muted); margin-top: .5em; }
+/* Bildschirmfoto mit Markierungen, Ziffern wie in der Schrittliste */
+html:root .np-bild { margin: 1.5em 0 2em; }
+html:root .np-bild img { display: block; width: 100%; height: auto; border: 1px solid var(--np-line); background: var(--np-bg-alt); }
+html:root .np-bild figcaption { font-size: .9em; color: var(--np-muted); margin-top: .5em; }
 html:root .content h1, html:root .content h2 { text-wrap: balance; }
 html:root .content h1 { border-block-end: 3px solid var(--np-primary); padding-block-end: .3em; }
 html:root .content main a, html:root .content main a:link { text-decoration: underline; text-underline-offset: .2em; }
@@ -473,3 +477,4 @@ html:root .sidebar { top: var(--np-oben, 0px); }
 html:root #mdbook-menu-bar, html:root #mdbook-menu-bar.bordered { border-block-end-color: transparent; }
 /* Ohne das Hover-Element von mdBook entfällt dessen Ausgleich; sonst schöbe sich die Seite über den Kopf */
 html:root .page { margin-block-start: 0; }
+html:root .content .table-wrapper:focus-visible { outline: 3px solid var(--np-primary); outline-offset: 2px; }

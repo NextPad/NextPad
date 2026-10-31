@@ -948,3 +948,10 @@ document.querySelectorAll('.content main pre, .content main pre > code').forEach
         a.addEventListener('click', () => { try { localStorage.setItem('nextpad-site-lang', a.dataset.lang); } catch (e) {} });
     });
 })();
+
+// Breite Tabellen scrollen auf dem Handy waagrecht; der Rahmen braucht dann Tastaturfokus und einen Namen (WCAG 2.1.1)
+document.querySelectorAll('.content .table-wrapper').forEach(w => {
+    w.tabIndex = 0;
+    w.setAttribute('role', 'region');
+    w.setAttribute('aria-label', document.documentElement.lang === 'de' ? 'Tabelle, waagrecht scrollbar' : 'Table, scrolls horizontally');
+});

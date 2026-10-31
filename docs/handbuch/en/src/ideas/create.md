@@ -28,7 +28,7 @@ Instead of the QR code, **Copy link to take part** also works, for example for t
 
 - Only the browser in which the collection was created can moderate. The host should therefore stay in the same browser.
 - The board updates itself. It works best in its own window on the projector, with the editing view on your own screen.
-- In a Moodle course, the idea collection is also available as an activity. Then only course members can take part, and teachers moderate.
+- In a Moodle course, the idea collection is also available as an activity. Then only course members can take part, and teachers moderate. [Embed in Moodle](../moodle/README.md) shows how.
 
 ## Try it yourself
 

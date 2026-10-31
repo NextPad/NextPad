@@ -15,7 +15,9 @@
 - [Idea collection](ideas/README.md)
     - [Create an idea collection](ideas/create.md)
     - [Collect and moderate](ideas/collect.md)
-- [Embed in Moodle]()
+- [Embed in Moodle](moodle/README.md)
+    - [Add an activity to a course](moodle/activity.md)
+    - [Register the tool in Moodle](moodle/setup.md)
 
 # Teaching scenarios
 

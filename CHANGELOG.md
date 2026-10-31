@@ -8,6 +8,7 @@ All notable changes to this project are documented in this file. The format is b
 
 ### Changed
 
+- Manual: wide tables that scroll sideways on phones can be reached with the keyboard.
 - Idea collection: participants see "Ideensammlung · Mitmachen" ("Idea collection · Take part") above the
   collection. Only the person who moderates still sees "Bearbeitungsansicht" ("Editing view").
 
@@ -17,6 +18,8 @@ All notable changes to this project are documented in this file. The format is b
   guides and short films. The quiz section links to its three guides.
 - Manual chapter on the idea collection with two guides and films (create, collect and moderate), in German and
   English. The help section of the idea collection links to them.
+- Manual chapter "Embed in Moodle" with real screenshots from Moodle 5.3: adding an activity to a course for
+  teachers and registering the LTI 1.3 tools for the Moodle administration, in German and English.
 
 ## [0.18.0] - 2026-10-30
 

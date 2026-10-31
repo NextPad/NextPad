@@ -15,7 +15,9 @@
 - [Ideensammlung](ideen/README.md)
     - [Ideensammlung anlegen](ideen/anlegen.md)
     - [Sammeln und moderieren](ideen/sammeln.md)
-- [In Moodle einbinden]()
+- [In Moodle einbinden](moodle/README.md)
+    - [Aktivität im Kurs anlegen](moodle/aktivitaet.md)
+    - [Werkzeug in Moodle eintragen](moodle/einrichten.md)
 
 # Einsatzszenarien
 
