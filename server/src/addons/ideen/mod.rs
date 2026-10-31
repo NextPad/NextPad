@@ -66,8 +66,8 @@ const TEXTE_DE: &[(&str, &str)] = &[
     ("ideen.s.leer", "Noch keine Beiträge."),
     ("ideen.s.qr", "QR-Code zum Mitmachen"),
     ("ideen.s.mitmachen", "Mitmachen:"),
-    ("ideen.s.mitmachen_moodle", "Mitmachen über Moodle:"),
-    ("ideen.s.mitmachen_kurs", "Mitmachen über die Aktivität im Moodle-Kurs."),
+    ("ideen.s.mitmachen_moodle", "Mitmachen über den Kurs:"),
+    ("ideen.s.mitmachen_kurs", "Mitmachen über die Aktivität im Kurs."),
     ("ideen.keine_sammlung", "Das ist keine Ideensammlung."),
     ("ideen.nur_mitlesen", "Über diesen Link lässt sich nur mitlesen."),
     ("ideen.text_fehlt", "Bitte einen Text eingeben."),
@@ -97,7 +97,7 @@ const TEXTE_DE: &[(&str, &str)] = &[
     ("ideenjs.eingeben", "Bitte eine Idee oder Frage eingeben."),
     ("ideenjs.leseansicht", "Ideensammlung · Leseansicht"),
     ("ideenjs.zeigen_sichern", "Zeigen und sichern"),
-    ("ideenjs.nur_moodle", "Zugang nur über die Aktivität im Moodle-Kurs."),
+    ("ideenjs.nur_moodle", "Zugang nur über die Aktivität im Kurs."),
     ("ideenjs.kopiert", "Link kopiert"),
     ("ideenjs.link_kopieren", "Link zum Mitmachen kopieren"),
     ("ideenjs.loeschen_frage", "Die Sammlung samt allen Beiträgen und Stimmen löschen? Das lässt sich nicht rückgängig machen."),
@@ -105,7 +105,7 @@ const TEXTE_DE: &[(&str, &str)] = &[
     ("ideenjs.beliebteste", ", hier die {n} beliebtesten"),
     ("ideen.name", "Ideensammlung"),
     ("ideen.kachel_html", r#"<li><a class="template" data-tint="yellow" href="{base}/new?typ=ideen"><svg class="template-icon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg><span class="template-name">Ideensammlung</span><span class="template-desc">Ideen und Fragen sammeln, abstimmen</span><svg class="chev" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6"/></svg></a></li>"#),
-    ("ideen.hilfe_html", r#"<h2>Ideensammlung</h2><p>„Ideensammlung“ legt eine Liste an, in die alle ohne Namen Ideen oder Fragen eintragen und für Beiträge stimmen. Jede Person hat je Beitrag eine Stimme. Wer die Sammlung angelegt hat, kann oben die Frage setzen, Beiträge als erledigt markieren oder ausblenden. „Link zum Mitmachen kopieren“ holt die Adresse für die Gruppe. „Leinwand öffnen“ zeigt die beliebtesten Beiträge groß für den Beamer, bei freien Sammlungen mit QR-Code zum Mitmachen. Gesichert wird als Markdown oder CSV. Im Moodle-Kurs gibt es die Ideensammlung auch als Aktivität: Dann kommen nur Kursmitglieder hinein, und Lehrende moderieren.</p>
+    ("ideen.hilfe_html", r#"<h2>Ideensammlung</h2><p>„Ideensammlung“ legt eine Liste an, in die alle ohne Namen Ideen oder Fragen eintragen und für Beiträge stimmen. Jede Person hat je Beitrag eine Stimme. Wer die Sammlung angelegt hat, kann oben die Frage setzen, Beiträge als erledigt markieren oder ausblenden. „Link zum Mitmachen kopieren“ holt die Adresse für die Gruppe. „Leinwand öffnen“ zeigt die beliebtesten Beiträge groß für den Beamer, bei freien Sammlungen mit QR-Code zum Mitmachen. Gesichert wird als Markdown oder CSV. In Moodle und ILIAS gibt es die Ideensammlung auch als Aktivität im Kurs: Dann kommen nur Kursmitglieder hinein, und Lehrende moderieren.</p>
 <p>Schritt für Schritt mit Filmen im Handbuch: <a href="https://nextpad.github.io/handbuch/ideen/anlegen.html">Ideensammlung anlegen</a>, <a href="https://nextpad.github.io/handbuch/ideen/sammeln.html">Sammeln und moderieren</a>.</p>"#),
     ("ideen.export_formate", "Ideensammlungen lassen sich als Markdown, Text oder CSV sichern."),
 ];
@@ -150,8 +150,8 @@ const TEXTE_EN: &[(&str, &str)] = &[
     ("ideen.s.leer", "No entries yet."),
     ("ideen.s.qr", "QR code to take part"),
     ("ideen.s.mitmachen", "Take part:"),
-    ("ideen.s.mitmachen_moodle", "Take part through Moodle:"),
-    ("ideen.s.mitmachen_kurs", "Take part through the activity in the Moodle course."),
+    ("ideen.s.mitmachen_moodle", "Take part through the course:"),
+    ("ideen.s.mitmachen_kurs", "Take part through the activity in the course."),
     ("ideen.keine_sammlung", "This is not an idea collection."),
     ("ideen.nur_mitlesen", "This link is for reading only."),
     ("ideen.text_fehlt", "Please enter a text."),
@@ -181,7 +181,7 @@ const TEXTE_EN: &[(&str, &str)] = &[
     ("ideenjs.eingeben", "Please enter an idea or question."),
     ("ideenjs.leseansicht", "Idea collection · Reading view"),
     ("ideenjs.zeigen_sichern", "Show and save"),
-    ("ideenjs.nur_moodle", "Access only through the activity in the Moodle course."),
+    ("ideenjs.nur_moodle", "Access only through the activity in the course."),
     ("ideenjs.kopiert", "Link copied"),
     ("ideenjs.link_kopieren", "Copy link to take part"),
     ("ideenjs.loeschen_frage", "Delete the collection with all entries and votes? This cannot be undone."),
@@ -189,7 +189,7 @@ const TEXTE_EN: &[(&str, &str)] = &[
     ("ideenjs.beliebteste", ", showing the {n} most popular"),
     ("ideen.name", "Idea collection"),
     ("ideen.kachel_html", r#"<li><a class="template" data-tint="yellow" href="{base}/new?typ=ideen"><svg class="template-icon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg><span class="template-name">Idea collection</span><span class="template-desc">Collect ideas and questions, vote</span><svg class="chev" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6"/></svg></a></li>"#),
-    ("ideen.hilfe_html", r#"<h2>Idea collection</h2><p>“Idea collection” creates a list where everyone adds ideas or questions without a name and votes for entries. Each person has one vote per entry. The person who created the collection can set the question at the top, mark entries as done or hide them. “Copy link to take part” copies the address for the group. “Open board” shows the most popular entries large for the projector, for free collections with a QR code to take part. The collection can be saved as Markdown or CSV. In a Moodle course, the idea collection is also available as an activity: then only course members can take part, and teachers moderate.</p>
+    ("ideen.hilfe_html", r#"<h2>Idea collection</h2><p>“Idea collection” creates a list where everyone adds ideas or questions without a name and votes for entries. Each person has one vote per entry. The person who created the collection can set the question at the top, mark entries as done or hide them. “Copy link to take part” copies the address for the group. “Open board” shows the most popular entries large for the projector, for free collections with a QR code to take part. The collection can be saved as Markdown or CSV. In Moodle and ILIAS, the idea collection is also available as a course activity: then only course members can take part, and teachers moderate.</p>
 <p>Step by step with films in the manual: <a href="https://nextpad.github.io/en/manual/ideas/create.html">Create an idea collection</a>, <a href="https://nextpad.github.io/en/manual/ideas/collect.html">Collect and moderate</a>.</p>"#),
     ("ideen.export_formate", "Idea collections can be saved as Markdown, text or CSV."),
 ];

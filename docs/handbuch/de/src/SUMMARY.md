@@ -18,6 +18,9 @@
 - [In Moodle einbinden](moodle/README.md)
     - [Aktivität im Kurs anlegen](moodle/aktivitaet.md)
     - [Werkzeug in Moodle eintragen](moodle/einrichten.md)
+- [In ILIAS einbinden](ilias/README.md)
+    - [Objekt im Kurs anlegen](ilias/objekt.md)
+    - [Werkzeug in ILIAS eintragen](ilias/einrichten.md)
 
 # Einsatzszenarien
 

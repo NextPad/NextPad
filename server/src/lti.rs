@@ -199,6 +199,14 @@ struct Claims {
     target_link_uri: Option<String>,
     #[serde(rename = "https://purl.imsglobal.org/spec/lti/claim/launch_presentation", default)]
     launch_presentation: Option<Praesentation>,
+    #[serde(rename = "https://purl.imsglobal.org/spec/lti/claim/tool_platform", default)]
+    tool_platform: Option<Produkt>,
+}
+
+#[derive(Deserialize)]
+struct Produkt {
+    #[serde(default)]
+    product_family_code: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -362,15 +370,10 @@ pub async fn launch(State(state): State<Arc<AppState>>, headers: HeaderMap, axum
             Err(e) => { tracing::error!("Kursaktivität suchen: {e}"); return page(sp, StatusCode::INTERNAL_SERVER_ERROR, t(sp, "lti.fehlgeschlagen")); }
         };
         if claims.moderates() { let _ = state.store.add_moderator(&pad, &author.id); }
-        // QR-Code am Beamer: Moodle zählt Ressourcen-Links mit der Nummer der LTI-Instanz, die Aktivität ist dann
-        // <Moodle>/mod/lti/view.php?l=<Nummer>; wer scannt, meldet sich in Moodle an und startet die Aktivität
-        if !link.id.is_empty() && link.id.len() <= 18 && link.id.chars().all(|c| c.is_ascii_digit()) {
-            let _ = state.store.set_join_url(&pad, &format!("{}/mod/lti/view.php?l={}", pl.moodle(), link.id));
-        }
-        // „Zurück zum Kurs“: Moodle schickt als Kontext die Kursnummer
-        if !ctx.id.is_empty() && ctx.id.len() <= 18 && ctx.id.chars().all(|c| c.is_ascii_digit()) {
-            let _ = state.store.set_course_url(&pad, &format!("{}/course/view.php?id={}", pl.moodle(), ctx.id));
-        }
+        let produkt = claims.tool_platform.as_ref().and_then(|p| p.product_family_code.as_deref());
+        let (join, course) = plattform_links(produkt, &pl.moodle(), &ctx.id, &link.id);
+        if let Some(u) = join { let _ = state.store.set_join_url(&pad, &u); }
+        if let Some(u) = course { let _ = state.store.set_course_url(&pad, &u); }
         let group = crate::ids::group_of_pad(&pad).unwrap_or("").to_string();
         let sid = match state.store.create_session(&group, &author.id, ids::now_ms() / 1000 + LOGIN_SECONDS) {
             Ok(s) => s,
@@ -406,6 +409,20 @@ pub async fn launch(State(state): State<Arc<AppState>>, headers: HeaderMap, axum
     resp
 }
 
+/// Adressen für den QR-Code am Beamer und „Zurück zum Kurs“. Moodle und ILIAS zählen Aktivität und Kurs
+/// mit Nummern; wer den QR-Code scannt, meldet sich dort an und startet die Aktivität. Moodle schickt die
+/// Nummer der LTI-Instanz als Ressourcen-Link und die Kursnummer als Kontext, ILIAS die Ref-IDs von
+/// Objekt und Kurs bzw. Gruppe. Ohne Angabe der Plattform gilt Moodle, andere Plattformen bekommen keine Links.
+fn plattform_links(produkt: Option<&str>, basis: &str, ctx: &str, link: &str) -> (Option<String>, Option<String>) {
+    let nummer = |s: &str| !s.is_empty() && s.len() <= 18 && s.chars().all(|c| c.is_ascii_digit());
+    let (join, course) = match produkt.map(str::to_ascii_lowercase).as_deref() {
+        None | Some("moodle") => (format!("{basis}/mod/lti/view.php?l={link}"), format!("{basis}/course/view.php?id={ctx}")),
+        Some("ilias") => (format!("{basis}/goto.php?target=lti_{link}"), format!("{basis}/ilias.php?baseClass=ilrepositorygui&ref_id={ctx}")),
+        Some(_) => return (None, None),
+    };
+    (nummer(link).then_some(join), nummer(ctx).then_some(course))
+}
+
 /// Öffentliche Schlüssel des Werkzeugs. NextPad nutzt keine LTI-Dienste und signiert nichts,
 /// Moodle verlangt aber eine Schlüsseladresse in der Werkzeugkonfiguration.
 pub async fn jwks() -> Response {
@@ -420,4 +437,20 @@ pub async fn logout(State(state): State<Arc<AppState>>, headers: HeaderMap) -> R
     let mut resp = (StatusCode::SEE_OTHER, [(header::LOCATION, path.clone())]).into_response();
     if let Ok(v) = HeaderValue::from_str(&format!("{}=; Path={path}; Max-Age=0; HttpOnly; Secure; SameSite=Lax", state.config.login_cookie)) { resp.headers_mut().append(header::SET_COOKIE, v); }
     resp
+}
+
+#[cfg(test)]
+mod tests {
+    use super::plattform_links;
+
+    #[test]
+    fn links_je_plattform() {
+        let m = plattform_links(Some("moodle"), "https://lms.example.org", "7", "42");
+        assert_eq!(m, (Some("https://lms.example.org/mod/lti/view.php?l=42".into()), Some("https://lms.example.org/course/view.php?id=7".into())));
+        assert_eq!(plattform_links(None, "https://lms.example.org", "7", "42"), m);
+        let i = plattform_links(Some("ilias"), "https://ilias.example.org", "92", "93");
+        assert_eq!(i, (Some("https://ilias.example.org/goto.php?target=lti_93".into()), Some("https://ilias.example.org/ilias.php?baseClass=ilrepositorygui&ref_id=92".into())));
+        assert_eq!(plattform_links(Some("canvas"), "https://x.example.org", "1", "2"), (None, None));
+        assert_eq!(plattform_links(Some("moodle"), "https://x.example.org", "kurs-1", "abc"), (None, None));
+    }
 }

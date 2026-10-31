@@ -18,6 +18,9 @@
 - [Embed in Moodle](moodle/README.md)
     - [Add an activity to a course](moodle/activity.md)
     - [Register the tool in Moodle](moodle/setup.md)
+- [Embed in ILIAS](ilias/README.md)
+    - [Add an object to a course](ilias/object.md)
+    - [Register the tool in ILIAS](ilias/setup.md)
 
 # Teaching scenarios
 

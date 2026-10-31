@@ -11,6 +11,10 @@ All notable changes to this project are documented in this file. The format is b
 - Manual: wide tables that scroll sideways on phones can be reached with the keyboard.
 - Idea collection: participants see "Ideensammlung · Mitmachen" ("Idea collection · Take part") above the
   collection. Only the person who moderates still sees "Bearbeitungsansicht" ("Editing view").
+- LTI: the QR code and "Back to course" lead back to the platform the launch came from. NextPad reads the
+  platform from the `tool_platform` claim and builds the links for Moodle and ILIAS; for other platforms it shows
+  neither. Before, both always used Moodle addresses.
+- Idea collection and quiz: the hints for course participants no longer name Moodle.
 
 ### Added
 
@@ -20,6 +24,12 @@ All notable changes to this project are documented in this file. The format is b
   English. The help section of the idea collection links to them.
 - Manual chapter "Embed in Moodle" with real screenshots from Moodle 5.3: adding an activity to a course for
   teachers and registering the LTI 1.3 tools for the Moodle administration, in German and English.
+- Manual chapter "Embed in ILIAS" with real screenshots from ILIAS 11: adding an object to a course for teachers
+  and registering the LTI 1.3 tools for the ILIAS administration, in German and English.
+
+### Fixed
+
+- Manual: the link from the idea collection to the Moodle chapter no longer ends on a missing page.
 
 ## [0.18.0] - 2026-10-30
 

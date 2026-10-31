@@ -478,3 +478,5 @@ html:root #mdbook-menu-bar, html:root #mdbook-menu-bar.bordered { border-block-e
 /* Ohne das Hover-Element von mdBook entfällt dessen Ausgleich; sonst schöbe sich die Seite über den Kopf */
 html:root .page { margin-block-start: 0; }
 html:root .content .table-wrapper:focus-visible { outline: 3px solid var(--np-primary); outline-offset: 2px; }
+/* Schlüssel in JSON-Beispielen: das Rot von Tomorrow Night erreicht im Dunkeln kein AA */
+.navy .hljs-attr, .navy .hljs-attribute, .navy .hljs-variable { color: #f2a0a0; }
