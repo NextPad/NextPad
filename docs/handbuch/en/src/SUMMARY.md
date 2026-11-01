@@ -4,7 +4,7 @@
 
 # Getting started
 
-- [Open a pad]()
+- [Create a pad](pad/create.md)
 
 # Guides
 
@@ -21,15 +21,3 @@
 - [Embed in ILIAS](ilias/README.md)
     - [Add an object to a course](ilias/object.md)
     - [Register the tool in ILIAS](ilias/setup.md)
-
-# Teaching scenarios
-
-- [Seminar with a projector]()
-
-# Reference
-
-- [Keyboard shortcuts]()
-
-# Operation
-
-- [Installation]()

@@ -42,7 +42,7 @@ steps = [
 ]
 moodle_name = "Moodle"
 moodle_how = "via the Etherpad API and LTI 1.3"
-ilias = { name = "ILIAS", status = "not yet tested", text = "NextPad signs in as an LTI 1.3 tool. In ILIAS it is added as an external tool (LTI consumer); pads, idea collection and quiz then run in the course. So far the sign-in is only tested with Moodle, feedback from ILIAS is welcome." }
+ilias = { name = "ILIAS", status = "tested with ILIAS 11", text = "The administration registers NextPad once as an LTI provider. Teachers then add a pad, idea collection or quiz to the course as an object. Roles, names and language come from ILIAS. From version 0.19 on, the QR code and “Back to course” lead to ILIAS." }
 api_label = "Example of an API call"
 api_c1 = "This is how mod_etherpadlite asks, NextPad answers like Etherpad"
 api_c2 = "Response"
@@ -60,7 +60,7 @@ themes_hint = "The variable <code>NEXTPAD_THEME</code> picks the look, on YunoHo
 ops_title = "Privacy, operation, accessibility"
 cards = [
   { title = "No third-party services", text = "No trackers, no fonts or scripts from others. Everything the browser loads comes from your own server." },
-  { title = "Delete your own pads", text = "Whoever creates a free pad owns it and can delete it or extend it by a year at any time. Unused pads disappear after a year; people signed in through Moodle get an email with the content first. Pads in Moodle courses follow the course." },
+  { title = "Deleting own pads", text = "Whoever creates a free pad owns it and can delete it or extend it by a year at any time. If wanted, NextPad deletes unused pads after an adjustable period; it is off by default. People signed in through Moodle or ILIAS get an email with the content first. Pads in courses follow the course." },
   { title = "Small attack surface", text = "One program without Node.js and without runtime plugins. Pad content stays data, sign-in through Moodle only accepts RS256-signed tokens." },
   { title = "Easy to run", text = "SQLite in the data directory, configuration through environment variables. A reverse proxy with TLS in front, done." },
   { title = "Accessibility checked", text = "Start page and idea collection are checked with axe against WCAG 2.2 AA in every look, light and dark, on every test run. Targets are at least 44 px." },
@@ -104,7 +104,7 @@ imgs = [
 tag = "Quiz"
 title = "Quiz grid with buzzer"
 text = ["Enter questions by category and points as a table, put the grid on the projector, teams buzz with their phones. Whoever presses first appears large on the screen, a countdown limits the time per question."]
-items = ["Teams join by QR code; start, end and restart the game", "Buzzer measurement checks in the room how fast each phone transmits signal and press", "As a Moodle activity via LTI, with “Back to course”"]
+items = ["Teams join by QR code; start, end and restart the game", "Buzzer measurement checks in the room how fast each phone transmits signal and press", "As an activity in Moodle and ILIAS via LTI 1.3"]
 board = true
 
 [[extra.features]]

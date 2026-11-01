@@ -42,7 +42,7 @@ steps = [
 ]
 moodle_name = "Moodle"
 moodle_how = "über die Etherpad-API und LTI 1.3"
-ilias = { name = "ILIAS", status = "noch nicht erprobt", text = "NextPad meldet sich als LTI-1.3-Werkzeug an. In ILIAS wird es als externes Werkzeug (LTI-Consumer) eingetragen; Pads, Ideensammlung und Quiz laufen dann im Kurs. Erprobt ist die Anmeldung bisher nur mit Moodle, Rückmeldungen aus ILIAS sind willkommen." }
+ilias = { name = "ILIAS", status = "erprobt mit ILIAS 11", text = "Die Administration trägt NextPad einmal als LTI-Provider ein. Danach legen Lehrende Pad, Ideensammlung oder Quiz als Objekt in den Kurs. Rollen, Namen und Sprache kommen aus ILIAS. QR-Code und „Zurück zum Kurs“ führen ab Version 0.19 nach ILIAS." }
 api_label = "Beispiel eines API-Aufrufs"
 api_c1 = "So fragt mod_etherpadlite an, NextPad antwortet wie Etherpad"
 api_c2 = "Antwort"
@@ -60,7 +60,7 @@ themes_hint = "Das Theme wählt die Variable <code>NEXTPAD_THEME</code>, bei Yun
 ops_title = "Datenschutz, Betrieb, Barrierefreiheit"
 cards = [
   { title = "Keine fremden Dienste", text = "Keine Tracker, keine Schriften oder Skripte von Dritten. Alles, was der Browser lädt, kommt vom eigenen Server." },
-  { title = "Eigene Pads löschen", text = "Wer ein freies Pad anlegt, besitzt es und kann es jederzeit löschen oder um ein Jahr verlängern. Ungenutzte Pads verschwinden nach einem Jahr; wer über Moodle angemeldet ist, bekommt vorher eine Mail mit dem Inhalt. Pads in Moodle-Kursen folgen dem Kurs." },
+  { title = "Eigene Pads löschen", text = "Wer ein freies Pad anlegt, besitzt es und kann es jederzeit löschen oder um ein Jahr verlängern. Auf Wunsch löscht NextPad ungenutzte Pads nach einer einstellbaren Frist, ab Werk ist sie aus. Wer über Moodle oder ILIAS angemeldet ist, bekommt vorher eine Mail mit dem Inhalt. Pads in Kursen folgen dem Kurs." },
   { title = "Kleine Angriffsfläche", text = "Ein Programm ohne Node.js und ohne Plugins zur Laufzeit. Pad-Inhalte bleiben Daten, die Anmeldung über Moodle nimmt nur RS256-signierte Tokens an." },
   { title = "Einfach zu betreiben", text = "SQLite im Datenverzeichnis, Konfiguration über Umgebungsvariablen. Reverse-Proxy mit TLS davor, fertig." },
   { title = "Barrierefreiheit geprüft", text = "Startseite und Ideensammlung werden in jedem Theme mit axe gegen WCAG 2.2 AA geprüft, hell und dunkel, bei jedem Testlauf. Bedienflächen sind mindestens 44 px groß." },
@@ -104,7 +104,7 @@ imgs = [
 tag = "Quiz"
 title = "Quiz-Tafel mit Buzzer"
 text = ["Fragen nach Kategorie und Punkten als Tabelle anlegen, die Tafel auf den Beamer, die Teams buzzern mit dem Telefon. Wer zuerst drückt, steht groß auf der Leinwand, ein Countdown begrenzt die Zeit je Frage."]
-items = ["Teams wählen per QR-Code, Spiel starten, beenden, neu beginnen", "Buzzer-Messung misst im Raum, wie schnell jedes Telefon Signal und Druck überträgt", "Als Moodle-Aktivität über LTI, mit „Zurück zum Kurs“"]
+items = ["Teams wählen per QR-Code, Spiel starten, beenden, neu beginnen", "Buzzer-Messung misst im Raum, wie schnell jedes Telefon Signal und Druck überträgt", "Als Aktivität in Moodle und ILIAS über LTI 1.3"]
 board = true
 
 [[extra.features]]

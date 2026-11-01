@@ -4,7 +4,7 @@
 
 # Erste Schritte
 
-- [Ein Pad öffnen]()
+- [Ein Pad anlegen](pad/anlegen.md)
 
 # Anleitungen
 
@@ -21,15 +21,3 @@
 - [In ILIAS einbinden](ilias/README.md)
     - [Objekt im Kurs anlegen](ilias/objekt.md)
     - [Werkzeug in ILIAS eintragen](ilias/einrichten.md)
-
-# Einsatzszenarien
-
-- [Seminar mit Beamer]()
-
-# Nachschlagen
-
-- [Tastenkürzel]()
-
-# Betrieb
-
-- [Installation]()

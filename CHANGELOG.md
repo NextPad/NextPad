@@ -25,6 +25,8 @@ All notable changes to this project are documented in this file. The format is b
   English. The help section of the idea collection links to them.
 - Manual chapter "Embed in Moodle" with real screenshots from Moodle 5.3: adding an activity to a course for
   teachers and registering the LTI 1.3 tools for the Moodle administration, in German and English.
+- Manual page "Create a pad" under Getting started with real screenshots: creating a pad, writing together,
+  entering one's name, sharing the link and exporting, in German and English.
 - Manual chapter "Embed in ILIAS" with real screenshots from ILIAS 11: adding an object to a course for teachers
   and registering the LTI 1.3 tools for the ILIAS administration, in German and English.
 
