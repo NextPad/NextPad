@@ -1,13 +1,13 @@
 #!/usr/bin/with-contenv bash
 # shellcheck shell=bash
-# Erster Start: Ordner unter /config, Rechte für abc (PUID/PGID), API-Schlüssel erzeugen, wenn keiner da ist.
+# First start: create /config folders, set ownership, generate an API key if missing.
 
 mkdir -p /config/data /config/secrets /config/theme
 
 if [[ ! -s /config/secrets/api-keys.txt ]]; then
     key="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 48)"
-    printf '# Ein Schlüssel je Zeile, optional danach die Moodle-Adresse: <schlüssel> https://moodle.example.org\n%s\n' "${key}" > /config/secrets/api-keys.txt
-    echo "**** Neuer API-Schlüssel in /config/secrets/api-keys.txt angelegt (für mod_etherpadlite in Moodle eintragen) ****"
+    printf '# One key per line, optionally followed by the Moodle URL: <key> https://moodle.example.org\n%s\n' "${key}" > /config/secrets/api-keys.txt
+    echo "**** New API key in /config/secrets/api-keys.txt (enter it in mod_etherpadlite in Moodle) ****"
 fi
 
 lsiown -R abc:abc /config/data

@@ -177,7 +177,9 @@ pub async fn page(State(state): State<Arc<AppState>>, Path(id): Path<String>, he
         Err((s, m)) => return fehler(&headers, s, m),
     };
     let sp = Sprache::aus_anfrage(&headers);
-    let (aid, aname) = access.author.clone().unwrap_or_default();
+    let (aid, mut aname) = access.author.clone().unwrap_or_default();
+    // „Gast“ ist nur der gespeicherte Platzhalter; die Oberfläche zeigt ihn in der eigenen Sprache
+    if aname == "Gast" { aname.clear(); }
     let color = PALETTE[ids::color_index(&aid, PALETTE.len())];
     let mut owner = false;
     let mut expires = serde_json::Value::Null;
@@ -585,6 +587,7 @@ pub async fn history(State(state): State<Arc<AppState>>, Path(id): Path<String>,
         if let Some(a) = a {
             if !authors.contains_key(a) {
                 let name = state.store.get_author(a).ok().flatten().map(|x| x.name).unwrap_or_default();
+                let name = if name == "Gast" { texte::t(Sprache::aus_anfrage(&headers), "editor.gast").to_string() } else { name };
                 authors.insert(a.clone(), json!({ "name": name, "color": PALETTE[ids::color_index(a, PALETTE.len())] }));
             }
         }

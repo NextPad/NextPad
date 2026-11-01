@@ -8,6 +8,10 @@ All notable changes to this project are documented in this file. The format is b
 
 ### Changed
 
+- Sign-in errors, help and retention notes speak of "the learning platform" or "Moodle or ILIAS" instead of
+  Moodle only. The account line reads "Signed in through the learning platform".
+- Guests see "Guest" in English instead of the stored placeholder "Gast", also in the timeline.
+- Container files: English comments, fewer of them; OCI labels instead of `maintainer`.
 - Manual: wide tables that scroll sideways on phones can be reached with the keyboard.
 - Idea collection: participants see "Ideensammlung · Mitmachen" ("Idea collection · Take part") above the
   collection. Only the person who moderates still sees "Bearbeitungsansicht" ("Editing view").

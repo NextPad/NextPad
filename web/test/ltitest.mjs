@@ -74,7 +74,7 @@ for (const [name, mk, opt, want] of cases) {
 { const li = await login(); const r = await launch(li, jwt(claims(li.nonce)), null); check('ohne Bindungs-Cookie 400', r.status === 400, `Status ${r.status}`) }
 { const li = await login(); const r = await fetch(`${base}/lti/launch`, { method: 'POST', redirect: 'manual', headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: li.cookie }, body: form({ error: 'login_required', state: li.state }) }); check('Moodle-Fehler login_required 403', r.status === 403) }
 { const li = await login(); const r = await fetch(`${base}/lti/launch`, { method: 'POST', redirect: 'manual', headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: `${li.cookie}; nextpad-lang=en` }, body: form({ error: 'login_required', state: li.state }) }); const t = await r.text()
-  check('Moodle-Fehler in der eigenen Wahl englisch', r.status === 403 && t.includes('Moodle reports: not signed in'), t.slice(0, 300)) }
+  check('Moodle-Fehler in der eigenen Wahl englisch', r.status === 403 && t.includes('The learning platform reports: not signed in'), t.slice(0, 300)) }
 
 // erfolgreiche Anmeldung
 l = await login()
