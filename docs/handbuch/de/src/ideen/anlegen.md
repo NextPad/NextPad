@@ -26,7 +26,7 @@ Statt des QR-Codes geht auch **Link zum Mitmachen kopieren**, etwa für den Chat
 
 ## Gut zu wissen
 
-- Moderieren kann nur der Browser, in dem die Sammlung angelegt wurde. Die Leitung sollte deshalb im selben Browser bleiben.
+- Moderieren kann nur der Browser, in dem die Sammlung angelegt wurde. Die Leitung sollte deshalb im selben Browser bleiben, nicht im privaten Fenster arbeiten und die Browserdaten nicht löschen. Wer auf mehreren Geräten oder zu zweit moderieren will, legt die Sammlung als Aktivität in [Moodle](../moodle/index.html) oder [ILIAS](../ilias/index.html) an. Dort moderieren alle Lehrenden des Kurses.
 - Die Leinwand aktualisiert sich selbst. Sie läuft am besten in einem eigenen Fenster auf dem Beamer, die Bearbeitungsansicht auf dem eigenen Bildschirm.
 - In Moodle- und ILIAS-Kursen gibt es die Ideensammlung auch als Aktivität. Dann kommen nur Kursmitglieder hinein, und die Lehrenden moderieren. Wie das geht, zeigen [In Moodle einbinden](../moodle/index.html) und [In ILIAS einbinden](../ilias/index.html).
 

@@ -4,22 +4,22 @@ description = "Write together in seminars and lectures: pad with timeline, idea 
 
 [extra]
 kicker = "For teaching · free software (EUPL-1.2)"
-h1 = "Write, learn through play and draw together"
+h1 = "Writing together in seminars and lectures"
 lead = "Groups write in the same text, the plenary collects questions and votes, teams compete in a quiz. Participants need no account, a link or QR code is enough, on desktop and mobile devices. The data stays on the institution’s server."
 facts = ["no account for participants", "on desktop and mobile devices", "data stays on your own server", "on its own or in Moodle and ILIAS", "German and English"]
 hero_alt = "A pad in the browser: heading “Audio-Feature: Klang des Campus”, a task list for Lea, Jonas and Mira, Jonas’ new sentence marked in colour."
 
 lehre_title = "Using it in teaching"
-lehre_text = "Pads are mainly tools for in-class and seminar phases: groups work at the same time, teachers see what emerges. NextPad builds on that and adds what is needed in the room."
+lehre_text = "Pads are mainly tools for in-class and seminar phases: groups work at the same time, teachers see what emerges. On top come a projector view with QR code, votes and a buzzer on the phone. Which tool suits which situation is shown in the <a href=\"manual/scenarios/\">manual</a>."
 szenarien = [
   { tool = "Pad", title = "Group work in class", text = "Three to six students write in the same text. In Moodle group mode every group gets its own pad." },
   { tool = "Author colours", title = "Making participation visible", text = "Every person writes in their own colour. The group sees who contributed, without anything being graded." },
-  { tool = "Thumbs", title = "Rating statements in the text", text = "Thumbs up or down right next to a statement or proposal, one vote per person. An opinion poll right inside the text." },
+  { tool = "Thumbs", title = "Opinion poll in the text", text = "Thumbs up or down right next to a statement or proposal, one vote per person. An opinion poll right inside the text." },
   { tool = "Task list", title = "Ticking off assignments", text = "Checkboxes typed as <code>- [ ]</code> or added by button. Everyone sees live what is done." },
   { tool = "Timeline", title = "Reflecting on writing", text = "The timeline shows how a text came about: what was deleted, when the turn came. Suited to tasks such as “Compare the first draft with the result”." },
-  { tool = "Idea collection", title = "Collecting questions in the plenary", text = "Even in large groups, questions and ideas come together, without names, with one vote per person. The board view shows the result live." },
-  { tool = "Quiz", title = "Revising through play", text = "At the end of a unit, teams compete on the quiz grid and buzz with their phones. Teams only have names, no individuals are recorded." },
-  { tool = "Drawing board", title = "Sketching and planning", text = "Storyboards, mind maps or flow charts are created together on the drawing board, on the same server." },
+  { tool = "Idea collection", title = "Questions from the plenary", text = "Even in large groups, questions and ideas come together, without names, with one vote per person. The board view shows the result live." },
+  { tool = "Quiz", title = "Revision as a quiz", text = "At the end of a unit, teams compete on the quiz grid and buzz with their phones. Teams only have names, no individuals are recorded." },
+  { tool = "Drawing board", title = "Storyboard and mind map", text = "Storyboards, mind maps or flow charts are created together on the drawing board, on the same server." },
 ]
 
 why_title = "Why NextPad and not Etherpad?"
@@ -31,10 +31,10 @@ why = [
 ]
 
 feat_title = "What is inside"
-feat_text = "A pad at the core, plus idea collection, quiz and drawing board, each switchable per server. Everything works without a learning platform, live for everyone present, on a phone too."
+feat_text = "The pad is at the core. Idea collection, quiz and drawing board come on top and can be switched on and off per server. Everything runs without a learning platform and on phones too."
 
 moodle_title = "With Moodle and ILIAS"
-moodle_text = "If you already use a learning platform, bring NextPad into your courses. Moodle does not even need a new plugin."
+moodle_text = "In Moodle and ILIAS, pad, idea collection and quiz come into the course as an activity. Then only course members take part, and teachers moderate. The manual shows how for <a href=\"manual/moodle/\">Moodle</a> and <a href=\"manual/ilias/\">ILIAS</a>. Moodle needs no new plugin for this."
 steps = [
   { title = "Enter server and key", text = "Set the NextPad address and the API key in the Etherpad Lite plugin. Nothing else changes in Moodle." },
   { title = "Keep working as before", text = "Moodle creates pads, authors and sessions itself through the API. Group mode, course reset, backup and restore use the same calls as with Etherpad." },
@@ -57,13 +57,16 @@ themes = [
 ]
 themes_hint = "The variable <code>NEXTPAD_THEME</code> picks the look, on YunoHost the installation does. Institutions with their own corporate design use the <code>hsd</code> look as a template."
 
+ops_kicker = "For operation"
 ops_title = "Privacy, operation, accessibility"
+ops_text = "This part is for everyone who runs NextPad at their institution or decides about it."
 cards = [
   { title = "No third-party services", text = "No trackers, no fonts or scripts from others. Everything the browser loads comes from your own server." },
   { title = "Deleting own pads", text = "Whoever creates a free pad owns it and can delete it or extend it by a year at any time. If wanted, NextPad deletes unused pads after an adjustable period; it is off by default. People signed in through Moodle or ILIAS get an email with the content first. Pads in courses follow the course." },
   { title = "Small attack surface", text = "One program without Node.js and without runtime plugins. Pad content stays data, sign-in through Moodle only accepts RS256-signed tokens." },
+  { title = "Technology", text = "One program in Rust with SQLite. Collaborative writing with Yjs (CRDT) and the TipTap editor; the drawing board is Excalidraw over the same Yjs server." },
   { title = "Easy to run", text = "SQLite in the data directory, configuration through environment variables. A reverse proxy with TLS in front, done." },
-  { title = "Accessibility checked", text = "Start page and idea collection are checked with axe against WCAG 2.2 AA in every look, light and dark, on every test run. Targets are at least 44 px." },
+  { title = "Accessibility checked", text = "Start page and idea collection are checked with axe against WCAG 2.2 AA in every look, light and dark, on every test run. Targets are at least 44 px. Limits: the drawing board is hardly usable with screen readers, and the buzzer requires quick reactions." },
   { title = "Two languages", text = "Interface, help, exports and emails in German and English. The choice is remembered, otherwise the language from Moodle or the browser applies. What people write stays as it is." },
 ]
 
@@ -87,7 +90,7 @@ imgs = [
 [[extra.features]]
 tag = "Pad"
 title = "Writing with a timeline"
-text = ["Collaborative writing with Yjs (CRDT) and the TipTap editor. Every person has a colour, the timeline replays how the text came about step by step."]
+text = ["Everyone writes in the same text at the same time, each person in their own colour. The timeline replays how the text came about step by step."]
 items = ["Markdown while typing and pasting: <code>#</code> for headings, <code>-</code> for lists, <code>- [ ]</code> for checkboxes, tables with <code>|</code>", "Thumbs up and down in the text, one vote per person", "Table of contents in the margin or as a block in the text", "Timeline with time and author per step, restore an earlier version", "Export as HTML, Markdown, text and PDF"]
 imgs = [{ src = "zeitleiste.webp", w = 1600, h = 1000, alt = "Timeline above the pad: the slider is just before the end, Jonas’ sentence is only half written." }]
 
@@ -110,7 +113,7 @@ board = true
 [[extra.features]]
 tag = "Drawing board"
 title = "Sketch on the same server"
-text = ["Excalidraw syncs through the same Yjs server as the pads. Shapes, arrows and text, without an extra service."]
+text = ["Shapes, arrows, freehand and text on a shared surface. Everyone sees the others' pointers. The drawing board is hardly usable with screen readers; the pad suits that better."]
 imgs = [{ src = "zeichenbrett.webp", w = 1600, h = 1000, alt = "Drawing board with a storyboard: rectangle “Szene 1: Totale”, arrow, ellipse “Szene 2: Interview”." }]
 
 [extra.board]

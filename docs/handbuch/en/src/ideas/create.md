@@ -26,7 +26,7 @@ Instead of the QR code, **Copy link to take part** also works, for example for t
 
 ## Good to know
 
-- Only the browser in which the collection was created can moderate. The host should therefore stay in the same browser.
+- Only the browser in which the collection was created can moderate. The host should therefore stay in the same browser, not use a private window and not clear the browser data. To moderate on several devices or as a pair, create the collection as an activity in [Moodle](../moodle/index.html) or [ILIAS](../ilias/index.html). There all teachers of the course can moderate.
 - The board updates itself. It works best in its own window on the projector, with the editing view on your own screen.
 - In Moodle and ILIAS courses, the idea collection is also available as an activity. Then only course members can take part, and teachers moderate. [Embed in Moodle](../moodle/index.html) and [Embed in ILIAS](../ilias/index.html) show how.
 

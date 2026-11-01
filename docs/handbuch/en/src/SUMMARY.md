@@ -6,6 +6,10 @@
 
 - [Create a pad](pad/create.md)
 
+# Teaching scenarios
+
+- [Which tool when](scenarios/README.md)
+
 # Guides
 
 - [Quiz grid](quiz/README.md)

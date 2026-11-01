@@ -41,10 +41,10 @@
       <a href="#lehre">{{ trans(key="nav_lehre", lang=lang) }}</a>
       <a href="#funktionen">{{ trans(key="nav_funktionen", lang=lang) }}</a>
       <a href="#lernplattformen">{{ trans(key="nav_moodle", lang=lang) }}</a>
-      <a href="#themes">{{ trans(key="nav_themes", lang=lang) }}</a>
-      <a href="#betrieb">{{ trans(key="nav_betrieb", lang=lang) }}</a>
-      <a href="#installieren">{{ trans(key="nav_installieren", lang=lang) }}</a>
       <a href="{{ root }}{% if lang == 'de' %}handbuch/{% else %}en/manual/{% endif %}">{{ trans(key="nav_handbuch", lang=lang) }}</a>
+      <a href="#betrieb">{{ trans(key="nav_betrieb", lang=lang) }}</a>
+      <a href="#themes">{{ trans(key="nav_themes", lang=lang) }}</a>
+      <a href="#installieren">{{ trans(key="nav_installieren", lang=lang) }}</a>
       <a href="{{ config.extra.repo }}">GitHub</a>
       <a class="lang" href="{{ other_href }}" hreflang="{{ other }}" lang="{{ other }}" data-lang="{{ other }}" aria-label="{{ trans(key='other_lang_label', lang=lang) }}">{{ trans(key="other_lang", lang=lang) }}</a>
     </nav>

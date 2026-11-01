@@ -19,10 +19,10 @@ Ein Pad ist ein Text, an dem mehrere Personen gleichzeitig schreiben. Alle sehen
 <figcaption>Ein Name genügt: Gibt es das Pad noch nicht, entsteht es neu.</figcaption>
 </figure>
 
-1. Auf der Startseite unter **Name des Pads** einen Namen eintragen, etwa `gruppe-3-interview`. Erlaubt sind Buchstaben, Ziffern, Leerzeichen und die Zeichen `- _ . ( ) ,`, bis 50 Zeichen.
+1. Auf der Startseite unter **Name des Pads** einen Namen eintragen, etwa `gruppe-3-interview`. Erlaubt sind Buchstaben, Ziffern, Leerzeichen und die Zeichen `- _ . ( ) ,`, bis 50 Zeichen. Gleicher Name bedeutet gleiches Pad: Wer denselben Namen einträgt, landet im selben Text.
 2. **Öffnen oder anlegen** wählen. Gibt es das Pad schon, öffnet es sich. Sonst legt NextPad ein neues, leeres Pad an.
 
-Gleicher Name bedeutet gleiches Pad. Ohne Namen entsteht ein Pad mit Zufallsnamen. Die Vorlagen unter **Mit Vorlage beginnen** bringen eine Gliederung für Gruppenarbeit oder Protokoll mit.
+Ohne Namen entsteht ein Pad mit Zufallsnamen. Die Vorlagen unter **Mit Vorlage beginnen** bringen eine Gliederung für Gruppenarbeit oder Protokoll mit.
 
 ## Gemeinsam schreiben
 

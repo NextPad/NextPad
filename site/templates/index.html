@@ -28,7 +28,7 @@
 
 <section id="lehre" class="alt" aria-labelledby="lehre-titel">
   <div class="wrap">
-    <div class="head"><h2 id="lehre-titel">{{ x.lehre_title }}</h2><p>{{ x.lehre_text }}</p></div>
+    <div class="head"><h2 id="lehre-titel">{{ x.lehre_title }}</h2><p>{{ x.lehre_text | safe }}</p></div>
     <div class="grid vier">{% for z in x.szenarien %}<div class="card"><span class="tag">{{ z.tool }}</span><h3>{{ z.title }}</h3><p>{{ z.text | safe }}</p></div>{% endfor %}</div>
   </div>
 </section>
@@ -66,20 +66,9 @@
   </div>
 </section>
 
-<section id="warum" class="alt" aria-labelledby="warum-titel">
+<section id="lernplattformen" class="alt" aria-labelledby="moodle-titel">
   <div class="wrap">
-    <div class="head"><h2 id="warum-titel">{{ x.why_title }}</h2><p>{{ x.why_text | safe }}</p></div>
-    <div class="why">
-      {%- for w in x.why %}
-      <div><span class="big">{{ w.big }}</span><h3>{{ w.title | safe }}</h3><p>{{ w.text | safe }}</p></div>
-      {%- endfor %}
-    </div>
-  </div>
-</section>
-
-<section id="lernplattformen" aria-labelledby="moodle-titel">
-  <div class="wrap">
-    <div class="head"><h2 id="moodle-titel">{{ x.moodle_title }}</h2><p>{{ x.moodle_text }}</p></div>
+    <div class="head"><h2 id="moodle-titel">{{ x.moodle_title }}</h2><p>{{ x.moodle_text | safe }}</p></div>
     <h3 class="plat">{{ x.moodle_name }} <span>{{ x.moodle_how }}</span></h3>
     <div class="moodle">
       <ol class="steps">{% for s in x.steps %}<li><h3>{{ s.title }}</h3><p>{{ s.text | safe }}</p></li>{% endfor %}</ol>
@@ -101,7 +90,25 @@ apikey=…&amp;groupID=g.x3Kq…&amp;padName=kurs-4711
   </div>
 </section>
 
-<section id="themes" class="alt" aria-labelledby="themes-titel">
+<section id="betrieb" aria-labelledby="betrieb-titel">
+  <div class="wrap">
+    <div class="head"><p class="kicker">{{ x.ops_kicker }}</p><h2 id="betrieb-titel">{{ x.ops_title }}</h2><p>{{ x.ops_text }}</p></div>
+    <div class="grid">{% for c in x.cards %}<div class="card"><h3>{{ c.title }}</h3><p>{{ c.text | safe }}</p></div>{% endfor %}</div>
+  </div>
+</section>
+
+<section id="warum" class="alt" aria-labelledby="warum-titel">
+  <div class="wrap">
+    <div class="head"><h2 id="warum-titel">{{ x.why_title }}</h2><p>{{ x.why_text | safe }}</p></div>
+    <div class="why">
+      {%- for w in x.why %}
+      <div><span class="big">{{ w.big }}</span><h3>{{ w.title | safe }}</h3><p>{{ w.text | safe }}</p></div>
+      {%- endfor %}
+    </div>
+  </div>
+</section>
+
+<section id="themes" aria-labelledby="themes-titel">
   <div class="wrap">
     <div class="head"><h2 id="themes-titel">{{ x.themes_title }}</h2><p>{{ x.themes_text }}</p></div>
     <div class="grid themes">{% for t in x.themes %}
@@ -109,13 +116,6 @@ apikey=…&amp;groupID=g.x3Kq…&amp;padName=kurs-4711
         <figcaption><h3>{{ t.name }} <code>{{ t.wert }}</code>{% if t.standard %} <span class="badge">{{ trans(key="standard", lang=lang) }}</span>{% endif %}</h3><p>{{ t.text }}</p></figcaption></figure>{% endfor %}
     </div>
     <p class="note">{{ x.themes_hint | safe }}</p>
-  </div>
-</section>
-
-<section id="betrieb" aria-labelledby="betrieb-titel">
-  <div class="wrap">
-    <div class="head"><h2 id="betrieb-titel">{{ x.ops_title }}</h2></div>
-    <div class="grid">{% for c in x.cards %}<div class="card"><h3>{{ c.title }}</h3><p>{{ c.text | safe }}</p></div>{% endfor %}</div>
   </div>
 </section>
 

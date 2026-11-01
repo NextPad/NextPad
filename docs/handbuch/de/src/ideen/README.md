@@ -9,7 +9,7 @@
 
 </aside>
 
-Die Ideensammlung ist eine Liste, in die alle ohne Namen Ideen oder Fragen eintragen. Für jeden Beitrag lässt sich stimmen. So wird sichtbar, was die Gruppe am meisten beschäftigt. Die Studierenden brauchen kein Konto und keine App, nur ein mobiles Gerät, Internet und den QR-Code.
+Die Ideensammlung ist eine Liste, in die alle ohne Namen Ideen oder Fragen eintragen. Für jeden Beitrag lässt sich stimmen. So wird sichtbar, was die Gruppe am meisten beschäftigt. Mitmachen geht über den QR-Code, ohne Konto und ohne App.
 
 <aside class="np-kasten np-begriffe" aria-label="Begriffe vorab">
 <p class="np-kasten-titel">Begriffe vorab</p>

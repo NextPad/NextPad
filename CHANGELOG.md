@@ -16,9 +16,15 @@ All notable changes to this project are documented in this file. The format is b
   neither. Before, both always used Moodle addresses.
 - Idea collection and quiz: the hints for course participants no longer name Moodle.
 - Manual: the films have a sound track with clicks, a buzzer and soft music. They still start muted.
+- Project site ordered by audience: teaching situations, features and learning platforms first, then a part
+  "For operation" with data protection, technology and accessibility, including the limits of the drawing board
+  and the buzzer.
+- Manual: clearer order on "Create a pad" and "Create a quiz"; a way out for moderation bound to one browser.
 
 ### Added
 
+- Manual chapter "Which tool when": teaching situations by group size, time and room, assignments to adopt,
+  notes on data protection and accessibility, in German and English.
 - The help page links to the manual on the project site (nextpad.github.io/handbuch, /en/manual) with step-by-step
   guides and short films. The quiz section links to its three guides.
 - Manual chapter on the idea collection with two guides and films (create, collect and moderate), in German and

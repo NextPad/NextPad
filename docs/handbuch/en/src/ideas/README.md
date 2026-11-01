@@ -9,7 +9,7 @@
 
 </aside>
 
-The idea collection is a list where everyone adds ideas or questions without a name. Each entry can be voted for. This shows what concerns the group most. Students need no account and no app, only a mobile device, internet access and the QR code.
+The idea collection is a list where everyone adds ideas or questions without a name. Each entry can be voted for. This shows what concerns the group most. Joining works through the QR code, without an account or app.
 
 <aside class="np-kasten np-begriffe" aria-label="Terms first">
 <p class="np-kasten-titel">Terms first</p>

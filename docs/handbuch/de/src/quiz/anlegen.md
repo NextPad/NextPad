@@ -14,6 +14,19 @@
 <figcaption>Ein Quiz-Raster entsteht: Titel, zwei Teams, 20 Sekunden je Frage, drei Kategorien mit je zwei Fragen.</figcaption>
 </figure>
 
+## Beispieltabelle
+
+Diese Tabelle ist die aus dem Film. Sie lässt sich für Schritt 5 kopieren.
+
+```text
+| Barock | 100 | Welche Malerin schuf um 1620 „Judith enthauptet Holofernes“? | Artemisia Gentileschi |
+| Barock | 200 | Welche Akademie nahm 1783 Élisabeth Vigée Le Brun auf? | Die Académie royale de peinture et de sculpture in Paris |
+| Bauhaus | 100 | In welche Werkstatt wurden Frauen am Bauhaus meist gelenkt? | In die Weberei |
+| Bauhaus | 200 | Wer war die einzige Meisterin am Bauhaus? | Gunta Stölzl |
+| Moderne | 100 | Welche Gruppe fragte 1989: „Do women have to be naked to get into the Met. Museum?“ | Guerrilla Girls |
+| Moderne | 200 | Wer malte ab 1906 abstrakte Bilder, Jahre vor Kandinsky? | Hilma af Klint |
+```
+
 ## Schritte
 
 1. Auf der Startseite **Quiz-Raster** wählen.
@@ -35,13 +48,4 @@ Eine Kopfzeile ist nicht nötig. Ist eine da, wird sie übersprungen.
 
 ## Selbst ausprobieren
 
-Diese Tabelle ist die aus dem Film. Sie lässt sich kopieren und in ein neues Quiz-Raster einfügen. Danach eine Zeile durch eine eigene Frage ersetzen.
-
-```text
-| Barock | 100 | Welche Malerin schuf um 1620 „Judith enthauptet Holofernes“? | Artemisia Gentileschi |
-| Barock | 200 | Welche Akademie nahm 1783 Élisabeth Vigée Le Brun auf? | Die Académie royale de peinture et de sculpture in Paris |
-| Bauhaus | 100 | In welche Werkstatt wurden Frauen am Bauhaus meist gelenkt? | In die Weberei |
-| Bauhaus | 200 | Wer war die einzige Meisterin am Bauhaus? | Gunta Stölzl |
-| Moderne | 100 | Welche Gruppe fragte 1989: „Do women have to be naked to get into the Met. Museum?“ | Guerrilla Girls |
-| Moderne | 200 | Wer malte ab 1906 abstrakte Bilder, Jahre vor Kandinsky? | Hilma af Klint |
-```
+Ein Quiz-Raster mit der Beispieltabelle anlegen und eine Zeile durch eine eigene Frage ersetzen. Dann den QR-Code mit dem eigenen Handy scannen und einmal buzzern.

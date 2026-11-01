@@ -4,22 +4,22 @@ description = "Gemeinsam schreiben in der Lehre: Pad mit Zeitleiste, Ideensammlu
 
 [extra]
 kicker = "Für die Lehre · freie Software (EUPL-1.2)"
-h1 = "Gemeinsam schreiben, spielerisch lernen und zeichnen"
+h1 = "Gemeinsam schreiben in Seminar und Vorlesung"
 lead = "Gruppen schreiben im selben Text, das Plenum sammelt Fragen und stimmt ab, Teams treten im Quiz gegeneinander an. Teilnehmer*innen brauchen kein Konto, ein Link oder QR-Code genügt, am Desktop und auf mobilen Geräten. Die Daten bleiben auf dem Server der Bildungseinrichtung."
 facts = ["ohne Konto für die Teilnehmer*innen", "am Desktop und auf mobilen Geräten", "Daten bleiben auf dem eigenen Server", "für sich allein oder in Moodle und ILIAS", "Deutsch und Englisch"]
 hero_alt = "Ein Pad im Browser: Überschrift „Audio-Feature: Klang des Campus“, eine Liste mit Aufgaben für Lea, Jonas und Mira, Jonas’ neuer Satz farbig markiert."
 
 lehre_title = "In der Lehre einsetzen"
-lehre_text = "Pads sind vor allem Werkzeuge für Präsenz- und Seminarphasen: Gruppen arbeiten gleichzeitig, Lehrende sehen, was entsteht. NextPad baut darauf auf und ergänzt, was im Raum gebraucht wird."
+lehre_text = "Pads sind vor allem Werkzeuge für Präsenz- und Seminarphasen: Gruppen arbeiten gleichzeitig, Lehrende sehen, was entsteht. Dazu kommen eine Ansicht für den Beamer mit QR-Code, Abstimmungen und ein Buzzer auf dem Handy. Welches Werkzeug sich wann lohnt, zeigt das <a href=\"handbuch/einsatz/\">Handbuch</a>."
 szenarien = [
   { tool = "Pad", title = "Gruppenarbeit in der Sitzung", text = "Drei bis sechs Studierende schreiben im selben Text. Im Moodle-Gruppenmodus bekommt jede Gruppe ihr eigenes Pad." },
   { tool = "Autorenfarben", title = "Beteiligung sichtbar machen", text = "Jede Person schreibt in ihrer Farbe. Die Gruppe sieht selbst, wer beigetragen hat, ohne dass etwas bewertet wird." },
-  { tool = "Daumen", title = "Thesen im Text bewerten", text = "Daumen hoch oder runter direkt neben einer These oder einem Vorschlag, eine Stimme je Person. So entsteht ein Meinungsbild mitten im Text." },
+  { tool = "Daumen", title = "Meinungsbild im Text", text = "Daumen hoch oder runter direkt neben einer These oder einem Vorschlag, eine Stimme je Person. So entsteht ein Meinungsbild mitten im Text." },
   { tool = "Aufgabenliste", title = "Arbeitsaufträge abhaken", text = "Kästchen zum Abhaken, mit <code>- [ ]</code> getippt oder per Knopf. Alle sehen live, was erledigt ist." },
   { tool = "Zeitleiste", title = "Schreibprozesse reflektieren", text = "Die Zeitleiste zeigt, wie ein Text entstanden ist: was gestrichen wurde, wann die Wende kam. Geeignet für Aufgaben wie „Vergleicht den ersten Entwurf mit dem Ergebnis“." },
-  { tool = "Ideensammlung", title = "Fragen im Plenum sammeln", text = "Auch in großen Gruppen kommen Fragen und Ideen zusammen, ohne Namen, mit einer Stimme je Person. Die Leinwand zeigt das Ergebnis live." },
-  { tool = "Quiz", title = "Spielerisch wiederholen", text = "Am Ende einer Einheit treten Teams auf der Quiz-Tafel gegeneinander an und buzzern mit dem Telefon. Teams haben nur Namen, Personen werden nicht erfasst." },
-  { tool = "Zeichenbrett", title = "Skizzieren und planen", text = "Storyboards, Mindmaps oder Ablaufpläne entstehen gemeinsam auf dem Zeichenbrett, auf demselben Server." },
+  { tool = "Ideensammlung", title = "Fragen aus dem Plenum", text = "Auch in großen Gruppen kommen Fragen und Ideen zusammen, ohne Namen, mit einer Stimme je Person. Die Leinwand zeigt das Ergebnis live." },
+  { tool = "Quiz", title = "Wiederholung als Quiz", text = "Am Ende einer Einheit treten Teams auf der Quiz-Tafel gegeneinander an und buzzern mit dem Telefon. Teams haben nur Namen, Personen werden nicht erfasst." },
+  { tool = "Zeichenbrett", title = "Storyboard und Mindmap", text = "Storyboards, Mindmaps oder Ablaufpläne entstehen gemeinsam auf dem Zeichenbrett, auf demselben Server." },
 ]
 
 why_title = "Warum NextPad und nicht Etherpad?"
@@ -31,10 +31,10 @@ why = [
 ]
 
 feat_title = "Was drinsteckt"
-feat_text = "Ein Pad als Kern, dazu Ideensammlung, Quiz und Zeichenbrett, je Server ein- und ausschaltbar. Alles funktioniert ohne Lernplattform, live für alle, die gerade dabei sind, auch am Telefon."
+feat_text = "Im Kern steht das Pad. Ideensammlung, Quiz und Zeichenbrett kommen dazu und lassen sich je Server ein- und ausschalten. Alles läuft ohne Lernplattform und auch auf dem Handy."
 
 moodle_title = "Mit Moodle und ILIAS"
-moodle_text = "Wer schon eine Lernplattform nutzt, holt NextPad in die Kurse. Moodle braucht dafür nicht einmal ein neues Plugin."
+moodle_text = "In Moodle und ILIAS kommen Pad, Ideensammlung und Quiz als Aktivität in den Kurs. Dann sind nur Kursmitglieder dabei, und Lehrende moderieren. Wie das geht, zeigt das Handbuch für <a href=\"handbuch/moodle/\">Moodle</a> und <a href=\"handbuch/ilias/\">ILIAS</a>. Moodle braucht dafür kein neues Plugin."
 steps = [
   { title = "Server und Schlüssel eintragen", text = "Im Plugin Etherpad Lite die Adresse von NextPad und den API-Schlüssel setzen. Mehr ändert sich in Moodle nicht." },
   { title = "Weiterarbeiten wie bisher", text = "Moodle legt Pads, Autoren und Sitzungen selbst über die API an. Gruppenmodus, Kurs-Reset, Sicherung und Wiederherstellung laufen über dieselben Aufrufe wie bei Etherpad." },
@@ -57,13 +57,16 @@ themes = [
 ]
 themes_hint = "Das Theme wählt die Variable <code>NEXTPAD_THEME</code>, bei YunoHost die Installation. Einrichtungen mit eigenem Corporate Design nutzen das Theme <code>hsd</code> als Vorlage."
 
+ops_kicker = "Für den Betrieb"
 ops_title = "Datenschutz, Betrieb, Barrierefreiheit"
+ops_text = "Dieser Teil richtet sich an alle, die NextPad an ihrer Einrichtung betreiben oder darüber entscheiden."
 cards = [
   { title = "Keine fremden Dienste", text = "Keine Tracker, keine Schriften oder Skripte von Dritten. Alles, was der Browser lädt, kommt vom eigenen Server." },
   { title = "Eigene Pads löschen", text = "Wer ein freies Pad anlegt, besitzt es und kann es jederzeit löschen oder um ein Jahr verlängern. Auf Wunsch löscht NextPad ungenutzte Pads nach einer einstellbaren Frist, ab Werk ist sie aus. Wer über Moodle oder ILIAS angemeldet ist, bekommt vorher eine Mail mit dem Inhalt. Pads in Kursen folgen dem Kurs." },
   { title = "Kleine Angriffsfläche", text = "Ein Programm ohne Node.js und ohne Plugins zur Laufzeit. Pad-Inhalte bleiben Daten, die Anmeldung über Moodle nimmt nur RS256-signierte Tokens an." },
+  { title = "Technik", text = "Ein Programm in Rust mit SQLite. Gemeinsames Schreiben über Yjs (CRDT) und den Editor TipTap, das Zeichenbrett ist Excalidraw über denselben Yjs-Server." },
   { title = "Einfach zu betreiben", text = "SQLite im Datenverzeichnis, Konfiguration über Umgebungsvariablen. Reverse-Proxy mit TLS davor, fertig." },
-  { title = "Barrierefreiheit geprüft", text = "Startseite und Ideensammlung werden in jedem Theme mit axe gegen WCAG 2.2 AA geprüft, hell und dunkel, bei jedem Testlauf. Bedienflächen sind mindestens 44 px groß." },
+  { title = "Barrierefreiheit geprüft", text = "Startseite und Ideensammlung werden in jedem Theme mit axe gegen WCAG 2.2 AA geprüft, hell und dunkel, bei jedem Testlauf. Bedienflächen sind mindestens 44 px groß. Grenzen: Das Zeichenbrett ist mit Screenreadern kaum nutzbar, der Buzzer verlangt schnelles Reagieren." },
   { title = "Zwei Sprachen", text = "Oberfläche, Hilfe, Exporte und Mails auf Deutsch und Englisch. Die Wahl wird gemerkt, sonst gilt die Sprache aus Moodle oder dem Browser. Was Menschen schreiben, bleibt, wie es ist." },
 ]
 
@@ -87,7 +90,7 @@ imgs = [
 [[extra.features]]
 tag = "Pad"
 title = "Schreiben mit Zeitleiste"
-text = ["Gemeinsames Schreiben über Yjs (CRDT) und den Editor TipTap. Jede Person hat ihre Farbe, die Zeitleiste spielt die Entstehung Schritt für Schritt ab."]
+text = ["Alle schreiben gleichzeitig im selben Text, jede Person in ihrer Farbe. Die Zeitleiste spielt die Entstehung Schritt für Schritt ab."]
 items = ["Markdown beim Tippen und Einfügen: <code>#</code> für Überschriften, <code>-</code> für Listen, <code>- [ ]</code> für Kästchen, Tabellen mit <code>|</code>", "Daumen hoch und runter im Text, eine Stimme je Person", "Inhaltsverzeichnis am Rand oder als Block im Text", "Zeitleiste mit Zeit und Autor je Schritt, frühere Fassung wiederherstellen", "Export als HTML, Markdown, Text und PDF"]
 imgs = [{ src = "zeitleiste.webp", w = 1600, h = 1000, alt = "Zeitleiste über dem Pad: Der Schieberegler steht kurz vor dem Ende, Jonas’ Satz ist erst halb geschrieben." }]
 
@@ -110,7 +113,7 @@ board = true
 [[extra.features]]
 tag = "Zeichenbrett"
 title = "Skizzieren auf demselben Server"
-text = ["Excalidraw synchronisiert über denselben Yjs-Server wie die Pads. Formen, Pfeile und Text, ohne zusätzlichen Dienst."]
+text = ["Formen, Pfeile, Freihand und Text auf einer gemeinsamen Fläche. Alle sehen die Zeiger der anderen. Mit Screenreadern ist das Zeichenbrett kaum nutzbar, dafür eignet sich das Pad."]
 imgs = [{ src = "zeichenbrett.webp", w = 1600, h = 1000, alt = "Zeichenbrett mit einem Storyboard: Rechteck „Szene 1: Totale“, Pfeil, Ellipse „Szene 2: Interview“." }]
 
 [extra.board]

@@ -3,6 +3,7 @@
 Das Handbuch beschreibt NextPad aus Sicht der Lehre: was sich vorbereiten lässt, wie eine Sitzung abläuft und was danach bleibt.
 
 - **Erste Schritte** führen vom ersten Pad bis zur geteilten Adresse.
+- **Einsatzszenarien** helfen bei der Wahl des Werkzeugs, mit Arbeitsaufträgen zum Übernehmen.
 - **Anleitungen** zeigen einzelne Aufgaben Schritt für Schritt, mit kurzem Film oder Bildschirmfotos und Schrittliste.
 
 Wer NextPad selbst betreiben will, findet Installation und Einstellungen in der [Server-Dokumentation](https://github.com/NextPad/NextPad/blob/main/server/README.de.md).

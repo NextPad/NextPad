@@ -3,6 +3,7 @@
 This manual describes NextPad from a teaching point of view: what can be prepared, how a session runs and what remains afterwards.
 
 - **Getting started** leads from the first pad to a shared address.
+- **Teaching scenarios** help choose a tool, with assignments to adopt.
 - **Guides** show single tasks step by step, with a short film or screenshots and a list of steps.
 
 Installation and settings for running NextPad on one's own server are in the [server documentation](https://github.com/NextPad/NextPad/blob/main/server/README.md).

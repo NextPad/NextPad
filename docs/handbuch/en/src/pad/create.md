@@ -19,10 +19,10 @@ A pad is a text that several people write at the same time. Everyone sees the ch
 <figcaption>A name is enough: if the pad does not exist yet, it is created.</figcaption>
 </figure>
 
-1. On the start page, enter a name under **Pad name**, for example `group-3-interview`. Letters, digits, spaces and the characters `- _ . ( ) ,` are allowed, up to 50 characters.
+1. On the start page, enter a name under **Pad name**, for example `group-3-interview`. Letters, digits, spaces and the characters `- _ . ( ) ,` are allowed, up to 50 characters. The same name means the same pad: whoever enters the same name ends up in the same text.
 2. Choose **Open or create**. If the pad exists, it opens. Otherwise NextPad creates a new, empty pad.
 
-The same name means the same pad. Without a name, a pad with a random name is created. The templates under **Start from a template** come with an outline for group work or minutes.
+Without a name, a pad with a random name is created. The templates under **Start from a template** come with an outline for group work or minutes.
 
 ## Write together
 
