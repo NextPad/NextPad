@@ -63,6 +63,11 @@
     </div>
     <div>
       <p>
+        <a href="https://www.hs-duesseldorf.de/impressum" hreflang="de">{{ trans(key="imprint", lang=lang) }}</a> ·
+        <a href="https://www.hs-duesseldorf.de/datenschutzbestimmungen" hreflang="de">{{ trans(key="privacy", lang=lang) }}</a>
+      </p>
+      <p class="hosting">{{ trans(key="hosting", lang=lang) | replace(from="{link}", to='<a href="' ~ trans(key="hosting_url", lang=lang) ~ '">' ~ trans(key="hosting_link", lang=lang) ~ '</a>') | safe }}</p>
+      <p>
         <a href="{{ config.extra.repo }}/blob/main/LICENSE">{{ trans(key="license", lang=lang) }}</a> ·
         <a href="{{ config.extra.repo }}/blob/main/CHANGELOG.md">{{ trans(key="changelog", lang=lang) }}</a> ·
         <a href="{{ config.extra.repo }}/blob/main/{% if lang == 'de' %}CONTRIBUTING.de.md{% else %}CONTRIBUTING.md{% endif %}">{{ trans(key="contributing", lang=lang) }}</a> ·
