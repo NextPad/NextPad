@@ -8,7 +8,7 @@ build_search_index = false
 generate_feeds = false
 
 [extra]
-version = "0.18.0"
+version = "0.19.0"
 repo = "https://github.com/NextPad/NextPad"
 
 [translations]

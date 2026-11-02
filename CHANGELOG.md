@@ -6,6 +6,13 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-11-02
+
+### Upgrade
+
+- Back up `data/` before updating. The database gets two new columns (`pads.pw_hash`, `pads.owner_link_hash`)
+  and two new tables (`pad_unlocks`, `pad_owners`); they are added automatically on the first start.
+
 ### Changed
 
 - Sign-in errors, help and retention notes speak of "the learning platform" or "Moodle or ILIAS" instead of
