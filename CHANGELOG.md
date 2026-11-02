@@ -27,6 +27,20 @@ All notable changes to this project are documented in this file. The format is b
 
 ### Added
 
+- Owner link for free pads: under "My pad", whoever manages a pad can create a link that lets another
+  browser manage it as well, for example on the lecture hall PC or after clearing browser data. It is shown once,
+  stored only as a hash, and a new link or revoking it removes browsers that joined through the old one.
+- Password for free pads: whoever created a pad can set, change or remove a password under "Participants" in
+  "Protection". Without access, the page asks for the password; export, timeline, live connection and the read-only
+  link are closed as well. Only an Argon2id hash is stored; changing the password ends all previous access.
+  Failed attempts are limited per network (30 in 15 minutes, reset by a correct password, so typos behind a
+  lecture hall NAT do not lock the room); a pad itself is never locked, only slowed down after 20 failures.
+  Attempts are counted before checking so parallel requests cannot get past the limit. Trivial passwords and the
+  pad name are rejected. A lock next to the number of people shows a protected pad; owners see a one-time hint
+  where to set a password.
+  If the password cannot be read, the pad stays closed. Changing an existing password asks first; anyone with the pad
+  open sees a notice with "Reload" instead of losing unsaved text. The content is not encrypted (end-to-end
+  encryption follows separately).
 - Manual chapter "Which tool when": teaching situations by group size, time and room, assignments to adopt,
   notes on data protection and accessibility, in German and English.
 - The help page links to the manual on the project site (nextpad.github.io/handbuch, /en/manual) with step-by-step

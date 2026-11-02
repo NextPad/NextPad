@@ -245,6 +245,11 @@ impl Rooms {
         Ok(Some(render::to_html(&txn, &frag)))
     }
 
+    /// Trennt alle Verbindungen eines Pads, ohne es als gelöscht zu markieren; die Browser verbinden sich neu
+    /// und durchlaufen dabei die Zugriffsprüfung (Passwortwechsel).
+    pub fn disconnect(&self, pad_id: &str) {
+        if let Some(room) = self.rooms.sperren().get(pad_id) { let _ = room.tx.send(Arc::new(Vec::new())); }
+    }
     /// Pad gelöscht: Raum sperren, aus dem Speicher nehmen, Verbindungen schließen.
     pub fn evict(&self, pad_id: &str) {
         if let Some(room) = self.rooms.sperren().remove(pad_id) {

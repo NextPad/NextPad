@@ -80,7 +80,7 @@ In groups, sketch a storyboard with six scenes: shot, sound, duration.
 
 ## Data protection: what students should know
 
-- Pads and collections from the start page have **no password protection**. Anyone who knows the name or link can read along.
+- Pads and collections from the start page are **open at first**. Anyone who knows the name or link can read along. A pad can be protected with a [password](../pad/create.md#protect-with-a-password); the content stays readable for whoever runs the server.
 - **Without a name does not mean anonymous.** NextPad shows no names on entries in the idea collection, but internally links every entry and every vote to a browser, and in a course activity to a signed-in person. The word “anonymous” therefore does not belong in the announcement.
 - Personal data of third parties, grades or health information do not belong in a pad.
 - Save at the end: pads as PDF or Markdown, idea collections as CSV. After that, a free pad can be deleted.

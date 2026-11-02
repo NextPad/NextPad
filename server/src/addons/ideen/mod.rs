@@ -254,7 +254,7 @@ fn viewer(state: &AppState, headers: &HeaderMap, id: &str) -> Result<Viewer, Res
     let access = web::check_access(state, headers, id).map_err(|(s, m)| web::abgelehnt(headers, s, m))?;
     if state.store.kind(&access.pad.id).as_deref() != Some(ADDON.art) { return Err(web::abgelehnt(headers, StatusCode::NOT_FOUND, "ideen.keine_sammlung")); }
     let author = access.author.map(|a| a.0);
-    let creator = access.free && !access.readonly && author.is_some() && state.store.owner_of(&access.pad.id).ok().flatten() == author;
+    let creator = access.free && !access.readonly && author.as_deref().is_some_and(|a| state.store.is_owner(&access.pad.id, a));
     let moderator = !access.readonly && author.as_deref().is_some_and(|a| state.store.is_moderator(&access.pad.id, a));
     Ok(Viewer { pad: access.pad.id, author, readonly: access.readonly, owner: creator || moderator, can_delete: creator })
 }

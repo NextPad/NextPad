@@ -7,6 +7,8 @@
 - gemeinsam darin schreiben und sehen, wer was geschrieben hat
 - den eigenen Namen eintragen
 - den Link teilen und das Ergebnis sichern
+- das Pad mit einem Passwort schützen
+- das Pad auch in einem anderen Browser verwalten
 
 </aside>
 
@@ -58,11 +60,29 @@ Ohne Namen entsteht ein Pad mit Zufallsnamen. Die Vorlagen unter **Mit Vorlage b
 2. **Link kopieren** wählen und den Link weitergeben, etwa im Chat einer Videokonferenz oder in einer Mail an die Gruppe. Auf dem Telefon gibt es zusätzlich **Über das Gerät teilen**.
 3. Unter **Aktuelles Pad exportieren** den Text als HTML, Markdown, reinen Text oder PDF sichern oder drucken.
 
+## Mit Passwort schützen
+
+1. Unten rechts die Zahl wählen. Unter **Mein Pad** steht der Bereich **Schutz**.
+2. Ein **Passwort** mit 6 bis 128 Zeichen eintragen und **Passwort setzen** wählen. Leicht zu erratende Passwörter wie „123456“ oder der Pad-Name werden abgelehnt. Gut geht ein kurzer Satz oder zwei Wörter mit Zahl, etwa „rote-tafel-7“.
+3. Alle anderen geben das Passwort beim nächsten Öffnen ein. Der Browser merkt sich die Freigabe 30 Tage. Ein Schloss neben der Zahl zeigt, dass das Pad geschützt ist.
+
+**Passwort ändern** sperrt alle wieder aus, die das alte kannten. Wer das Pad gerade offen hat, sieht einen Hinweis und gibt nach dem Neuladen das neue Passwort ein. **Passwort entfernen** macht das Pad wieder offen. Wer das Pad angelegt hat, braucht kein Passwort.
+
+## In einem anderen Browser verwalten
+
+Verlängern, Löschen und Passwort hängen am Browser, in dem das Pad angelegt wurde. Ein Besitz-Link überträgt die Verwaltung zusätzlich auf einen weiteren Browser, etwa am Hörsaal-PC.
+
+1. Unten rechts die Zahl wählen. Unter **Mein Pad** steht der Bereich **Besitz-Link**.
+2. **Besitz-Link erstellen** wählen und den Link mit **Kopieren** sichern, etwa in einer Notiz oder einem Mail-Entwurf. Der Link erscheint nur dieses eine Mal.
+3. Den Link im anderen Browser öffnen und **In diesem Browser übernehmen** wählen. Ein Passwort ist dafür nicht nötig.
+
+Beide Browser verwalten das Pad danach. **Neuen Besitz-Link erstellen** oder **Besitz-Link widerrufen** nimmt allen Browsern, die über den alten Link hinzukamen, die Verwaltung wieder. Wer ihn hat, verwaltet das Pad: Der Link gehört nicht ins Pad und nicht an die Gruppe.
+
 ## Gut zu wissen
 
-- Pads von der Startseite haben keinen Passwortschutz. Wer den Namen oder den Link kennt, kann mitlesen und mitschreiben. Ein Name, der sich nicht leicht erraten lässt, etwa mit Kurs und Datum, hält Fremde fern. Namen und andere persönliche Daten Dritter gehören nicht in ein solches Pad.
+- Ohne Passwort kann mitlesen und mitschreiben, wer den Namen oder den Link kennt. Ein Name mit Kurs und Datum ist schwerer zu erraten. Das Passwort hält Fremde fern, verschlüsselt den Inhalt aber nicht. Namen und andere persönliche Daten Dritter gehören nicht in ein solches Pad.
 - Für Kurse mit festen Gruppen eignet sich das Pad als Aktivität in [Moodle](../moodle/index.html) oder [ILIAS](../ilias/index.html). Dann kommen nur Kursmitglieder hinein.
-- Das Pad gehört dem Browser, in dem es angelegt wurde. Nur dort erscheinen **Mein Pad**, die Verlängerung und das Löschen.
+- Das Pad gehört dem Browser, in dem es angelegt wurde. Nur dort erscheinen **Mein Pad**, die Verlängerung, das Löschen und der Schutz. Werden die Daten dieses Browsers gelöscht, hilft nur ein vorher gesicherter Besitz-Link.
 - Wie lange ein Pad bleibt, legt der Betrieb fest. Öffnen oder Bearbeiten verlängert die Frist.
 - Unten links zeigt **Frühere Stände ansehen**, wie der Text entstanden ist. Wer das Pad angelegt hat, kann einen früheren Stand zurückholen.
 

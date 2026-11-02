@@ -124,13 +124,15 @@ pub fn check_access_ext(state: &AppState, headers: &HeaderMap, id: &str, create_
     };
     let Some(group) = pad.group_id.clone() else {
         if state.config.allow_free_pads {
-            if let Some(a) = login_author(state, headers) {
-                return Ok(Access { pad, readonly, author: Some((a.id, a.name)), avatar: a.avatar, free: true, set_cookie: None, login: true });
-            }
-            return Ok(match guest_author(state, headers, create_guest)? {
-                Some((aid, name, set_cookie)) => Access { pad, readonly, author: Some((aid, name)), avatar: None, free: true, set_cookie, login: false },
-                None => Access { pad, readonly: true, author: None, avatar: None, free: true, set_cookie: None, login: false },
-            });
+            let access = if let Some(a) = login_author(state, headers) {
+                Access { pad, readonly, author: Some((a.id, a.name)), avatar: a.avatar, free: true, set_cookie: None, login: true }
+            } else {
+                match guest_author(state, headers, create_guest)? {
+                    Some((aid, name, set_cookie)) => Access { pad, readonly, author: Some((aid, name)), avatar: None, free: true, set_cookie, login: false },
+                    None => Access { pad, readonly: true, author: None, avatar: None, free: true, set_cookie: None, login: false },
+                }
+            };
+            return pw_gate(state, headers, access);
         }
         return Err((StatusCode::FORBIDDEN, "zugang.ohne_gruppe"));
     };
@@ -146,6 +148,25 @@ pub fn check_access_ext(state: &AppState, headers: &HeaderMap, id: &str, create_
         }
     }
     Err((StatusCode::FORBIDDEN, "zugang.keine_sitzung"))
+}
+
+/// Passwort freier Pads: ohne Freigabe-Cookie kein Zugang, außer für den Besitz.
+fn pw_gate(state: &AppState, headers: &HeaderMap, access: Access) -> Result<Access, (StatusCode, &'static str)> {
+    match state.store.pw_hash(&access.pad.id) {
+        Ok(None) => return Ok(access),
+        Ok(Some(_)) => {}
+        Err(e) => { tracing::warn!("Passwort lesen: {e}"); return Err((StatusCode::INTERNAL_SERVER_ERROR, "passwort.fehler")); }
+    }
+    let aid = access.author.as_ref().map(|a| a.0.as_str()).unwrap_or_default();
+    if state.store.is_owner(&access.pad.id, aid) { return Ok(access); }
+    if pw_tokens(state, headers).iter().any(|t| state.store.unlocked(t, &access.pad.id)) { return Ok(access); }
+    Err((StatusCode::FORBIDDEN, "passwort.noetig"))
+}
+
+fn pw_cookie(state: &AppState) -> String { format!("{}_pw", state.config.author_cookie) }
+/// Freigabe-Tokens aus dem Cookie, durch Punkte getrennt (Kommas sind in Cookie-Werten nicht erlaubt).
+fn pw_tokens(state: &AppState, headers: &HeaderMap) -> Vec<String> {
+    cookie_values(headers, &pw_cookie(state)).iter().flat_map(|v| v.split('.').map(str::to_string).collect::<Vec<_>>()).filter(|t| !t.is_empty()).collect()
 }
 
 /// Basis-Pfad für Seiten ohne Zugriff auf den Zustand (Fehlerseiten); einmal beim Start gesetzt.
@@ -174,6 +195,7 @@ pub(crate) fn error_page(sp: Sprache, status: StatusCode, msg: &str) -> Response
 pub async fn page(State(state): State<Arc<AppState>>, Path(id): Path<String>, headers: HeaderMap) -> Response {
     let access = match check_access_ext(&state, &headers, &id, true) {
         Ok(a) => a,
+        Err((_, "passwort.noetig")) => return pw_page(&state, &headers, &id, None),
         Err((s, m)) => return fehler(&headers, s, m),
     };
     let sp = Sprache::aus_anfrage(&headers);
@@ -185,7 +207,7 @@ pub async fn page(State(state): State<Arc<AppState>>, Path(id): Path<String>, he
     let mut expires = serde_json::Value::Null;
     if access.free {
         let _ = state.store.touch_seen(&access.pad.id, ids::now_ms());
-        owner = !aid.is_empty() && state.store.owner_of(&access.pad.id).ok().flatten().as_deref() == Some(aid.as_str());
+        owner = state.store.is_owner(&access.pad.id, &aid);
         if owner && state.config.retention != crate::retention::Mode::Off {
             if let Ok(Some(r)) = state.store.retention_row(&access.pad.id) { expires = json!(r.delete_after.unwrap_or_else(|| crate::retention::expires(&r, state.config.retention_days * 86_400_000))); }
         }
@@ -203,6 +225,8 @@ pub async fn page(State(state): State<Arc<AppState>>, Path(id): Path<String>, he
         "owner": owner,
         "restore": may_restore(&state, &access),
         "expires": expires,
+        "passwort": access.free && state.store.pw_hash(&access.pad.id).ok().flatten().is_some(),
+        "besitzLink": owner && state.store.owner_link_hash(&access.pad.id).ok().flatten().is_some(),
         "theme": state.config.theme,
         "logo": if theme_rahmen(&state) && has_logo(&state) { serde_json::Value::String(theme_url(&state, "logo.png")) } else { serde_json::Value::Null },
         "logoAlt": crate::look::get(&state).institution(),
@@ -365,7 +389,7 @@ async fn snapshot_html_inner(State(state): State<Arc<AppState>>, Path((id, ts)):
 /// Frühere Stände zurückholen darf, wer das freie Pad besitzt; bei Moodle-Pads, wer moderiert (Lehrende).
 fn may_restore(state: &AppState, access: &Access) -> bool {
     let Some((aid, _)) = access.author.as_ref().filter(|_| !access.readonly) else { return false };
-    (access.free && state.store.owner_of(&access.pad.id).ok().flatten().as_deref() == Some(aid.as_str())) || state.store.is_moderator(&access.pad.id, aid)
+    (access.free && state.store.is_owner(&access.pad.id, aid)) || state.store.is_moderator(&access.pad.id, aid)
 }
 
 /// Früheren Stand aus der Zeitleiste wiederherstellen: `{"ts": …}` für einen Vollstand, `{"seq": …}` für einen Schritt.
@@ -899,14 +923,171 @@ pub async fn logout_confirm(State(state): State<Arc<AppState>>, headers: HeaderM
 }
 
 /// Besitzer-Aktionen: nur per POST von der eigenen Seite, nur wer das freie Pad angelegt hat.
-fn owner_check(state: &AppState, headers: &HeaderMap, id: &str) -> Result<String, Response> {
+fn owner_check(state: &AppState, headers: &HeaderMap, id: &str) -> Result<String, Response> { owner_check_mit(state, headers, id).map(|(p, _)| p) }
+
+/// Wie `owner_check`, dazu die Autorenkennung des Besitzes.
+fn owner_check_mit(state: &AppState, headers: &HeaderMap, id: &str) -> Result<(String, String), Response> {
     if !origin_ok(state, headers) || headers.get(header::ORIGIN).is_none() { return Err(StatusCode::FORBIDDEN.into_response()); }
     let access = check_access(state, headers, id).map_err(|(s, m)| abgelehnt(headers, s, m))?;
     let aid = access.author.map(|a| a.0).unwrap_or_default();
-    if !access.free || access.readonly || aid.is_empty() || state.store.owner_of(&access.pad.id).ok().flatten().as_deref() != Some(aid.as_str()) {
+    if !access.free || access.readonly || !state.store.is_owner(&access.pad.id, &aid) {
         return Err(abgelehnt(headers, StatusCode::FORBIDDEN, "zugang.nur_besitz"));
     }
-    Ok(access.pad.id)
+    Ok((access.pad.id, aid))
+}
+
+/// Eingabe des Passworts für ein geschütztes Pad; `meldung`: Status und Schlüssel im Textkatalog.
+fn pw_page(state: &AppState, headers: &HeaderMap, id: &str, meldung: Option<(StatusCode, &'static str)>) -> Response {
+    let sp = Sprache::aus_anfrage(headers);
+    let base = &state.config.base_path;
+    let titel = texte::t(sp, "passwort.titel");
+    let (status, meldung) = match meldung {
+        Some((s, k)) => (s, format!(r#"<p class="field-error" id="pw-fehler" role="alert">{}</p>"#, texte::t(sp, k))),
+        None => (StatusCode::FORBIDDEN, r#"<p class="field-error" id="pw-fehler" role="alert" hidden></p>"#.to_string()),
+    };
+    let content = format!(r#"<main id="inhalt" class="doc" tabindex="-1"><h1>{titel}</h1><p>{text}</p>
+<form method="post" action="{base}/p/{pid}/entsperren">
+<label class="field-label" for="passwort">{label}</label>
+<div class="field-row"><input type="password" id="passwort" name="passwort" maxlength="{max}" autocomplete="current-password" required autofocus aria-describedby="pw-fehler"><button class="btn btn-primary" type="submit">{oeffnen}</button></div>
+{meldung}</form>
+<p><a href="{base}/">{start}</a></p></main>"#,
+        text = texte::t(sp, "passwort.text"), label = texte::t(sp, "passwort.label"), oeffnen = texte::t(sp, "passwort.oeffnen"),
+        start = texte::t(sp, "fehler.zur_startseite"), max = crate::passwort::MAX, pid = urlencode(id));
+    let mut r = start_page(state, sp, None, &format!("NextPad · {titel}"), &content, "");
+    *r.status_mut() = status;
+    r
+}
+
+/// Prozentkodierung für einen Pfadabschnitt (Leerzeichen als %20, nicht als +).
+fn urlencode(s: &str) -> String {
+    s.bytes().map(|b| if b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_' | b'.' | b'~') { (b as char).to_string() } else { format!("%{b:02X}") }).collect()
+}
+
+/// Passwort eingeben: richtig gibt ein Freigabe-Cookie (30 Tage) und führt ins Pad.
+pub async fn unlock(State(state): State<Arc<AppState>>, Path(id): Path<String>, ConnectInfo(peer): ConnectInfo<SocketAddr>, headers: HeaderMap, axum::Form(f): axum::Form<HashMap<String, String>>) -> Response {
+    if !origin_ok(&state, &headers) { return abgelehnt(&headers, StatusCode::FORBIDDEN, "zugang.origin"); }
+    let pad = if id.starts_with("r.") { state.store.pad_by_readonly(&id) } else { state.store.get_pad(&id) };
+    let Ok(Some(pad)) = pad else { return fehler(&headers, StatusCode::NOT_FOUND, "zugang.pad_fehlt") };
+    let base = &state.config.base_path;
+    let ziel = format!("{base}/p/{}", urlencode(&id));
+    let hash = match state.store.pw_hash(&pad.id) {
+        Ok(Some(h)) => h,
+        Ok(None) => return axum::response::Redirect::to(&ziel).into_response(),
+        Err(e) => { tracing::warn!("Passwort lesen: {e}"); return fehler(&headers, StatusCode::INTERNAL_SERVER_ERROR, "passwort.fehler"); }
+    };
+    let netz = crate::net::rate_key(crate::net::client_ip(&state, &headers, peer));
+    let Some(warten) = crate::passwort::versuch(&pad.id, &netz, ids::now_ms()) else {
+        return pw_page(&state, &headers, &id, Some((StatusCode::TOO_MANY_REQUESTS, "passwort.zu_viele")));
+    };
+    if warten > 0 { tokio::time::sleep(std::time::Duration::from_millis(warten)).await; }
+    let pw = f.get("passwort").cloned().unwrap_or_default();
+    // zu lange Eingaben gar nicht erst durch Argon2 schicken
+    if !crate::passwort::zulaessig(&pw) || !crate::passwort::pruefen(pw, hash).await {
+        return pw_page(&state, &headers, &id, Some((StatusCode::FORBIDDEN, "passwort.falsch")));
+    }
+    crate::passwort::erfolg(&pad.id, &netz);
+    let token = match state.store.create_unlock(&pad.id) { Ok(t) => t, Err(e) => { tracing::warn!("Freigabe: {e}"); return StatusCode::INTERNAL_SERVER_ERROR.into_response(); } };
+    // bisherige Freigaben anderer Pads behalten, die neueste vorn, höchstens 20
+    let mut alle = vec![token];
+    alle.extend(pw_tokens(&state, &headers).into_iter().take(19));
+    let path = if base.is_empty() { "/".to_string() } else { format!("{base}/") };
+    let cookie = format!("{}={}; Path={path}; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax", pw_cookie(&state), alle.join("."));
+    with_cookie(axum::response::Redirect::to(&ziel).into_response(), Some(cookie))
+}
+
+/// Besitzer setzt, ändert oder entfernt (leeres Passwort) das Passwort. Laufende Verbindungen werden getrennt.
+pub async fn set_password(State(state): State<Arc<AppState>>, Path(id): Path<String>, headers: HeaderMap, axum::Json(b): axum::Json<serde_json::Value>) -> Response {
+    let pad = match owner_check(&state, &headers, &id) { Ok(p) => p, Err(r) => return r };
+    let pw = b.get("passwort").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+    let hash = if pw.is_empty() { None } else {
+        if !crate::passwort::zulaessig(&pw) { return abgelehnt(&headers, StatusCode::BAD_REQUEST, "passwort.laenge"); }
+        if crate::passwort::trivial(&pw, &id) { return abgelehnt(&headers, StatusCode::UNPROCESSABLE_ENTITY, "passwort.trivial"); }
+        match crate::passwort::hash(pw).await {
+            Ok(h) => Some(h),
+            Err(e) => { tracing::warn!("Passwort-Hash: {e}"); return StatusCode::INTERNAL_SERVER_ERROR.into_response(); }
+        }
+    };
+    if let Err(e) = state.store.set_pw_hash(&pad, hash.as_deref()) { tracing::warn!("Passwort setzen: {e}"); return StatusCode::INTERNAL_SERVER_ERROR.into_response(); }
+    state.rooms.disconnect(&pad);
+    tracing::info!("Passwort eines freien Pads {}", if hash.is_some() { "gesetzt" } else { "entfernt" });
+    axum::Json(json!({ "ok": true, "passwort": hash.is_some() })).into_response()
+}
+
+/// Besitz-Link: `{"widerrufen": true}` entfernt ihn, sonst entsteht ein neuer. Das Geheimnis geht
+/// nur in dieser Antwort hinaus; gespeichert wird der Argon2id-Hash.
+pub async fn set_owner_link(State(state): State<Arc<AppState>>, Path(id): Path<String>, headers: HeaderMap, axum::Json(b): axum::Json<serde_json::Value>) -> Response {
+    let (pad, aid) = match owner_check_mit(&state, &headers, &id) { Ok(p) => p, Err(r) => return r };
+    let geheimnis = (!b.get("widerrufen").and_then(|v| v.as_bool()).unwrap_or(false)).then(|| format!("{}{}", ids::random16(), ids::random16()));
+    let hash = match &geheimnis {
+        None => None,
+        Some(g) => match crate::passwort::hash(g.clone()).await {
+            Ok(h) => Some(h),
+            Err(e) => { tracing::warn!("Besitz-Link: {e}"); return StatusCode::INTERNAL_SERVER_ERROR.into_response(); }
+        },
+    };
+    if let Err(e) = state.store.set_owner_link(&pad, hash.as_deref(), &aid) { tracing::warn!("Besitz-Link: {e}"); return StatusCode::INTERNAL_SERVER_ERROR.into_response(); }
+    axum::Json(json!({ "ok": true, "geheimnis": geheimnis })).into_response()
+}
+
+/// Seite des Besitz-Links. Das Geheimnis steht im Fragment (nie in Logs von Proxys); start.js legt es
+/// ins Formular, abgeschickt wird es erst auf Knopfdruck.
+fn besitz_page(state: &AppState, headers: &HeaderMap, id: &str, meldung: Option<(StatusCode, &'static str)>) -> Response {
+    let sp = Sprache::aus_anfrage(headers);
+    let base = &state.config.base_path;
+    let titel = texte::t(sp, "besitz.titel");
+    let (status, meldung) = match meldung {
+        Some((s, k)) => (s, format!(r#"<p class="field-error" id="besitz-fehler" role="alert">{}</p>"#, texte::t(sp, k))),
+        None => (StatusCode::OK, String::new()),
+    };
+    let content = format!(r#"<main id="inhalt" class="doc" tabindex="-1"><h1>{titel}</h1><p>{text}</p>
+<form method="post" action="{base}/p/{pid}/besitz"><input type="hidden" id="besitz-geheimnis" name="geheimnis" value="">
+<button class="btn btn-primary" type="submit">{knopf}</button></form>
+{meldung}<p><a href="{base}/">{start}</a></p></main>"#,
+        text = texte::t(sp, "besitz.text"), knopf = texte::t(sp, "besitz.uebernehmen"), start = texte::t(sp, "fehler.zur_startseite"), pid = urlencode(id));
+    let scripts = format!(r#"<script src="{base}/static/start.js?v={v}"></script>"#, v = start_version());
+    let mut r = start_page(state, sp, None, &format!("NextPad · {titel}"), &content, &scripts);
+    *r.status_mut() = status;
+    r
+}
+
+fn freies_pad(state: &AppState, id: &str) -> Option<crate::store::Pad> {
+    state.store.get_pad(id).ok().flatten().filter(|p| p.group_id.is_none() && state.config.allow_free_pads)
+}
+
+pub async fn owner_link_page(State(state): State<Arc<AppState>>, Path(id): Path<String>, headers: HeaderMap) -> Response {
+    if freies_pad(&state, &id).is_none() { return fehler(&headers, StatusCode::NOT_FOUND, "zugang.pad_fehlt"); }
+    besitz_page(&state, &headers, &id, None)
+}
+
+/// Besitz-Link einlösen: Dieser Browser wird zusätzlich Besitz, der bisherige behält ihn.
+pub async fn claim_owner(State(state): State<Arc<AppState>>, Path(id): Path<String>, ConnectInfo(peer): ConnectInfo<SocketAddr>, headers: HeaderMap, axum::Form(f): axum::Form<HashMap<String, String>>) -> Response {
+    if !origin_ok(&state, &headers) { return abgelehnt(&headers, StatusCode::FORBIDDEN, "zugang.origin"); }
+    let Some(pad) = freies_pad(&state, &id) else { return fehler(&headers, StatusCode::NOT_FOUND, "zugang.pad_fehlt") };
+    let hash = match state.store.owner_link_hash(&pad.id) {
+        Ok(Some(h)) => h,
+        Ok(None) => return besitz_page(&state, &headers, &id, Some((StatusCode::FORBIDDEN, "besitz.ungueltig"))),
+        Err(e) => { tracing::warn!("Besitz-Link lesen: {e}"); return fehler(&headers, StatusCode::INTERNAL_SERVER_ERROR, "passwort.fehler"); }
+    };
+    let netz = crate::net::rate_key(crate::net::client_ip(&state, &headers, peer));
+    let Some(warten) = crate::passwort::versuch(&format!("besitz:{}", pad.id), &netz, ids::now_ms()) else {
+        return besitz_page(&state, &headers, &id, Some((StatusCode::TOO_MANY_REQUESTS, "passwort.zu_viele")));
+    };
+    if warten > 0 { tokio::time::sleep(std::time::Duration::from_millis(warten)).await; }
+    let g = f.get("geheimnis").cloned().unwrap_or_default();
+    if g.len() != 32 || !crate::passwort::pruefen(g, hash).await {
+        return besitz_page(&state, &headers, &id, Some((StatusCode::FORBIDDEN, "besitz.ungueltig")));
+    }
+    crate::passwort::erfolg(&format!("besitz:{}", pad.id), &netz);
+    let (aid, set_cookie) = if let Some(a) = login_author(&state, &headers) { (a.id, None) } else {
+        match guest_author(&state, &headers, true) {
+            Ok(Some((aid, _, c))) => (aid, c),
+            Ok(None) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Err((s, m)) => return fehler(&headers, s, m),
+        }
+    };
+    if let Err(e) = state.store.add_owner(&pad.id, &aid) { tracing::warn!("Besitz hinzufügen: {e}"); return StatusCode::INTERNAL_SERVER_ERROR.into_response(); }
+    tracing::info!("Besitz-Link eines freien Pads eingelöst");
+    with_cookie(axum::response::Redirect::to(&format!("{}/p/{}", state.config.base_path, urlencode(&id))).into_response(), set_cookie)
 }
 
 /// Besitzer verlängert die Aufbewahrung um ein Jahr.

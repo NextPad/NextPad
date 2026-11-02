@@ -7,6 +7,8 @@
 - write in it together and see who wrote what
 - enter one's own name
 - share the link and save the result
+- protect the pad with a password
+- manage the pad in another browser too
 
 </aside>
 
@@ -58,11 +60,29 @@ Without a name, a pad with a random name is created. The templates under **Start
 2. Choose **Copy link** and pass the link on, for example in the chat of a video conference or in an email to the group. On a phone there is also **Share via device**.
 3. Under **Export this pad**, save the text as HTML, Markdown, plain text or PDF, or print it.
 
+## Protect with a password
+
+1. Choose the number at the bottom right. Under **My pad** is the section **Protection**.
+2. Enter a **Password** with 6 to 128 characters and choose **Set password**. Passwords that are easy to guess, such as “123456” or the pad name, are rejected. A short phrase or two words with a number work well, such as “red-board-7”.
+3. Everyone else enters the password the next time they open the pad. The browser remembers the access for 30 days. A lock next to the number shows that the pad is protected.
+
+**Change password** locks out everyone who knew the old one. Anyone who has the pad open sees a notice and enters the new password after reloading. **Remove password** opens the pad again. Whoever created the pad needs no password.
+
+## Manage in another browser
+
+Extending, deleting and the password are tied to the browser the pad was created in. An owner link extends managing to another browser, for example on the lecture hall PC.
+
+1. Choose the number at the bottom right. Under **My pad** is the section **Owner link**.
+2. Choose **Create owner link** and save the link with **Copy**, for example in a note or a draft email. The link appears only this once.
+3. Open the link in the other browser and choose **Take over in this browser**. No password is needed for this.
+
+Both browsers then manage the pad. **Create new owner link** or **Revoke owner link** takes managing away again from all browsers that joined through the old link. Whoever has it manages the pad: the link does not belong in the pad or with the group.
+
 ## Good to know
 
-- Pads from the start page have no password protection. Anyone who knows the name or the link can read and write. A name that is hard to guess, for example with course and date, keeps strangers out. Names and other personal data of third parties do not belong in such a pad.
+- Without a password, anyone who knows the name or the link can read and write. A name with course and date is harder to guess. The password keeps strangers out but does not encrypt the content. Names and other personal data of third parties do not belong in such a pad.
 - For courses with fixed groups, the pad as an activity in [Moodle](../moodle/index.html) or [ILIAS](../ilias/index.html) is the better choice. Then only course members get in.
-- The pad belongs to the browser it was created in. **My pad**, extending and deleting appear only there.
+- The pad belongs to the browser it was created in. **My pad**, extending, deleting and protection appear only there. If the data of this browser is cleared, only an owner link saved beforehand helps.
 - How long a pad is kept is set by whoever runs NextPad. Opening or editing extends the period.
 - **View earlier versions** at the bottom left shows how the text came about. Whoever created the pad can bring back an earlier version.
 

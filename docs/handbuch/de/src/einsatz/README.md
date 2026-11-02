@@ -80,7 +80,7 @@ In Gruppen ein Storyboard mit sechs Szenen skizzieren: Einstellung, Ton, Dauer.
 
 ## Datenschutz: Was Studierende wissen sollten
 
-- Pads und Sammlungen von der Startseite haben **keinen Passwortschutz**. Wer den Namen oder Link kennt, liest mit.
+- Pads und Sammlungen von der Startseite sind **zunächst offen**. Wer den Namen oder Link kennt, liest mit. Ein Pad lässt sich mit einem [Passwort](../pad/anlegen.md#mit-passwort-schützen) schützen, der Inhalt bleibt dabei für den Betrieb lesbar.
 - **Ohne Namen heißt nicht anonym.** NextPad zeigt keine Namen an Beiträgen der Ideensammlung, ordnet aber jeden Beitrag und jede Stimme intern einem Browser zu, in einer Kursaktivität einer angemeldeten Person. Das Wort „anonym“ gehört deshalb nicht in die Ankündigung.
 - Persönliche Daten Dritter, Noten oder Gesundheitsangaben gehören nicht in ein Pad.
 - Am Ende sichern: Pads als PDF oder Markdown, Ideensammlungen als CSV. Danach lässt sich ein freies Pad löschen.

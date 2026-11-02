@@ -43,6 +43,7 @@ typst-layout = { version = "0.15", optional = true }
 include_dir = "0.7"
 qrcode = { version = "0.14", default-features = false, features = ["svg"] }
 mimalloc = { version = "0.1.52", default-features = false }
+argon2 = "0.5"
 
 [profile.release]
 lto = true

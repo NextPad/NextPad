@@ -174,7 +174,13 @@ CREATE TABLE IF NOT EXISTS pad_join (pad_id TEXT PRIMARY KEY, url TEXT NOT NULL)
 CREATE TABLE IF NOT EXISTS pad_kurs (pad_id TEXT PRIMARY KEY, url TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS pad_moderators (pad_id TEXT NOT NULL, author_id TEXT NOT NULL, PRIMARY KEY (pad_id, author_id));
+CREATE TABLE IF NOT EXISTS pad_unlocks (token TEXT PRIMARY KEY, pad_id TEXT NOT NULL, created INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS pad_unlocks_pad ON pad_unlocks(pad_id);
+CREATE TABLE IF NOT EXISTS pad_owners (pad_id TEXT NOT NULL, author_id TEXT NOT NULL, PRIMARY KEY (pad_id, author_id));
 "#;
+
+/// Freigabe eines Pads mit Passwort gilt 30 Tage, wie das Cookie.
+pub const UNLOCK_MS: i64 = 30 * 24 * 3600 * 1000;
 
 impl Store {
     pub fn open(path: &Path, zusaetze: &[&Zusatz]) -> Result<Self> {
@@ -200,6 +206,12 @@ impl Store {
         // Schema-Ergänzung 29.10.2026: zuletzt gewählte Sprache einer über Moodle angemeldeten Person (für die Mail vor dem Löschen)
         let has_sprache: bool = conn.prepare("SELECT 1 FROM pragma_table_info('authors') WHERE name='sprache'")?.exists([])?;
         if !has_sprache { conn.execute_batch("ALTER TABLE authors ADD COLUMN sprache TEXT;")?; }
+        // Schema-Ergänzung 01.11.2026: Passwort freier Pads als Argon2id-Hash
+        let has_pw: bool = conn.prepare("SELECT 1 FROM pragma_table_info('pads') WHERE name='pw_hash'")?.exists([])?;
+        if !has_pw { conn.execute_batch("ALTER TABLE pads ADD COLUMN pw_hash TEXT;")?; }
+        // Schema-Ergänzung 01.11.2026: Besitz-Link freier Pads als Argon2id-Hash
+        let has_link: bool = conn.prepare("SELECT 1 FROM pragma_table_info('pads') WHERE name='owner_link_hash'")?.exists([])?;
+        if !has_link { conn.execute_batch("ALTER TABLE pads ADD COLUMN owner_link_hash TEXT;")?; }
         for z in zusaetze { conn.execute_batch(z.schema)?; (z.ergaenzen)(&conn)?; }
         let wconn = Connection::open(path)?;
         wconn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;")?;
@@ -291,6 +303,8 @@ impl Store {
         c.execute("DELETE FROM pad_join WHERE pad_id=?1", params![id])?;
         c.execute("DELETE FROM pad_kurs WHERE pad_id=?1", params![id])?;
         c.execute("DELETE FROM snapshots WHERE pad_id=?1", params![id])?;
+        c.execute("DELETE FROM pad_unlocks WHERE pad_id=?1", params![id])?;
+        c.execute("DELETE FROM pad_owners WHERE pad_id=?1", params![id])?;
         Ok(c.execute("DELETE FROM pads WHERE id=?1", params![id])? > 0)
     }
     pub fn delete_pad(&self, id: &str) -> Result<bool> {
@@ -344,6 +358,55 @@ impl Store {
     }
     pub fn owner_of(&self, pad_id: &str) -> Result<Option<String>> {
         Ok(self.c().query_row("SELECT owner_id FROM pads WHERE id=?1", params![pad_id], |r| r.get(0)).optional()?.flatten())
+    }
+    /// Besitz: wer das Pad angelegt hat oder über den Besitz-Link hinzugekommen ist.
+    pub fn is_owner(&self, pad_id: &str, author_id: &str) -> bool {
+        !author_id.is_empty() && self.c().query_row(
+            "SELECT 1 FROM pads WHERE id=?1 AND owner_id=?2 UNION SELECT 1 FROM pad_owners WHERE pad_id=?1 AND author_id=?2",
+            params![pad_id, author_id], |_| Ok(())).optional().ok().flatten().is_some()
+    }
+    pub fn add_owner(&self, pad_id: &str, author_id: &str) -> Result<()> {
+        self.c().execute("INSERT OR IGNORE INTO pad_owners (pad_id, author_id) VALUES (?1, ?2)", params![pad_id, author_id])?;
+        Ok(())
+    }
+    pub fn owner_link_hash(&self, pad_id: &str) -> Result<Option<String>> {
+        Ok(self.c().query_row("SELECT owner_link_hash FROM pads WHERE id=?1", params![pad_id], |r| r.get::<_, Option<String>>(0)).optional()?.flatten())
+    }
+    /// Neuer oder widerrufener Besitz-Link. Wer über den alten Link hinzukam, verliert den Besitz,
+    /// außer `behalten` (die Person, die den Link gerade ändert); wer das Pad angelegt hat, behält ihn.
+    pub fn set_owner_link(&self, pad_id: &str, hash: Option<&str>, behalten: &str) -> Result<()> {
+        let mut c = self.c();
+        let tx = c.transaction()?;
+        tx.execute("UPDATE pads SET owner_link_hash=?2 WHERE id=?1", params![pad_id, hash])?;
+        tx.execute("DELETE FROM pad_owners WHERE pad_id=?1 AND author_id<>?2", params![pad_id, behalten])?;
+        tx.commit()?;
+        Ok(())
+    }
+    // Passwort freier Pads
+    /// Fehler der Datenbank kommen als Fehler zurück, nie als „kein Passwort“: Das Pad bleibt dann zu.
+    pub fn pw_hash(&self, pad_id: &str) -> Result<Option<String>> {
+        Ok(self.c().query_row("SELECT pw_hash FROM pads WHERE id=?1", params![pad_id], |r| r.get::<_, Option<String>>(0)).optional()?.flatten())
+    }
+    /// Setzt oder entfernt das Passwort und beendet alle bisherigen Freigaben.
+    pub fn set_pw_hash(&self, pad_id: &str, hash: Option<&str>) -> Result<()> {
+        let mut c = self.c();
+        let tx = c.transaction()?;
+        tx.execute("UPDATE pads SET pw_hash=?2 WHERE id=?1", params![pad_id, hash])?;
+        tx.execute("DELETE FROM pad_unlocks WHERE pad_id=?1", params![pad_id])?;
+        tx.commit()?;
+        Ok(())
+    }
+    /// Neue Freigabe; abgelaufene aller Pads werden dabei gelöscht.
+    pub fn create_unlock(&self, pad_id: &str) -> Result<String> {
+        let token = format!("{}{}", ids::random16(), ids::random16());
+        let now = ids::now_ms();
+        let c = self.c();
+        c.execute("DELETE FROM pad_unlocks WHERE created < ?1", params![now - UNLOCK_MS])?;
+        c.execute("INSERT INTO pad_unlocks (token, pad_id, created) VALUES (?1, ?2, ?3)", params![token, pad_id, now])?;
+        Ok(token)
+    }
+    pub fn unlocked(&self, token: &str, pad_id: &str) -> bool {
+        self.c().query_row("SELECT 1 FROM pad_unlocks WHERE token=?1 AND pad_id=?2 AND created >= ?3", params![token, pad_id, ids::now_ms() - UNLOCK_MS], |_| Ok(())).optional().ok().flatten().is_some()
     }
     /// Aufruf eines Pads zählt als Aktivität; höchstens stündlich geschrieben.
     pub fn touch_seen(&self, pad_id: &str, now: i64) -> Result<()> {
@@ -650,6 +713,25 @@ impl Store {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn besitz_ueber_link_und_widerruf() {
+        let dir = std::env::temp_dir().join(format!("nextpad-test-b-{}-{}", std::process::id(), ids::now_ms()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let store = Store::open(&dir.join("t.sqlite"), &[]).unwrap();
+        store.create_pad("p1", None).unwrap(); store.set_owner("p1", "a.1").unwrap();
+        assert!(store.is_owner("p1", "a.1") && !store.is_owner("p1", "a.2") && !store.is_owner("p1", ""));
+        store.set_owner_link("p1", Some("h"), "a.1").unwrap();
+        store.add_owner("p1", "a.2").unwrap(); store.add_owner("p1", "a.3").unwrap();
+        assert!(store.is_owner("p1", "a.2") && store.is_owner("p1", "a.1"));
+        // a.2 erstellt einen neuen Link: a.3 verliert den Besitz, a.1 (angelegt) und a.2 behalten ihn
+        store.set_owner_link("p1", Some("h2"), "a.2").unwrap();
+        assert!(store.is_owner("p1", "a.1") && store.is_owner("p1", "a.2") && !store.is_owner("p1", "a.3"));
+        assert_eq!(store.owner_link_hash("p1").unwrap().as_deref(), Some("h2"));
+        assert!(store.delete_pad("p1").unwrap());
+        assert!(!store.is_owner("p1", "a.2"));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 
     /// Tabellen eines Addons legt der Speicher an und räumt sie mit dem Pad weg.
     #[test]

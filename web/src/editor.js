@@ -347,7 +347,8 @@ for (const [label, fmt, icon, title] of [['HTML', 'html', I.code, tx('export_als
 }
 sb.appendChild(exportPopup)
 const conn = document.createElement('span'); conn.className = 'conn'; fl.appendChild(conn)
-const usersBtn = document.createElement('button'); usersBtn.type = 'button'; usersBtn.className = 'ib users'; usersBtn.title = tx('teilnehmende'); usersBtn.innerHTML = `<span class="buttonicon" aria-hidden="true">${I.users}</span> <span class="count">1</span>`
+const usersBtn = document.createElement('button'); usersBtn.type = 'button'; usersBtn.className = 'ib users'; usersBtn.title = tx('teilnehmende'); usersBtn.innerHTML = `<span class="buttonicon" aria-hidden="true">${I.users}</span> <span class="count">1</span><svg class="schloss" role="img" viewBox="0 0 16 16" width="12" height="12" hidden><title></title><path fill="currentColor" d="M4 7V5a4 4 0 0 1 8 0v2h1v8H3V7h1Zm2 0h4V5a2 2 0 0 0-4 0v2Z"/></svg>`
+usersBtn.querySelector('.schloss title').textContent = tx('mit_passwort')
 usersBtn.addEventListener('click', () => togglePopup(usersPopup)); fr.appendChild(usersBtn)
 const usersPopup = document.createElement('div'); usersPopup.className = 'popup right'; usersPopup.hidden = true; sb.appendChild(usersPopup)
 // Link zum Pad kopieren oder über das Teilen-Menü des Geräts weitergeben; ohne Zwischenablage markiert zum Selbstkopieren
@@ -376,12 +377,17 @@ function einladen() {
 function togglePopup(p) { const open = p.hidden; for (const x of sb.querySelectorAll('.popup')) x.hidden = true; p.hidden = !open }
 document.addEventListener('click', e => { if (!sb.contains(e.target)) for (const x of sb.querySelectorAll('.popup')) x.hidden = true })
 
+// Meldung zum Passwort; das Popup wird nach dem Speichern neu aufgebaut, weil der Server neu verbinden lässt
+let pwMeldung = ''
+// Besitz-Link: einmal gezeigt, übersteht aber das Neuaufbauen des Popups
+let besitzAnzeige = null, besitzOffen = false
 function renderStatus() {
   if (!sb) return
   const users = []
   provider.awareness.getStates().forEach(s => { if (s.user) users.push(s.user) })
   conn.textContent = provider.wsconnected ? tx('verbunden') : tx('getrennt'); conn.className = 'conn ' + (provider.wsconnected ? 'ok' : 'warn')
   usersBtn.querySelector('.count').textContent = String(users.length)
+  usersBtn.querySelector('.schloss').hidden = !cfg.passwort
   usersPopup.innerHTML = `<h2>${tx('teilnehmende')}</h2>`
   if (cfg.free && !cfg.readonly && !cfg.login) {
     const row = document.createElement('div'); row.className = 'me'
@@ -422,13 +428,111 @@ function renderStatus() {
       const r = await fetch(`${cfg.basePath}/p/${encodeURIComponent(cfg.urlId)}/delete`, { method: 'POST' })
       if (r.ok) { try { const l = JSON.parse(localStorage.getItem('nextpad.recent') || '[]').filter(x => x && x.id !== cfg.urlId); localStorage.setItem('nextpad.recent', JSON.stringify(l)) } catch {} location.href = `${cfg.basePath}/` }
     })
-    row2.appendChild(del); box.appendChild(row2); usersPopup.appendChild(box)
+    row2.appendChild(del); box.appendChild(row2)
+    // Schutz: Passwort setzen, ändern, entfernen; Ende-zu-Ende folgt als weitere Wahl
+    const schutz = document.createElement('div'); schutz.className = 'schutz'
+    const sh = document.createElement('h3'); sh.textContent = tx('schutz')
+    const stand = document.createElement('p'); stand.className = 'exp'
+    const pwLabel = document.createElement('label'); pwLabel.htmlFor = 'pw-neu'; pwLabel.textContent = tx('pw_label')
+    const pwIn = document.createElement('input'); pwIn.type = 'password'; pwIn.id = 'pw-neu'; pwIn.maxLength = 128; pwIn.autocomplete = 'new-password'; pwIn.setAttribute('aria-describedby', 'pw-meldung pw-hinweis')
+    const pwRow = document.createElement('div'); pwRow.className = 'actions'
+    const pwSet = document.createElement('button'); pwSet.type = 'button'
+    const pwDel = document.createElement('button'); pwDel.type = 'button'; pwDel.textContent = tx('pw_entfernen')
+    const zeigen = document.createElement('label'); zeigen.className = 'zeigen'
+    const zeigenBox = document.createElement('input'); zeigenBox.type = 'checkbox'; zeigenBox.addEventListener('change', () => { pwIn.type = zeigenBox.checked ? 'text' : 'password' })
+    zeigen.append(zeigenBox, document.createTextNode(' ' + tx('pw_zeigen')))
+    const meldung = document.createElement('p'); meldung.id = 'pw-meldung'; meldung.className = 'exp'; meldung.setAttribute('role', 'status'); meldung.textContent = pwMeldung
+    const hinweis = document.createElement('p'); hinweis.id = 'pw-hinweis'; hinweis.className = 'exp'; hinweis.textContent = tx('pw_hinweis')
+    const zeigeSchutz = () => { stand.textContent = tx(cfg.passwort ? 'schutz_an' : 'schutz_aus'); pwSet.textContent = tx(cfg.passwort ? 'pw_aendern' : 'pw_setzen'); pwDel.hidden = !cfg.passwort }
+    const sende = async pw => {
+      const r = await fetch(`${cfg.basePath}/p/${encodeURIComponent(cfg.urlId)}/passwort`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ passwort: pw }) }).catch(() => null)
+      if (!r || !r.ok) { pwMeldung = meldung.textContent = tx(r && r.status === 400 ? 'pw_laenge' : r && r.status === 422 ? 'pw_trivial' : 'pw_fehler'); return }
+      cfg.passwort = (await r.json()).passwort; pwIn.value = ''; pwMeldung = meldung.textContent = tx(cfg.passwort ? 'pw_gespeichert' : 'pw_entfernt'); zeigeSchutz()
+    }
+    pwSet.addEventListener('click', e => { e.stopPropagation(); const pw = pwIn.value; if ([...pw].length < 6 || [...pw].length > 128) { pwMeldung = meldung.textContent = tx('pw_laenge'); pwIn.focus(); return }
+      if (cfg.passwort && !confirm(tx('pw_aendern_frage'))) return
+      sende(pw)
+    })
+    pwIn.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); pwSet.click() } })
+    pwDel.addEventListener('click', e => { e.stopPropagation(); sende('') })
+    pwRow.append(pwSet, pwDel); schutz.append(sh, stand, pwLabel, pwIn, zeigen, pwRow, meldung, hinweis); zeigeSchutz()
+    box.appendChild(schutz)
+    // Besitz-Link; mit Anmeldung über die Lernplattform hängt der Besitz am Konto, nicht am Browser
+    if (!cfg.login) box.appendChild(besitzBereich())
+    usersPopup.appendChild(box)
   }
   for (const u of users) { const el = document.createElement('div'); el.className = 'user'; el.append(avatarEl(u, 28), document.createTextNode(u.name || tx('gast'))); usersPopup.appendChild(el) }
   if (cfg.readonly) { const ro = document.createElement('span'); ro.textContent = tx('nur_lesen'); ro.className = 'warn ro'; if (!fl.querySelector('.ro')) fl.appendChild(ro) }
 }
 provider.on('status', renderStatus)
+
+function besitzBereich() {
+  // aufklappbar, damit das Popup klein bleibt; selten gebraucht
+  const b = document.createElement('details'); b.className = 'schutz besitz'; b.open = besitzOffen || !!besitzAnzeige
+  b.addEventListener('toggle', () => { besitzOffen = b.open })
+  const h = document.createElement('summary'); h.textContent = tx('besitz')
+  const erkl = document.createElement('p'); erkl.className = 'exp'; erkl.textContent = tx('besitz_erklaerung')
+  const row = document.createElement('div'); row.className = 'actions'
+  const neu = document.createElement('button'); neu.type = 'button'; neu.textContent = tx(cfg.besitzLink ? 'besitz_neu' : 'besitz_erstellen')
+  const weg = document.createElement('button'); weg.type = 'button'; weg.textContent = tx('besitz_widerrufen'); weg.hidden = !cfg.besitzLink
+  const meldung = document.createElement('p'); meldung.id = 'besitz-meldung'; meldung.className = 'exp'; meldung.setAttribute('role', 'status')
+  b.append(h, erkl)
+  if (besitzAnzeige && besitzAnzeige.link) {
+    const lab = document.createElement('label'); lab.htmlFor = 'besitz-link'; lab.textContent = tx('besitz_link')
+    const feld = document.createElement('input'); feld.type = 'text'; feld.id = 'besitz-link'; feld.readOnly = true; feld.value = besitzAnzeige.link; feld.setAttribute('aria-describedby', 'besitz-meldung')
+    const kopie = document.createElement('button'); kopie.type = 'button'; kopie.textContent = tx('kopieren')
+    kopie.addEventListener('click', async e => {
+      e.stopPropagation()
+      try { await navigator.clipboard.writeText(feld.value); meldung.textContent = tx('kopiert') } catch { feld.select() }
+    })
+    b.append(lab, feld)
+    row.append(kopie)
+  }
+  meldung.textContent = besitzAnzeige ? besitzAnzeige.text : ''
+  const sende = async widerrufen => {
+    const r = await fetch(`${cfg.basePath}/p/${encodeURIComponent(cfg.urlId)}/besitzlink`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ widerrufen }) }).catch(() => null)
+    if (!r || !r.ok) { besitzAnzeige = { text: tx('pw_fehler') }; renderStatus(); return }
+    const j = await r.json()
+    cfg.besitzLink = !widerrufen
+    besitzAnzeige = widerrufen ? { text: tx('besitz_widerrufen_ok') } : { link: `${location.origin}${cfg.basePath}/p/${encodeURIComponent(cfg.urlId)}/besitz#${j.geheimnis}`, text: tx('besitz_einmal') }
+    renderStatus()
+    document.getElementById(widerrufen ? 'besitz-meldung' : 'besitz-link')?.focus()
+  }
+  neu.addEventListener('click', e => { e.stopPropagation(); if (cfg.besitzLink && !confirm(tx('besitz_frage'))) return; sende(false) })
+  weg.addEventListener('click', e => { e.stopPropagation(); sende(true) })
+  row.append(neu, weg)
+  b.append(row, meldung)
+  return b
+}
+// Passwort geändert: Der Server lässt die Verbindung nicht mehr zu. Antwortet die Seite mit 403, erscheint ein
+// Hinweis mit „Neu laden“. Kein automatisches Neuladen: Ungespeicherter Text bleibt so zum Kopieren stehen.
+let zugangGeprueft = 0
+provider.on('status', async ({ status }) => {
+  if (status !== 'disconnected' || !cfg.free || Date.now() - zugangGeprueft < 5000) return
+  zugangGeprueft = Date.now()
+  const r = await fetch(location.href, { method: 'HEAD', cache: 'no-store' }).catch(() => null)
+  if (!r || r.status !== 403 || document.getElementById('zugang-hinweis')) return
+  const h = document.createElement('div'); h.id = 'zugang-hinweis'; h.className = 'leiste'; h.setAttribute('role', 'alert')
+  const p = document.createElement('p'); p.textContent = tx('pw_gewechselt')
+  const b = document.createElement('button'); b.type = 'button'; b.textContent = tx('neu_laden'); b.addEventListener('click', () => location.reload())
+  h.append(p, b); document.body.prepend(h)
+})
 renderStatus()
+
+// Einmal je Pad und Browser: Wer ein offenes Pad besitzt, erfährt, wo sich ein Passwort setzen lässt.
+function schutzTipp() {
+  if (!cfg.owner || !cfg.free || cfg.readonly || cfg.passwort) return
+  const key = 'nextpad.schutztipp.' + cfg.urlId
+  try { if (localStorage.getItem(key)) return; localStorage.setItem(key, '1') } catch { return }
+  const h = document.createElement('div'); h.id = 'schutz-tipp'; h.className = 'leiste'; h.setAttribute('role', 'status')
+  const p = document.createElement('p'); p.textContent = tx('schutz_tipp')
+  const setzen = document.createElement('button'); setzen.type = 'button'; setzen.textContent = tx('schutz_tipp_setzen')
+  const zu = document.createElement('button'); zu.type = 'button'; zu.textContent = tx('schliessen')
+  setzen.addEventListener('click', e => { e.stopPropagation(); h.remove(); if (usersPopup.hidden) togglePopup(usersPopup); document.getElementById('pw-neu')?.focus() })
+  zu.addEventListener('click', () => h.remove())
+  h.append(p, setzen, zu); document.body.prepend(h)
+}
+schutzTipp()
 
 // Markdown-Dialog: Text eingeben oder einfügen, wird an der Cursorposition als formatierter Text übernommen
 function openMarkdownDialog() {

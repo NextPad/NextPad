@@ -12,6 +12,7 @@ mod live;
 mod lti;
 mod migrate;
 mod net;
+mod passwort;
 mod pdf;
 mod qr;
 mod retention;
@@ -101,6 +102,10 @@ async fn main() -> anyhow::Result<()> {
         .route("/verlaengern", get(web::extend_page).post(web::extend_by_token))
         .route("/p/{id}/extend", axum::routing::post(web::extend_owner))
         .route("/p/{id}/delete", axum::routing::post(web::delete_owner))
+        .route("/p/{id}/passwort", axum::routing::post(web::set_password))
+        .route("/p/{id}/besitzlink", axum::routing::post(web::set_owner_link))
+        .route("/p/{id}/besitz", get(web::owner_link_page).post(web::claim_owner))
+        .route("/p/{id}/entsperren", axum::routing::post(web::unlock))
         .route("/lti/login", get(lti::login).post(lti::login))
         .route("/lti/launch", axum::routing::post(lti::launch))
         .route("/lti/jwks", get(lti::jwks))

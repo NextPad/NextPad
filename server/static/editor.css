@@ -46,8 +46,8 @@ body { font-family: Quicksand, Cantarell, "Open Sans", "Helvetica Neue", sans-se
 #statusbar { display: flex; justify-content: space-between; align-items: center; background: var(--super-light); border-top: 1px solid var(--border); padding: 0 5px; min-height: 38px; position: relative; }
 #statusbar .conn { font-size: 12px; margin-left: 8px; } #statusbar .ok { color: #2a7a2a; } #statusbar .warn { color: #e60028; margin-left: 8px; font-size: 12px; }
 #statusbar .users { background: #e9e2f3; color: var(--super-dark); padding: 0 10px; font-size: 13px; } #statusbar .users .count { margin-left: 4px; }
-.popup { position: absolute; bottom: 42px; left: 8px; background: var(--super-light); border: 1px solid var(--border); border-radius: 3px; box-shadow: 0 2px 12px #0002; padding: 12px 14px; min-width: 220px; z-index: 5; }
-.popup.right { left: auto; right: 8px; }
+.popup { max-height: calc(100dvh - 60px); overflow-y: auto; position: absolute; bottom: 42px; left: 8px; background: var(--super-light); border: 1px solid var(--border); border-radius: 3px; box-shadow: 0 2px 12px #0002; padding: 12px 14px; min-width: 220px; z-index: 5; }
+.popup.right { left: auto; right: 8px; max-width: min(28rem, calc(100vw - 16px)); box-sizing: border-box; }
 .popup h2 { font-size: 13px; font-weight: 700; margin: 0 0 8px; color: var(--dark); text-transform: uppercase; letter-spacing: .03em; }
 .popup a { display: flex; align-items: center; gap: 8px; padding: 6px 4px; color: var(--super-dark); text-decoration: none; border-radius: 3px; } .popup a:hover { background: var(--light); }
 .popup .user { display: flex; align-items: center; gap: 8px; padding: 4px 2px; } .popup .swatch { width: 14px; height: 14px; border-radius: 50%; border: 1px solid #0002; }
@@ -92,6 +92,24 @@ body { font-family: Quicksand, Cantarell, "Open Sans", "Helvetica Neue", sans-se
 .popup .owner .actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .popup .owner button { font: inherit; font-size: 12px; padding: 6px 10px; border: 1px solid var(--middle); background: var(--super-light); cursor: pointer; border-radius: 3px; }
 .popup .owner button.danger { color: #b00020; border-color: #e3a3ad; }
+.popup .owner .schutz { border-top: 1px solid var(--border); margin-top: 10px; padding-top: 8px; }
+.popup .owner .schutz label { display: block; font-size: 12px; margin-bottom: 4px; }
+.popup .owner .schutz input { font: inherit; box-sizing: border-box; width: 100%; min-height: 32px; padding: 5px 8px; margin-bottom: 6px; border: 1px solid var(--middle); border-radius: 3px; }
+.popup .owner .schutz .exp:empty { display: none; }
+.popup .owner .actions + .exp { margin-top: 6px; }
+.popup .owner details.besitz summary { font-size: 13px; font-weight: 600; cursor: pointer; min-height: 32px; display: flex; align-items: center; }
+.popup .owner details.besitz[open] summary { margin-bottom: 4px; }
+.popup .owner details.besitz summary { list-style: none; gap: 6px; }
+.popup .owner details.besitz summary::-webkit-details-marker { display: none; }
+.popup .owner details.besitz summary::before { content: "▸"; }
+.popup .owner details.besitz[open] summary::before { content: "▾"; }
+.popup .owner .schutz label.zeigen { display: flex; align-items: center; gap: 6px; min-height: 32px; margin: 0 0 6px; }
+.popup .owner .schutz label.zeigen input { width: auto; min-height: 0; margin: 0; }
+.users .schloss { margin-left: 3px; vertical-align: -1px; }
+.leiste { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px max(16px, env(safe-area-inset-left, 0px)); background: var(--super-light); color: inherit; border-bottom: 2px solid var(--middle); }
+.leiste p { margin: 0; flex: 1 1 20em; }
+.leiste button { font: inherit; min-height: 44px; padding: 6px 14px; border: 1px solid var(--middle); background: var(--light); color: inherit; cursor: pointer; border-radius: 3px; }
+.theme-hsd .popup .owner .schutz input { border-radius: 0; }
 .theme-hsd .popup .owner button { border-radius: 0; }
 .popup .login p { margin: 0; font-size: 12px; color: var(--dark); }
 .popup .login form { margin: 0; }
@@ -120,7 +138,9 @@ html[data-theme="dark"] #editor .ProseMirror > :not(ul):not(ol)::before, html[da
 html[data-theme="dark"] .popup { box-shadow: 0 2px 12px #000a; }
 html[data-theme="dark"] .popup .owner button.danger { color: #ff8a9a; border-color: #7a3a44; }
 html[data-theme="dark"] #mddialog { background: #1e1e1e; color: #ececec; }
-html[data-theme="dark"] #mddialog textarea, html[data-theme="dark"] .popup input.myname { background: #121212; color: #ececec; }
+html[data-theme="dark"] #mddialog textarea { background: #121212; color: #ececec; }
+/* Namensfeld trägt die helle Autorenfarbe als Hintergrund, auch im Dunkelmodus: dunkle Schrift */
+html[data-theme="dark"] .popup input.myname { color: #1e1e1e; }
 /* Autorenfarben sind helle Pastelltöne: darauf dunkle Schrift, ohne Farben wieder helle */
 html[data-theme="dark"] #editor:not(.no-colors) span.author[style*="background"] { color: #111; }
 html[data-theme="dark"] ul[data-type="taskList"] li > label input, html[data-theme="dark"] ul[data-type="taskList"] li > input { accent-color: #ececec; }

@@ -1,6 +1,9 @@
 // Startseite: Prüfung des Pad-Namens vor dem Absenden, zuletzt geöffnete Pads (nur in diesem Browser).
 (() => {
   const base = document.documentElement.dataset.base || ''
+  // Besitz-Link: Geheimnis aus dem Fragment ins Formular, dann aus der Adresszeile entfernen
+  const besitz = document.getElementById('besitz-geheimnis')
+  if (besitz) { besitz.value = location.hash.slice(1); history.replaceState(null, '', location.pathname) }
   // Texte in der Sprache der Seite (Server, Block #start-texte); Platzhalter {name}
   let T = {}
   try { T = JSON.parse(document.getElementById('start-texte')?.textContent || '{}') } catch { T = {} }
