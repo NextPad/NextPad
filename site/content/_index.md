@@ -63,6 +63,7 @@ ops_text = "Dieser Teil richtet sich an alle, die NextPad an ihrer Einrichtung b
 cards = [
   { title = "Keine fremden Dienste", text = "Keine Tracker, keine Schriften oder Skripte von Dritten. Alles, was der Browser lädt, kommt vom eigenen Server." },
   { title = "Eigene Pads löschen", text = "Wer ein freies Pad anlegt, besitzt es und kann es jederzeit löschen oder um ein Jahr verlängern. Auf Wunsch löscht NextPad ungenutzte Pads nach einer einstellbaren Frist, ab Werk ist sie aus. Wer über Moodle oder ILIAS angemeldet ist, bekommt vorher eine Mail mit dem Inhalt. Pads in Kursen folgen dem Kurs." },
+  { title = "Pads mit Passwort", text = "Wer ein freies Pad besitzt, kann es mit einem Passwort schützen. Der Server speichert davon nur einen Argon2id-Hash und bremst Rateversuche. Das Passwort hält Fremde fern, verschlüsselt den Inhalt aber nicht: Wer den Server betreibt, kann ihn lesen. Nur so bleiben PDF-Export und die Mail vor dem Löschen möglich." },
   { title = "Kleine Angriffsfläche", text = "Ein Programm ohne Node.js und ohne Plugins zur Laufzeit. Pad-Inhalte bleiben Daten, die Anmeldung über Moodle nimmt nur RS256-signierte Tokens an." },
   { title = "Technik", text = "Ein Programm in Rust mit SQLite. Gemeinsames Schreiben über Yjs (CRDT) und den Editor TipTap, das Zeichenbrett ist Excalidraw über denselben Yjs-Server." },
   { title = "Einfach zu betreiben", text = "SQLite im Datenverzeichnis, Konfiguration über Umgebungsvariablen. Reverse-Proxy mit TLS davor, fertig." },

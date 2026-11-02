@@ -63,6 +63,7 @@ ops_text = "This part is for everyone who runs NextPad at their institution or d
 cards = [
   { title = "No third-party services", text = "No trackers, no fonts or scripts from others. Everything the browser loads comes from your own server." },
   { title = "Deleting own pads", text = "Whoever creates a free pad owns it and can delete it or extend it by a year at any time. If wanted, NextPad deletes unused pads after an adjustable period; it is off by default. People signed in through Moodle or ILIAS get an email with the content first. Pads in courses follow the course." },
+  { title = "Pads with a password", text = "Whoever owns a free pad can protect it with a password. The server stores only an Argon2id hash of it and slows down guessing. The password keeps strangers out but does not encrypt the content: whoever runs the server can read it. Only this way PDF export and the email before deletion stay possible." },
   { title = "Small attack surface", text = "One program without Node.js and without runtime plugins. Pad content stays data, sign-in through Moodle only accepts RS256-signed tokens." },
   { title = "Technology", text = "One program in Rust with SQLite. Collaborative writing with Yjs (CRDT) and the TipTap editor; the drawing board is Excalidraw over the same Yjs server." },
   { title = "Easy to run", text = "SQLite in the data directory, configuration through environment variables. A reverse proxy with TLS in front, done." },
