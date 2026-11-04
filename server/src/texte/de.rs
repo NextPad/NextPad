@@ -161,6 +161,7 @@ pub const TEXTE: &[(&str, &str)] = &[
     ("editor.stil", "Stil"),
     ("editor.normal", "Normal"),
     ("editor.ueberschrift", "Überschrift {n}"),
+    ("editor.code", "Code"),
     ("editor.markdown", "Markdown-Text einfügen (auch per Einfügen aus der Zwischenablage)"),
     ("editor.bewertung", "Bewertung einfügen (Daumen hoch / runter)"),
     ("editor.inhalt_umschalten", "Inhaltsverzeichnis ein/aus"),

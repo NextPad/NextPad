@@ -60,6 +60,14 @@ Ohne Namen entsteht ein Pad mit Zufallsnamen. Die Vorlagen unter **Mit Vorlage b
 2. **Link kopieren** wählen und den Link weitergeben, etwa im Chat einer Videokonferenz oder in einer Mail an die Gruppe. Auf dem Telefon gibt es zusätzlich **Über das Gerät teilen**.
 3. Unter **Aktuelles Pad exportieren** den Text als HTML, Markdown, reinen Text oder PDF sichern oder drucken.
 
+## Code einfügen
+
+1. Am Zeilenanfang drei Backticks tippen (` ``` `), auf Wunsch mit Sprache wie ` ```python `, dann Leertaste oder Enter. Alternativ in der Auswahl **Absatzstil** den Eintrag **Code** wählen.
+2. Code tippen oder einfügen. Eingefügter Text bleibt im Codeblock, wie er ist. Enter macht eine neue Zeile, Tab rückt um zwei Leerzeichen ein, Umschalt+Tab wieder aus.
+3. Zum Verlassen dreimal Enter drücken oder im Absatzstil **Normal** wählen. Wer mit der Tastatur zum nächsten Bedienelement will, drückt Esc und dann Tab.
+
+Die Sprache steht im Export als HTML und Markdown mit. Farbig hervorgehoben wird der Code nicht.
+
 ## Mit Passwort schützen
 
 1. Unten rechts die Zahl wählen. Unter **Mein Pad** steht der Bereich **Schutz**.

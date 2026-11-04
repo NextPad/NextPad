@@ -17,6 +17,8 @@ const LIB_BOLD: &[u8] = include_bytes!("../static/fonts/LiberationSans-Bold.ttf"
 const LIB_ITALIC: &[u8] = include_bytes!("../static/fonts/LiberationSans-Italic.ttf");
 const LIB_BOLDITALIC: &[u8] = include_bytes!("../static/fonts/LiberationSans-BoldItalic.ttf");
 // Emoji (👍, 👎 der Bewertung und alles andere, was Arial nicht hat), einfarbig: Noto Emoji, OFL
+/// Festbreite für Codeblöcke, Liberation Mono 2.1.5 unverändert
+const LIB_MONO: &[u8] = include_bytes!("../static/fonts/LiberationMono-Regular.ttf");
 const EMOJI: &[u8] = include_bytes!("../static/fonts/NotoEmoji.ttf");
 
 struct Fonts { book: LazyHash<FontBook>, fonts: Vec<Font> }
@@ -31,7 +33,7 @@ fn fonts(theme_dir: Option<&std::path::Path>) -> &'static Fonts {
     static F: OnceLock<Fonts> = OnceLock::new();
     F.get_or_init(|| {
         let mut fonts: Vec<Font> = Vec::new();
-        for data in [LIB_REGULAR, LIB_BOLD, LIB_ITALIC, LIB_BOLDITALIC, EMOJI] { fonts.extend(Font::iter(Bytes::new(data))); }
+        for data in [LIB_REGULAR, LIB_BOLD, LIB_ITALIC, LIB_BOLDITALIC, LIB_MONO, EMOJI] { fonts.extend(Font::iter(Bytes::new(data))); }
         if let Some(dir) = theme_dir {
             if let Ok(rd) = std::fs::read_dir(dir) {
                 for e in rd.flatten() {
@@ -66,7 +68,10 @@ fn file_id(path: &str) -> FileId {
 }
 
 pub struct Options<'a> {
+    /// HSD-Corporate-Design: HSD Sans für Ebene 1 und Schriften aus dem Theme-Ordner, nur beim Theme `hsd`
     pub hsd: bool,
+    /// Logo der Einrichtung und Akzentlinie im Kopf (Themes mit HSD-Rahmen: hsd, nextpad, rund)
+    pub rahmen: bool,
     pub theme_dir: Option<&'a std::path::Path>,
     /// Logo der Einrichtung mit Bildart (aus look::logo), Akzentfarbe und Produktname
     pub logo: Option<(Vec<u8>, &'static str)>,
@@ -81,11 +86,11 @@ pub struct Options<'a> {
     pub sprache: crate::texte::Sprache,
 }
 
-/// Vorlage: HSD (Logo, rote Linie, Arial, HSD Sans nur für Ebene 1 ab 20 pt) oder neutral.
+/// Vorlage: HSD (Logo, rote Linie, Arial, HSD Sans nur für Ebene 1 ab 20 pt), mit Rahmen (Logo und Akzent der Einrichtung, ohne HSD Sans) oder neutral.
 fn template(o: &Options, logo: Option<&str>, body: &str) -> String {
     use crate::render::typst_str as q;
-    let head_left = match logo { Some(path) if o.hsd => format!("image({}, height: 11mm)", q(path)), _ => format!("text(size: 13pt, weight: \"bold\")[#{}]", q(o.product)) };
-    let accent = if o.hsd { format!("rgb({})", q(o.accent)) } else { "luma(160)".to_string() };
+    let head_left = match logo { Some(path) if o.rahmen => format!("image({}, height: 11mm)", q(path)), _ => format!("text(size: 13pt, weight: \"bold\")[#{}]", q(o.product)) };
+    let accent = if o.rahmen { format!("rgb({})", q(o.accent)) } else { "luma(160)".to_string() };
     let h1 = if o.hsd { "#show heading.where(level: 1): set text(font: (\"HSD Sans\", \"Arial\", \"Liberation Sans\", \"Noto Emoji\"), weight: \"regular\", size: 22pt)" } else { "#show heading.where(level: 1): set text(size: 20pt)" };
     let seite = q(crate::texte::t(o.sprache, "export.seite"));
     let von = q(crate::texte::t(o.sprache, "export.von"));
@@ -117,7 +122,7 @@ fn template(o: &Options, logo: Option<&str>, body: &str) -> String {
 pub fn pdf(o: &Options, body: &str) -> anyhow::Result<Vec<u8>> {
     let fonts = fonts(o.theme_dir);
     // WebP setzt Typst nicht sicher; dann der Produktname statt des Logos
-    let path = o.logo.as_ref().and_then(|(_, t)| match *t { "image/png" => Some("/logo.png"), "image/jpeg" => Some("/logo.jpg"), "image/svg+xml" => Some("/logo.svg"), _ => None }).filter(|_| o.hsd);
+    let path = o.logo.as_ref().and_then(|(_, t)| match *t { "image/png" => Some("/logo.png"), "image/jpeg" => Some("/logo.jpg"), "image/svg+xml" => Some("/logo.svg"), _ => None }).filter(|_| o.rahmen);
     let logo = path.and_then(|p| o.logo.as_ref().map(|(b, _)| (file_id(p), Bytes::new(b.clone()))));
     let main = file_id("/main.typ");
     let text = template(o, path, body);
@@ -136,7 +141,7 @@ mod tests {
     use super::*;
     #[test]
     fn satz_mit_sonderzeichen() {
-        let o = Options { hsd: true, theme_dir: None, logo: None, accent: "#e60028", product: "NextPad", header: "NextPad · Stand 24.10.2026", footer: "Pad \"x\" #1", title: "Test", sprache: crate::texte::Sprache::De };
+        let o = Options { hsd: true, rahmen: true, theme_dir: None, logo: None, accent: "#e60028", product: "NextPad", header: "NextPad · Stand 24.10.2026", footer: "Pad \"x\" #1", title: "Test", sprache: crate::texte::Sprache::De };
         let body = format!("#heading(level: 1)[#{}]\n\n#{} #strong[#{}]\n\n- #{}\n", crate::render::typst_str("Überschrift #1 *x*"), crate::render::typst_str("Text mit \\ und \" und $ und ] und <a>"), crate::render::typst_str("fett"), crate::render::typst_str("Punkt"));
         let p = pdf(&o, &body).expect("PDF");
         assert!(p.starts_with(b"%PDF"));
@@ -144,14 +149,25 @@ mod tests {
     #[test]
     fn satz_mit_svg_logo_und_akzent() {
         let svg = include_bytes!("../static/logo.svg").to_vec();
-        let o = Options { hsd: true, theme_dir: None, logo: Some((svg, "image/svg+xml")), accent: "#007a96", product: "Pads", header: "Kopf", footer: "Fuß", title: "Test", sprache: crate::texte::Sprache::De };
+        let o = Options { hsd: true, rahmen: true, theme_dir: None, logo: Some((svg, "image/svg+xml")), accent: "#007a96", product: "Pads", header: "Kopf", footer: "Fuß", title: "Test", sprache: crate::texte::Sprache::De };
         assert!(pdf(&o, "Text").expect("PDF").starts_with(b"%PDF"));
     }
     #[test]
     fn emoji_aus_eingebauter_schrift() {
-        let o = Options { hsd: true, theme_dir: None, logo: None, accent: "#e60028", product: "NextPad", header: "Kopf", footer: "Fuß", title: "Test", sprache: crate::texte::Sprache::De };
+        let o = Options { hsd: true, rahmen: true, theme_dir: None, logo: None, accent: "#e60028", product: "NextPad", header: "Kopf", footer: "Fuß", title: "Test", sprache: crate::texte::Sprache::De };
         let body = format!("#heading(level: 1)[#{}]\n\n#{}\n", crate::render::typst_str("Abstimmung 👍"), crate::render::typst_str("Stimmen: 👍 15 · 👎 2"));
         let p = pdf(&o, &body).expect("PDF");
         assert!(p.windows(9).any(|w| w == b"NotoEmoji"), "Noto Emoji fehlt im PDF");
+    }
+
+    /// HSD Sans nur beim Theme hsd; Rahmen ohne HSD zeigt Logo und Akzent, aber nicht die Hausschrift.
+    #[test]
+    fn hausschrift_nur_mit_hsd() {
+        let mk = |hsd, rahmen| Options { hsd, rahmen, theme_dir: None, logo: None, accent: "#007a96", product: "NextPad", header: "Kopf", footer: "Fuß", title: "Test", sprache: crate::texte::Sprache::De };
+        assert!(template(&mk(true, true), Some("/logo.png"), "x").contains("HSD Sans"));
+        let t = template(&mk(false, true), Some("/logo.png"), "x");
+        assert!(!t.contains("HSD Sans") && t.contains("image(\"/logo.png\"") && t.contains("#007a96"), "{t}");
+        let n = template(&mk(false, false), Some("/logo.png"), "x");
+        assert!(!n.contains("HSD Sans") && !n.contains("image(") && n.contains("luma(160)"), "{n}");
     }
 }

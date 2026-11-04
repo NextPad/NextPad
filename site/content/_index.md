@@ -92,7 +92,7 @@ imgs = [
 tag = "Pad"
 title = "Schreiben mit Zeitleiste"
 text = ["Alle schreiben gleichzeitig im selben Text, jede Person in ihrer Farbe. Die Zeitleiste spielt die Entstehung Schritt für Schritt ab."]
-items = ["Markdown beim Tippen und Einfügen: <code>#</code> für Überschriften, <code>-</code> für Listen, <code>- [ ]</code> für Kästchen, Tabellen mit <code>|</code>", "Daumen hoch und runter im Text, eine Stimme je Person", "Inhaltsverzeichnis am Rand oder als Block im Text", "Zeitleiste mit Zeit und Autor je Schritt, frühere Fassung wiederherstellen", "Export als HTML, Markdown, Text und PDF"]
+items = ["Markdown beim Tippen und Einfügen: <code>#</code> für Überschriften, <code>-</code> für Listen, <code>- [ ]</code> für Kästchen, Tabellen mit <code>|</code>, Codeblöcke mit <code>```</code>", "Daumen hoch und runter im Text, eine Stimme je Person", "Inhaltsverzeichnis am Rand oder als Block im Text", "Zeitleiste mit Zeit und Autor je Schritt, frühere Fassung wiederherstellen", "Export als HTML, Markdown, Text und PDF"]
 imgs = [{ src = "zeitleiste.webp", w = 1600, h = 1000, alt = "Zeitleiste über dem Pad: Der Schieberegler steht kurz vor dem Ende, Jonas’ Satz ist erst halb geschrieben." }]
 
 [[extra.features]]

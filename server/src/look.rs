@@ -188,6 +188,11 @@ fn sniff(b: &[u8], svg_ok: bool) -> Option<&'static str> {
 
 /// Logo nach Einstellung: eigenes Bild, Vorgabe aus NEXTPAD_THEME_DIR oder keins.
 pub fn logo(state: &AppState) -> Option<(Vec<u8>, &'static str)> { image(state, get(state).logo, "logo", "logo.png", true) }
+#[cfg(feature = "pdf")]
+/// Nur ein selbst hochgeladenes Logo, nie das aus dem Theme-Ordner (PDF bei den Themes nextpad und rund).
+pub fn own_logo(state: &AppState) -> Option<(Vec<u8>, &'static str)> {
+    if get(state).logo == Source::Eigen { image(state, Source::Eigen, "logo", "logo.png", true) } else { None }
+}
 pub fn background(state: &AppState) -> Option<(Vec<u8>, &'static str)> { image(state, get(state).background, "hintergrund", "background.jpg", false) }
 fn image(state: &AppState, src: Source, own: &str, default: &str, svg_ok: bool) -> Option<(Vec<u8>, &'static str)> {
     let b = match src {

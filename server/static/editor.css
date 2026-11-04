@@ -39,6 +39,10 @@ body { font-family: Quicksand, Cantarell, "Open Sans", "Helvetica Neue", sans-se
 #editor .ProseMirror li > p, #timeline .snapshot li > p, .print-view li > p { margin: 0; }
 #editor .ProseMirror li + li, #timeline .snapshot li + li, .print-view li + li { margin-top: 2px; }
 #editor .ProseMirror code { background: var(--light); padding: 0 .25em; border-radius: 2px; }
+/* Codeblock: Festbreite des Systems, kein Umbruch, waagerecht scrollbar */
+#editor .ProseMirror pre { background: var(--light); border: 1px solid var(--border); border-radius: 2px; padding: .6em .8em; margin: .6em 0; white-space: pre; font: 14px/1.45 ui-monospace, "Liberation Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace; tab-size: 2; }
+/* gescrollt wird im inneren code, sonst schneidet pre die Zeilennummer am Rand ab */
+#editor .ProseMirror pre code { display: block; overflow-x: auto; background: none; padding: 0; border-radius: 0; font: inherit; }
 #editor.no-colors span.author { background-color: transparent !important; }
 @media (max-width: 1000px) { :root { --gutter: 46px; } #editor .ProseMirror { padding-right: 16px; } }
 

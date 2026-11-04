@@ -60,6 +60,14 @@ Without a name, a pad with a random name is created. The templates under **Start
 2. Choose **Copy link** and pass the link on, for example in the chat of a video conference or in an email to the group. On a phone there is also **Share via device**.
 3. Under **Export this pad**, save the text as HTML, Markdown, plain text or PDF, or print it.
 
+## Insert code
+
+1. Type three backticks at the start of a line (` ``` `), optionally with a language such as ` ```python `, then Space or Enter. Alternatively choose **Code** in the **Paragraph style** menu.
+2. Type or paste code. Pasted text stays in the code block as it is. Enter starts a new line, Tab indents by two spaces, Shift+Tab outdents.
+3. To leave the block, press Enter three times or choose **Normal** as paragraph style. To move on to the next control with the keyboard, press Esc and then Tab.
+
+The language is kept in the HTML and Markdown export. The code is not highlighted in colour.
+
 ## Protect with a password
 
 1. Choose the number at the bottom right. Under **My pad** is the section **Protection**.

@@ -1161,7 +1161,11 @@ pub async fn pad_pdf(state: &Arc<AppState>, pad_id: &str, shown_id: &str, sp: Sp
     let res = tokio::task::spawn_blocking(move || {
         let look = crate::look::get(&st);
         let accent = look.palette().accent;
-        let o = crate::typeset::Options { hsd: theme_rahmen(&st), theme_dir: st.config.theme_dir.as_deref(), logo: crate::look::logo(&st), accent: &accent, product: look.product(), header: &header, footer: &footer, title: &title, sprache: sp };
+        // HSD-Design (Hausschrift, Schriften und Logo aus dem Theme-Ordner) nur beim Theme hsd;
+        // nextpad und rund tragen nur Logo und Akzent, die die Einrichtung selbst hinterlegt hat
+        let hsd = st.config.theme == "hsd";
+        let logo = if hsd { crate::look::logo(&st) } else { crate::look::own_logo(&st) };
+        let o = crate::typeset::Options { hsd, rahmen: theme_rahmen(&st), theme_dir: if hsd { st.config.theme_dir.as_deref() } else { None }, logo, accent: &accent, product: look.product(), header: &header, footer: &footer, title: &title, sprache: sp };
         crate::typeset::pdf(&o, &body)
     }).await.map_err(|e| anyhow::anyhow!("{e}"))?;
     match res {

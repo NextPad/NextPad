@@ -69,6 +69,29 @@ fn attr_string(out: Option<Out>) -> Option<String> {
     }
 }
 
+/// Sprache eines Codeblocks: nur kurze Namen aus Buchstaben, Ziffern und + # . _ -
+pub fn safe_lang(v: &str) -> Option<String> {
+    let v = v.trim();
+    (!v.is_empty() && v.len() <= 32 && v != "null" && v.chars().all(|c| c.is_ascii_alphanumeric() || "+#._-".contains(c))).then(|| v.to_ascii_lowercase())
+}
+
+fn code_lang<T: ReadTxn>(txn: &T, el: &XmlElementRef) -> Option<String> {
+    attr_string(el.get_attribute(txn, "language")).and_then(|v| safe_lang(&v))
+}
+
+/// Text eines Codeblocks ohne Marks (Autorenfarben bleiben im Editor, nicht im Export).
+fn code_text<T: ReadTxn>(txn: &T, el: &XmlElementRef) -> String {
+    let mut s = String::new();
+    for c in el.children(txn) {
+        match &c {
+            XmlOut::Text(t) => for d in t.diff(txn, YChange::identity) { if let Out::Any(Any::String(x)) = d.insert { s.push_str(&x); } },
+            XmlOut::Element(e) if e.tag().as_ref() == "hardBreak" => s.push('\n'),
+            _ => {}
+        }
+    }
+    s
+}
+
 /// Einrückstufe eines Absatzes oder einer Überschrift (0 bis 8), vom Editor als Attribut `indent` gesetzt.
 fn indent_level<T: ReadTxn>(txn: &T, el: &XmlElementRef) -> usize {
     attr_string(el.get_attribute(txn, "indent")).and_then(|n| n.parse::<usize>().ok()).unwrap_or(0).min(8)
@@ -185,7 +208,10 @@ fn element_html<T: ReadTxn>(txn: &T, el: &XmlElementRef, out: &mut String, depth
             out.push_str("</li>\n");
         }
         "blockquote" => { out.push_str("<blockquote>\n"); inner(txn, out, cx); out.push_str("</blockquote>\n"); }
-        "codeBlock" => { out.push_str("<pre><code>"); inner(txn, out, cx); out.push_str("</code></pre>\n"); }
+        "codeBlock" => {
+            match code_lang(txn, el) { Some(l) => out.push_str(&format!("<pre><code class=\"language-{l}\">")), None => out.push_str("<pre><code>") }
+            inner(txn, out, cx); out.push_str("</code></pre>\n");
+        }
         "table" => { cx.in_table += 1; out.push_str("<table>\n"); inner(txn, out, cx); out.push_str("</table>\n"); cx.in_table -= 1; }
         "tableRow" => { out.push_str("<tr>"); inner(txn, out, cx); out.push_str("</tr>\n"); }
         "tableHeader" | "tableCell" => {
@@ -400,7 +426,13 @@ fn block_md<T: ReadTxn>(txn: &T, toc: &str, node: &XmlOut, out: &mut String, dep
             }
             if depth == 0 { out.push('\n'); }
         }
-        "codeBlock" => { out.push_str("```\n"); out.push_str(&inline_md(txn, el)); out.push_str("\n```\n\n"); }
+        "codeBlock" => {
+            let code = code_text(txn, el);
+            let mut run = 0; let mut longest = 0;
+            for ch in code.chars() { if ch == '`' { run += 1; longest = longest.max(run); } else { run = 0; } }
+            let fence = "`".repeat((longest + 1).max(3));
+            out.push_str(&format!("{fence}{}\n{code}\n{fence}\n\n", code_lang(txn, el).unwrap_or_default()));
+        }
         "table" => {
             // GFM-Tabelle: erste Zeile ist der Kopf; mehrere Absätze einer Zelle mit <br>
             let rows: Vec<Vec<String>> = el.children(txn).map(|r| row_cells(txn, &r).iter().map(|(_, c)| {
@@ -559,9 +591,7 @@ fn block_typst<T: ReadTxn>(txn: &T, toc: &str, node: &XmlOut, out: &mut String, 
             if depth == 0 { out.push('\n'); }
         }
         "codeBlock" => {
-            let mut text = String::new();
-            for c in el.children(txn) { if let XmlOut::Text(t) = &c { text.push_str(&t.get_string(txn)); } }
-            out.push_str(&format!("#raw(block: true, {})\n\n", typst_str(&text)));
+            out.push_str(&format!("#raw(block: true, {})\n\n", typst_str(&code_text(txn, el))));
         }
         "horizontalRule" => out.push_str("#line(length: 100%, stroke: 0.5pt + luma(170))\n\n"),
         "table" => {
@@ -663,6 +693,31 @@ pub enum Block {
     Table { rows: Vec<Vec<(bool, Vec<Block>)>> },
     /// Inhaltsverzeichnis (Inhalt entsteht beim Anzeigen)
     Toc,
+    /// Codeblock: Sprache und Text, Marks nur Autor
+    Code { language: Option<String>, runs: Vec<(String, Marks)> },
+}
+
+/// Inhalt eines <pre>: Zeilenumbrüche bleiben, aus Marks bleibt nur der Autor.
+fn collect_pre(el: ElementRef, author: Option<&str>, runs: &mut Vec<(String, Marks)>) {
+    for child in el.children() {
+        match child.value() {
+            Node::Text(t) => if !t.text.is_empty() { runs.push((t.text.to_string(), Marks { author: author.map(str::to_string), ..Marks::default() })); },
+            Node::Element(e) if e.name().eq_ignore_ascii_case("br") => runs.push(("\n".into(), Marks { author: author.map(str::to_string), ..Marks::default() })),
+            Node::Element(e) => collect_pre(ElementRef::wrap(child).unwrap(), e.attr("data-author").or(author), runs),
+            _ => {}
+        }
+    }
+}
+
+fn pre_block(el: ElementRef) -> Block {
+    let lang_of = |e: &scraper::node::Element| e.attr("class").and_then(|c| c.split_whitespace().find_map(|k| k.strip_prefix("language-").or_else(|| k.strip_prefix("lang-")).and_then(safe_lang)));
+    let language = lang_of(el.value()).or_else(|| el.children().filter_map(ElementRef::wrap).find(|c| c.value().name().eq_ignore_ascii_case("code")).and_then(|c| lang_of(c.value())));
+    let mut runs = Vec::new();
+    collect_pre(el, el.value().attr("data-author"), &mut runs);
+    // ein Umbruch am Ende stammt vom Export, nicht vom Inhalt
+    if let Some((s, _)) = runs.last_mut() { if s.ends_with('\n') { s.pop(); } }
+    runs.retain(|(s, _)| !s.is_empty());
+    Block::Code { language, runs }
 }
 
 fn style_props(style: &str) -> (Option<String>, Option<String>) {
@@ -799,7 +854,8 @@ fn parse_block(el: ElementRef, marks: &Marks) -> Vec<Block> {
                     let mut item = Vec::new();
                     if !runs.is_empty() { item.push(Block::Para { align: None, indent: 0, runs }); }
                     item.extend(inner);
-                    if item.is_empty() { item.push(Block::Para { align: None, indent: 0, runs: vec![] }); }
+                    // Listeneintrag beginnt mit einem Absatz (TipTap: "paragraph block*")
+                    if item.is_empty() || matches!(item.first(), Some(Block::Code { .. })) { item.insert(0, Block::Para { align: None, indent: 0, runs: vec![] }); }
                     items.push((checked, item));
                 }
                 blocks.push(Block::TaskList { items });
@@ -815,7 +871,8 @@ fn parse_block(el: ElementRef, marks: &Marks) -> Vec<Block> {
                     let mut item = Vec::new();
                     if !runs.is_empty() { item.push(Block::Para { align: None, indent: 0, runs }); }
                     item.extend(inner);
-                    if item.is_empty() { item.push(Block::Para { align: None, indent: 0, runs: vec![] }); }
+                    // Listeneintrag beginnt mit einem Absatz (TipTap: "paragraph block*")
+                    if item.is_empty() || matches!(item.first(), Some(Block::Code { .. })) { item.insert(0, Block::Para { align: None, indent: 0, runs: vec![] }); }
                     items.push(item);
                 }
             }
@@ -846,10 +903,7 @@ fn parse_block(el: ElementRef, marks: &Marks) -> Vec<Block> {
             if !rows.is_empty() { blocks.push(Block::Table { rows }); }
         }
         "nav" if el.value().attr("data-type") == Some("toc") => blocks.push(Block::Toc),
-        "pre" => {
-            let text = el.text().collect::<String>();
-            blocks.push(Block::Para { align: None, indent: 0, runs: vec![(text, Marks { code: true, ..marks.clone() })] });
-        }
+        "pre" => blocks.push(pre_block(el)),
         _ => {
             let mut runs = Vec::new();
             let mut a = align;
@@ -921,6 +975,11 @@ fn write_block(txn: &mut TransactionMut, parent: &XmlElementRef, b: &Block) {
             write_rows(txn, &t, rows);
         }
         Block::Toc => { parent.push_back(txn, XmlElementPrelim::new("tableOfContents", Vec::<XmlIn>::new())); }
+        Block::Code { language, runs } => {
+            let c: XmlElementRef = parent.push_back(txn, XmlElementPrelim::new("codeBlock", Vec::<XmlIn>::new()));
+            if let Some(l) = language { c.insert_attribute(txn, "language", Any::from(l.as_str())); }
+            write_runs(txn, &c, runs);
+        }
     }
 }
 
@@ -972,6 +1031,11 @@ fn write_block_root(txn: &mut TransactionMut, frag: &XmlFragmentRef, b: &Block) 
             write_rows(txn, &t, rows);
         }
         Block::Toc => { frag.push_back(txn, XmlElementPrelim::new("tableOfContents", Vec::<XmlIn>::new())); }
+        Block::Code { language, runs } => {
+            let c: XmlElementRef = frag.push_back(txn, XmlElementPrelim::new("codeBlock", Vec::<XmlIn>::new()));
+            if let Some(l) = language { c.insert_attribute(txn, "language", Any::from(l.as_str())); }
+            write_runs(txn, &c, runs);
+        }
     }
 }
 
@@ -1131,8 +1195,34 @@ mod tests {
         let doc = pad();
         let frag = doc.get_or_insert_xml_fragment(FRAGMENT);
         let body = { let txn = doc.transact(); to_typst(&txn, &frag) };
-        let o = crate::typeset::Options { hsd: false, theme_dir: None, logo: None, accent: "#e60028", product: "NextPad", header: "Test", footer: "pad", title: "Test", sprache: crate::texte::Sprache::De };
+        let o = crate::typeset::Options { hsd: false, rahmen: false, theme_dir: None, logo: None, accent: "#e60028", product: "NextPad", header: "Test", footer: "pad", title: "Test", sprache: crate::texte::Sprache::De };
         let pdf = crate::typeset::pdf(&o, &body).expect("Satz gelingt");
         assert!(pdf.starts_with(b"%PDF"));
+    }
+
+    /// Codeblock mit Sprache und Autor übersteht HTML-Import, alle Exporte und den Wiederimport.
+    #[test]
+    fn codeblock_roundtrip() {
+        let doc = Doc::new();
+        let frag = doc.get_or_insert_xml_fragment(FRAGMENT);
+        let html = r#"<html><body><p>davor</p><pre><code class="language-Python"><span data-author="a.1">if a &lt; b:
+    print("```")</span></code></pre><ul><li><pre>in der Liste</pre></li></ul></body></html>"#;
+        { let mut txn = doc.transact_mut(); set_html(&mut txn, &frag, html); }
+        let txn = doc.transact();
+        let h = to_html(&txn, &frag);
+        assert!(h.contains(r#"<pre><code class="language-python"><span data-author="a.1">if a &lt; b:"#), "{h}");
+        let md = to_markdown(&txn, &frag);
+        assert!(md.contains("````python\nif a < b:\n    print(\"```\")\n````"), "{md}");
+        assert!(to_text(&txn, &frag).contains("if a < b:\n    print(\"```\")\n"));
+        #[cfg(feature = "pdf")]
+        { let ty = to_typst(&txn, &frag); assert!(ty.contains("#raw(block: true") && !ty.contains("author"), "{ty}"); }
+        // eigener Export wieder eingelesen: gleiches HTML
+        let doc2 = Doc::new();
+        let frag2 = doc2.get_or_insert_xml_fragment(FRAGMENT);
+        { let mut t2 = doc2.transact_mut(); set_html(&mut t2, &frag2, &h); }
+        assert_eq!(to_html(&doc2.transact(), &frag2), h);
+        assert_eq!(safe_lang("c++"), Some("c++".into()));
+        assert_eq!(safe_lang("x\"><script>"), None);
+        assert_eq!(safe_lang("null"), None);
     }
 }

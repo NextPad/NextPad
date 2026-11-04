@@ -6,6 +6,28 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-11-04
+
+### Added
+
+- Code blocks: three backticks (optionally with a language, such as ```` ```python ````) or "Code" in the
+  paragraph style menu. Pasted text stays as it is inside a code block. Tab and Shift+Tab indent by two
+  spaces; Esc followed by Tab leaves the editor. Author colours stay visible. The language is kept in HTML
+  (`class="language-…"`) and Markdown. No syntax highlighting.
+- Import: `<pre>` in HTML (`setHTML`, restore from a Moodle backup) becomes a code block again instead of a
+  paragraph with inline code.
+
+### Changed
+
+- PDF: the HSD design (HSD Sans, fonts and logo from `NEXTPAD_THEME_DIR`) applies only with
+  `NEXTPAD_THEME=hsd`. With `nextpad` and `rund` the PDF shows only a logo uploaded under "Appearance" and the
+  accent colour, set in Liberation Sans. Before, these themes also used HSD Sans and the theme folder.
+
+### Fixed
+
+- Markdown export of code blocks no longer escapes `<`, `>` and `&`; the fence grows when the code contains
+  backticks. The PDF of a code block no longer shows formatting tags and uses Liberation Mono (now built in).
+
 ## [0.19.0] - 2026-11-02
 
 ### Upgrade

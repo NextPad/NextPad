@@ -8,6 +8,7 @@ import { TextStyle, Color, FontSize } from '@tiptap/extension-text-style'
 import TextAlign from '@tiptap/extension-text-align'
 import { Markdown } from '@tiptap/markdown'
 import { TaskList, TaskItem } from '@tiptap/extension-list'
+import CodeBlock from '@tiptap/extension-code-block'
 import { batchRemoteUpdates } from './yjs-batch.js'
 import { tableExtensions, addTableTools } from './table-tools.js'
 import { createRating, thumbSvg } from './rating.js'
@@ -118,7 +119,7 @@ const Indent = Extension.create({
   },
   addKeyboardShortcuts() {
     // in Listen und Tabellen gelten deren eigene Tab-Tasten
-    const free = ed => !inList(ed) && !ed.isActive('table')
+    const free = ed => !inList(ed) && !ed.isActive('table') && !ed.isActive('codeBlock')
     return {
       Tab: ({ editor: ed }) => free(ed) && ed.commands.indent(),
       'Shift-Tab': ({ editor: ed }) => free(ed) && ed.commands.outdent(),
@@ -141,11 +142,67 @@ const TaskShortcut = Extension.create({
   },
 })
 
+// Codeblock: ``` mit Sprache, Absatzstil „Code“; nur die Autorenfarbe als Mark.
+// Tab rückt die Zeilen um zwei Leerzeichen ein, Umschalt+Tab aus. Esc gibt Tab frei: die nächste
+// Tab-Taste verlässt den Editor (keine Tastaturfalle, WCAG 2.1.2).
+const CODE_INDENT = '  '
+let codeEscaped = false
+function codeLines(state) {
+  // Anfänge der markierten Zeilen im Codeblock als Dokumentpositionen
+  const { $from, from, to } = state.selection
+  const start = $from.start(), text = $from.parent.textContent
+  const a = from - start, b = to - start
+  const pos = [start + text.lastIndexOf('\n', a - 1) + 1]
+  for (let i = text.indexOf('\n', a); i !== -1 && i < b; i = text.indexOf('\n', i + 1)) pos.push(start + i + 1)
+  return pos
+}
+const NextCodeBlock = CodeBlock.extend({
+  marks: 'author',
+  addKeyboardShortcuts() {
+    const inCode = ed => ed.isActive('codeBlock')
+    return {
+      ...this.parent?.(),
+      Tab: ({ editor: ed }) => {
+        if (!inCode(ed)) return false
+        if (codeEscaped) { codeEscaped = false; return false }
+        const { state } = ed, { empty } = state.selection
+        if (empty) return ed.commands.insertContent(CODE_INDENT)
+        const tr = state.tr
+        for (const p of codeLines(state).reverse()) tr.insertText(CODE_INDENT, p)
+        ed.view.dispatch(tr); return true
+      },
+      'Shift-Tab': ({ editor: ed }) => {
+        if (!inCode(ed)) return false
+        if (codeEscaped) { codeEscaped = false; return false }
+        const { state } = ed, text = state.selection.$from.parent.textContent, start = state.selection.$from.start()
+        const tr = state.tr
+        for (const p of codeLines(state).reverse()) {
+          let n = 0; while (n < CODE_INDENT.length && text[p - start + n] === ' ') n++
+          if (n) tr.delete(p, p + n)
+        }
+        if (tr.docChanged) ed.view.dispatch(tr)
+        return true
+      },
+      Escape: ({ editor: ed }) => { if (!inCode(ed)) return false; codeEscaped = true; return true },
+    }
+  },
+  addProseMirrorPlugins() {
+    // jede andere Taste oder ein Klick hebt die Freigabe wieder auf
+    return [...(this.parent?.() || []), new Plugin({
+      key: new PluginKey('nextpad-code-escape'),
+      props: {
+        handleKeyDown(_view, ev) { if (ev.key !== 'Escape' && ev.key !== 'Tab' && ev.key !== 'Shift') codeEscaped = false; return false },
+        handleClick() { codeEscaped = false; return false },
+      },
+    })]
+  },
+}).configure({ HTMLAttributes: { spellcheck: 'false' } })
+
 const names = new Map()
 let showColors = true
 
 // Markdown als Eingabe: eingefügter Klartext, der nach Markdown aussieht, wird als Markdown gelesen.
-const looksLikeMarkdown = t => /^(#{1,6} |[-*+] |\d+\. |> |[-*+] \[[ xX]\] )/m.test(t) || /^\s*\|.*\|\s*\n\s*\|?\s*:?-{3,}/m.test(t) || /\*\*[^*]+\*\*|__[^_]+__|`[^`]+`|\[[^\]]+\]\([^)]+\)|~~[^~]+~~/.test(t)
+const looksLikeMarkdown = t => /^(#{1,6} |[-*+] |\d+\. |> |[-*+] \[[ xX]\] |```|~~~)/m.test(t) || /^\s*\|.*\|\s*\n\s*\|?\s*:?-{3,}/m.test(t) || /\*\*[^*]+\*\*|__[^_]+__|`[^`]+`|\[[^\]]+\]\([^)]+\)|~~[^~]+~~/.test(t)
 const MarkdownPaste = Extension.create({
   name: 'markdownPaste',
   addProseMirrorPlugins() {
@@ -155,7 +212,8 @@ const MarkdownPaste = Extension.create({
       props: {
         handlePaste(view, event) {
           const cd = event.clipboardData
-          if (!cd || cd.types.includes('text/html')) return false
+          // im Codeblock bleibt eingefügter Text, wie er ist
+          if (!cd || cd.types.includes('text/html') || ed.isActive('codeBlock')) return false
           const text = cd.getData('text/plain')
           if (!text || !looksLikeMarkdown(text)) return false
           ed.commands.insertContent(text, { contentType: 'markdown' })
@@ -204,7 +262,7 @@ const editor = new Editor({
     StarterKit.configure({ undoRedo: false, link: false, codeBlock: false, blockquote: false, horizontalRule: false, heading: { levels: [1, 2, 3, 4] } }),
     TextStyle, Color, FontSize,
     TextAlign.configure({ types: ['heading', 'paragraph'] }), Indent,
-    TaskList, TaskItem.configure({ nested: true }), TaskShortcut,
+    TaskList, TaskItem.configure({ nested: true }), TaskShortcut, NextCodeBlock,
     ...tableExtensions, TableOfContents,
     createRating({ ydoc, me: cfg.author.id, readonly: cfg.readonly }),
     Markdown, MarkdownPaste,
@@ -271,7 +329,7 @@ if (!cfg.readonly) {
   ibtn(menuLeft, I.alignR, tx('rechts'), () => editor.chain().setTextAlign('right').run(), () => editor.isActive({ textAlign: 'right' }))
   ibtn(menuLeft, I.alignJ, tx('blocksatz'), () => editor.chain().setTextAlign('justify').run(), () => editor.isActive({ textAlign: 'justify' }))
   sep(menuLeft)
-  select(menuLeft, tx('absatzstil'), tx('stil'), [['p', tx('normal')], ...[1, 2, 3, 4].map(n => [String(n), tx('ueberschrift', { n })])], v => v === 'p' ? editor.chain().setParagraph().run() : editor.chain().setHeading({ level: +v }).run())
+  select(menuLeft, tx('absatzstil'), tx('stil'), [['p', tx('normal')], ...[1, 2, 3, 4].map(n => [String(n), tx('ueberschrift', { n })]), ['code', tx('code')]], v => v === 'p' ? editor.chain().setParagraph().run() : v === 'code' ? editor.chain().setCodeBlock().run() : editor.chain().setHeading({ level: +v }).run())
   sep(menuLeft)
   ibtn(menuLeft, I.md, tx('markdown'), () => openMarkdownDialog())
   sep(menuLeft)

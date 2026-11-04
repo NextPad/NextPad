@@ -86,6 +86,7 @@ pruefe wiederherstelltest "$U"
 pruefe aufgabentest
 pruefe einruecktest
 pruefe markdowntest
+pruefe codetest
 pruefe guesttest
 pruefe passworttest
 pruefe tasklist "$U" "$NEXTPAD_KEY_FILE"

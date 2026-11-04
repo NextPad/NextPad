@@ -92,7 +92,7 @@ imgs = [
 tag = "Pad"
 title = "Writing with a timeline"
 text = ["Everyone writes in the same text at the same time, each person in their own colour. The timeline replays how the text came about step by step."]
-items = ["Markdown while typing and pasting: <code>#</code> for headings, <code>-</code> for lists, <code>- [ ]</code> for checkboxes, tables with <code>|</code>", "Thumbs up and down in the text, one vote per person", "Table of contents in the margin or as a block in the text", "Timeline with time and author per step, restore an earlier version", "Export as HTML, Markdown, text and PDF"]
+items = ["Markdown while typing and pasting: <code>#</code> for headings, <code>-</code> for lists, <code>- [ ]</code> for checkboxes, tables with <code>|</code>, code blocks with <code>```</code>", "Thumbs up and down in the text, one vote per person", "Table of contents in the margin or as a block in the text", "Timeline with time and author per step, restore an earlier version", "Export as HTML, Markdown, text and PDF"]
 imgs = [{ src = "zeitleiste.webp", w = 1600, h = 1000, alt = "Timeline above the pad: the slider is just before the end, Jonas’ sentence is only half written." }]
 
 [[extra.features]]
