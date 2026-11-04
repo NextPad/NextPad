@@ -6,6 +6,12 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+### Fixed
+
+- Timeline: marked as busy (`aria-busy`) while the history loads, so screen readers and tests wait for it.
+  Two browser tests read the slider too early on slow CI runners.
+- CI: actions for Node 24 (v7), runner pinned to `ubuntu-24.04`.
+
 ## [0.20.0] - 2026-11-04
 
 ### Added

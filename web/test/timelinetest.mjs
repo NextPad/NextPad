@@ -27,7 +27,7 @@ const hist = await (await fetch(`${base}/p/${encodeURIComponent(P)}/history`, { 
 check('Verlauf mit Schritten und Autor', hist.updates.length > 0 && !!hist.updates.at(-1)?.author, `updates ${hist.updates.length}, snapshots ${hist.snapshots.length}`)
 const pb = await open(await session('tl2', 'Zeit Ben'))
 await pb.click('button[title="Frühere Stände ansehen"]')
-await pb.waitForSelector('#timeline .tl-slider')
+await pb.waitForSelector('#timeline:not([aria-busy]) .tl-slider')
 const max = await pb.evaluate(() => +document.querySelector('#timeline .tl-slider').max)
 const last = await pb.evaluate(() => document.querySelector('#timeline .snapshot').innerText)
 check('letzter Stand enthält die Überschrift', last.includes('Später eine Überschrift'), `Schritte ${max + 1}`)

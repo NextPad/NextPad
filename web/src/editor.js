@@ -624,9 +624,12 @@ async function toggleTimeline() {
     <div class="tl-authors"></div>
     <div class="snapshot ProseMirror"></div>`
   document.getElementById('app').appendChild(panel)
+  // lädt noch: Regler und Knöpfe stehen schon, der Verlauf kommt erst (Screenreader und Tests warten darauf)
+  panel.setAttribute('aria-busy', 'true')
+  const fertig = () => panel.removeAttribute('aria-busy')
   const slider = panel.querySelector('.tl-slider'), info = panel.querySelector('.tl-info'), pos = panel.querySelector('.tl-pos'), view = panel.querySelector('.snapshot'), authorsEl = panel.querySelector('.tl-authors')
   const res = await fetch(`${cfg.basePath}/p/${encodeURIComponent(cfg.urlId)}/history`)
-  if (!res.ok) { info.textContent = tx('verlauf_fehlt'); return }
+  if (!res.ok) { info.textContent = tx('verlauf_fehlt'); fertig(); return }
   const h = await res.json()
   if (h.truncated) info.dataset.truncated = '1'
   const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0))
@@ -635,7 +638,7 @@ async function toggleTimeline() {
   for (const sn of h.snapshots) points.push({ kind: 'snapshot', ts: sn.ts, label: sn.label, bytes: b64(sn.state) })
   for (const u of h.updates) points.push({ kind: 'update', ts: u.ts, seq: u.seq, author: u.author, bytes: b64(u.bytes) })
   points.sort((a, b) => a.ts - b.ts || (a.kind === 'snapshot' ? -1 : 1))
-  if (!points.length) { info.textContent = tx('kein_verlauf'); return }
+  if (!points.length) { info.textContent = tx('kein_verlauf'); fertig(); return }
   for (const a of Object.keys(h.authors || {})) names.set(a, h.authors[a].name)
   slider.max = String(points.length - 1); slider.value = slider.max
   const serializer = DOMSerializer.fromSchema(editor.schema)
@@ -696,4 +699,5 @@ async function toggleTimeline() {
     playing = setInterval(() => { const n = +slider.value + 1; if (n >= points.length) return stop(); slider.value = String(n); render(n) }, 120)
   })
   render(points.length - 1)
+  fertig()
 }
