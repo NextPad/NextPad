@@ -5,15 +5,19 @@ on:
     branches: [main]
   pull_request:
 
-# Feste Ubuntu-Fassung statt ubuntu-latest: Wechsel des Abbilds bewusst und nicht nebenbei.
+# Gebaut und getestet wird unter Debian 12 (rust:1-bookworm), wie das Release-Programm und der Betrieb.
+# GitHub bietet keine Debian-Runner; der Job läuft darum als Container auf einem fest gewählten Ubuntu-Runner.
 # Actions in Fassungen für Node 24 (Node 20 ist auf GitHub abgekündigt).
 jobs:
   server:
     runs-on: ubuntu-24.04
+    container: rust:1-bookworm
     defaults:
       run:
         working-directory: server
     steps:
+      - run: apt-get update -qq && apt-get install -y -qq rsync > /dev/null
+        working-directory: /
       - uses: actions/checkout@v7
       # Editor- und Zeichenbrett-Bündel, der Server bettet sie beim Übersetzen ein
       - uses: actions/setup-node@v7
@@ -56,7 +60,7 @@ jobs:
           tool: cargo-audit
       - run: cargo audit
 
-  # Container-Image bauen und starten (ohne PDF-Satz)
+  # Container-Image bauen und starten (ohne PDF-Satz); braucht den Docker-Dienst des Runners, darum ohne Job-Container
   container:
     runs-on: ubuntu-24.04
     steps:
