@@ -5,16 +5,18 @@ on:
     branches: [main]
   pull_request:
 
+# Feste Ubuntu-Fassung statt ubuntu-latest: Wechsel des Abbilds bewusst und nicht nebenbei.
+# Actions in Fassungen für Node 24 (Node 20 ist auf GitHub abgekündigt).
 jobs:
   server:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: server
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Editor- und Zeichenbrett-Bündel, der Server bettet sie beim Übersetzen ein
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - run: npm install -g pnpm@11.28.5 --no-fund --no-audit
@@ -42,7 +44,7 @@ jobs:
         env:
           NEXTPAD_WEB_BUILD: ${{ runner.temp }}/web
           NEXTPAD_TEST_LOGS: ${{ runner.temp }}/browsertests
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: browsertests
@@ -56,9 +58,9 @@ jobs:
 
   # Container-Image bauen und starten (ohne PDF-Satz)
   container:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: docker build -t nextpad:ci .
       - name: Start und API
         run: |
