@@ -6,6 +6,15 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+## [0.22.1] - 2026-11-15
+
+### Security
+
+- Bundled SQLite updated through rusqlite 0.43 (libsqlite3-sys 0.40). Fixes RUSTSEC-2026-0459 (CVE-2026-119375):
+  SQLite before 3.54.0 could return uninitialized memory when it opened a database together with a crafted `-wal`
+  file. NextPad is exposed only where it opens files from someone else, for example `nextpad check` on a foreign
+  backup.
+
 ## [0.22.0] - 2026-11-15
 
 ### Upgrade
