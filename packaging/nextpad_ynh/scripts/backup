@@ -6,9 +6,24 @@ source /usr/share/yunohost/helpers
 ynh_print_info "Sicherung von $app..."
 
 ynh_backup "$install_dir"
-# Pads, Schlüssel und Design; SQLite im WAL-Modus: Dienst kurz anhalten ist nicht nötig, die Sicherung
-# kopiert Datenbank und WAL zusammen (YunoHost-Sicherungen laufen selten parallel zu großer Schreiblast)
-ynh_backup "$data_dir"
+nextpad_pfade
+
+# Die laufende Datenbank wird nie direkt gepackt: YunoHost liest die Dateien erst nach diesem Skript,
+# Datenbank und WAL kämen aus verschiedenen Zeitpunkten. Gesichert wird ein Schnappschuss.
+if [ "${BACKUP_CORE_ONLY:-0}" -eq 1 ]; then
+    ynh_print_info "Sicherung vor einem Upgrade: ohne Pads, das Upgrade legt selbst einen Schnappschuss an."
+elif [ "$(ynh_app_setting_get --key=do_not_backup_data)" = "1" ]; then
+    ynh_print_warn "do_not_backup_data=1 ist gesetzt: Diese Sicherung enthält KEINE Pads."
+else
+    snap="$nextpad_snapshots/sicherung.sqlite"
+    rm -f "$snap.neu"
+    ynh_exec_as_app "$install_dir/nextpad" snapshot "$snap.neu" --quelle "$nextpad_db" \
+        || ynh_die "Schnappschuss der Datenbank gescheitert, Sicherung abgebrochen"
+    mv -f "$snap.neu" "$snap"
+    ynh_backup "$snap"
+fi
+ynh_backup "$data_dir/secrets"
+ynh_backup "$data_dir/theme"
 ynh_backup "/etc/nginx/conf.d/$domain.d/$app.conf"
 ynh_backup "/etc/systemd/system/$app.service"
 

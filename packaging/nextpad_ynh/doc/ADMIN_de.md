@@ -33,4 +33,21 @@ sudo -u __APP__ bash -c 'set -a; . __INSTALL_DIR__/nextpad.env; __INSTALL_DIR__/
 sudo -u __APP__ bash -c 'set -a; . __INSTALL_DIR__/nextpad.env; NEXTPAD_RETENTION=dry-run __INSTALL_DIR__/nextpad retention-run'
 ```
 
+## Sicherung und Wiederherstellung
+
+- `yunohost backup create --apps __APP__` sichert das Programm, `secrets/`, `theme/` und einen Schnappschuss der Datenbank (`data/snapshots/sicherung.sqlite`), nie die laufende Datei.
+- Vor jedem Upgrade legt das Paket `data/snapshots/vor-upgrade-<version>-<zeit>.sqlite` an. Die automatische Sicherung von YunoHost vor einem Upgrade enthält keine Pads.
+- Startet ein neues Programm auf einer älteren Datenbank, legt es vorher `data/snapshots/vor-schema-<alt>-<neu>-<datum>.sqlite` an. Von beiden Arten bleiben die zwei jüngsten.
+- Auf einer Datenbank mit höherer Schemaversion startet ein Programm nicht. Scheitert ein Upgrade, setzt die Wiederherstellung den jüngsten Schnappschuss vor dem Upgrade ein und legt die neuere Datenbank nach `archiv/`.
+- `archiv/` mit früheren Ständen und Hand-Sicherungen wird weder gesichert noch automatisch geleert.
+- Mit der Einstellung `do_not_backup_data=1` enthält eine Sicherung keine Pads.
+- `yunohost app remove __APP__ --purge` löscht auch `data/snapshots/` und `archiv/`.
+
+Von Hand (das Ziel muss für `__APP__` beschreibbar sein):
+
+```bash
+sudo -u __APP__ __INSTALL_DIR__/nextpad snapshot __DATA_DIR__/data/snapshots/hand.sqlite --quelle __DATA_DIR__/data/nextpad.sqlite
+sudo __INSTALL_DIR__/nextpad check __DATA_DIR__/data/nextpad.sqlite   # 0 passt, 3 neuer als das Programm, 1 Fehler
+```
+
 Die Oberfläche gibt es auf Deutsch und Englisch; jede Person wechselt mit „DE | EN“. Die Mail vor dem Löschen kommt in der Sprache, die die besitzende Person zuletzt gewählt hat, sonst in beiden.

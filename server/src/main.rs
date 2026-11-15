@@ -17,6 +17,7 @@ mod pdf;
 mod qr;
 mod retention;
 mod render;
+mod sicherung;
 mod sperre;
 mod texte;
 mod store;
@@ -52,6 +53,8 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt().with_env_filter(tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into())).init();
     let args: Vec<String> = std::env::args().collect();
     if args.get(1).map(String::as_str) == Some("--version") { println!("nextpad {}", env!("CARGO_PKG_VERSION")); return Ok(()); }
+    if args.get(1).map(String::as_str) == Some("snapshot") { return sicherung::befehl_snapshot(&args); }
+    if args.get(1).map(String::as_str) == Some("check") { std::process::exit(sicherung::befehl_check(&args)?); }
     if args.get(1).map(String::as_str) == Some("import-etherpad") {
         // nextpad import-etherpad <export-dir> [--no-history] [--only padID,padID]
         let export = std::path::PathBuf::from(args.get(2).ok_or_else(|| anyhow::anyhow!("Aufruf: nextpad import-etherpad <export-dir> [--no-history] [--only id,id]"))?);
@@ -134,6 +137,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/static/themes.css", get(web::static_themes))
         .route("/static/fonts/{datei}", get(web::static_webfont))
         .route("/static/theme-hsd.css", get(web::static_theme_hsd))
+        .route("/theme/hsd.css", get(web::theme_hsd_css))
         .route("/theme/logo.png", get(look::logo_file))
         .route("/theme/font.ttf", get(web::theme_font))
         .route("/theme/background.jpg", get(look::background_file))

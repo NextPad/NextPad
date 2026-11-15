@@ -185,7 +185,7 @@ pub fn datum(sp: crate::texte::Sprache, ms: i64) -> String {
 }
 
 /// Jahr, Monat, Tag (UTC) aus Millisekunden seit 1970.
-fn ymd(ms: i64) -> (i64, i64, i64) {
+pub(crate) fn ymd(ms: i64) -> (i64, i64, i64) {
     let days = ms.div_euclid(86_400_000);
     // Umrechnung nach Howard Hinnant (civil_from_days)
     let z = days + 719_468;

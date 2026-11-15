@@ -52,3 +52,53 @@ nextpad_set_permissions() {
     chmod 750 "$data_dir" "$data_dir/data" "$data_dir/secrets" "$data_dir/theme"
     find "$data_dir/secrets" -type f -exec chmod 640 {} +
 }
+
+# Sicherung und Wiederherstellung. Schnappschüsse liegen in $NEXTPAD_DATA/snapshots,
+# beiseitegelegte Stände in archiv/, das weder gesichert noch automatisch geleert wird.
+# Aufruf nach dem Laden der Helfer, vorher sind $app und $data_dir nicht gesetzt.
+nextpad_pfade() {
+    nextpad_db="$data_dir/data/nextpad.sqlite"
+    nextpad_snapshots="$data_dir/data/snapshots"
+    nextpad_archiv="$data_dir/archiv"
+    mkdir -p "$data_dir/data" "$nextpad_snapshots" "$nextpad_archiv"
+    chown "$app:$app" "$data_dir/data" "$nextpad_snapshots" "$nextpad_archiv"
+    chmod 750 "$data_dir/data" "$nextpad_snapshots" "$nextpad_archiv"
+}
+
+# Kann dieses Programm `snapshot` und `check`? Ältere (bis 0.21) würden den unbekannten Befehl
+# übergehen und den Server starten, deshalb nie blind aufrufen.
+nextpad_kann_snapshot() {
+    grep -q -a "Aufruf: nextpad snapshot" "$install_dir/nextpad" 2>/dev/null
+}
+
+# Datenbank samt WAL und SHM nach archiv/ legen, mit Grund und Zeit im Namen
+nextpad_beiseite() {
+    local grund="$1" ziel endung
+    ziel="$nextpad_archiv/$grund-$(date +%Y-%m-%d-%H%M%S).sqlite"
+    mv "$nextpad_db" "$ziel"
+    for endung in wal shm; do
+        if [ -e "$nextpad_db-$endung" ]; then mv "$nextpad_db-$endung" "$ziel-$endung"; fi
+    done
+    ynh_print_info "Datenbank beiseitegelegt: $ziel"
+}
+
+# Einen Schnappschuss als Datenbank einsetzen, die Kopie in snapshots/ bleibt
+nextpad_einsetzen() {
+    local quelle="$1"
+    rm -f "$nextpad_db-wal" "$nextpad_db-shm"
+    install -m 640 -o "$app" -g "$app" "$quelle" "$nextpad_db"
+    if [ -e "$quelle-wal" ]; then install -m 640 -o "$app" -g "$app" "$quelle-wal" "$nextpad_db-wal"; fi
+    ynh_print_info "Eingesetzt: $quelle"
+}
+
+# Je Art bleiben die zwei jüngsten Schnappschüsse, jede Löschung steht im Log
+nextpad_snapshots_aufraeumen() {
+    local art f
+    for art in vor-upgrade vor-schema; do
+        while read -r f; do
+            [ -n "$f" ] || continue
+            rm -f "$f" "$f-wal"
+            ynh_print_info "Älterer Schnappschuss gelöscht: $f"
+        done < <(ls -1t "$nextpad_snapshots/$art-"*.sqlite 2>/dev/null | tail -n +3 || true)
+    done
+}

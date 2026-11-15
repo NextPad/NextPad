@@ -242,7 +242,7 @@ pub async fn page(State(state): State<Arc<AppState>>, Path(id): Path<String>, he
         return with_cookie(resp, access.set_cookie.clone());
     }
     let theme_link = if theme_rahmen(&state) { format!(r#"<link rel="stylesheet" href="{}/static/theme-hsd.css?v={}">"#, state.config.base_path, bundle_version()) } else { String::new() };
-    let theme_link = theme_link + &themes_link(&state);
+    let theme_link = theme_link + &hsd_link(&state) + &themes_link(&state);
     let body_class = if theme_rahmen(&state) { format!("theme-hsd {}", theme_klasse(&state)).trim_end().to_string() } else { "theme-colibris".to_string() };
     let icons = icon_links();
     let body = format!(
@@ -668,6 +668,26 @@ pub async fn theme_font(State(state): State<Arc<AppState>>) -> Response {
     match theme_file(&state, "font.ttf") { Some(b) => ([(header::CONTENT_TYPE, "font/ttf"), (header::CACHE_CONTROL, "public, max-age=86400")], b).into_response(), None => StatusCode::NOT_FOUND.into_response() }
 }
 pub async fn static_theme_hsd() -> Response { ([(header::CONTENT_TYPE, "text/css; charset=utf-8"), (header::CACHE_CONTROL, "public, max-age=31536000, immutable")], THEME_HSD_CSS).into_response() }
+/// Hausdesign hsd: die Datei hsd.css aus NEXTPAD_THEME_DIR (nicht im Repo), nach dem Grundstil geladen.
+/// Fehlt die Datei, bleibt es beim Grundstil. Versionsangabe nach Änderungszeit, damit Änderungen sofort greifen.
+fn hsd_link(state: &AppState) -> String {
+    match hsd_css_version(state) {
+        Some(v) => format!(r#"<link rel="stylesheet" href="{}/theme/hsd.css?v={v}">"#, state.config.base_path),
+        None => String::new(),
+    }
+}
+fn hsd_css_version(state: &AppState) -> Option<String> {
+    if state.config.theme != "hsd" { return None; }
+    let meta = std::fs::metadata(state.config.theme_dir.as_ref()?.join("hsd.css")).ok()?;
+    let secs = meta.modified().ok()?.duration_since(std::time::UNIX_EPOCH).ok()?.as_secs();
+    Some(secs.to_string())
+}
+pub async fn theme_hsd_css(State(state): State<Arc<AppState>>) -> Response {
+    match theme_file(&state, "hsd.css") {
+        Some(b) => ([(header::CONTENT_TYPE, "text/css; charset=utf-8"), (header::CACHE_CONTROL, "public, max-age=86400")], b).into_response(),
+        None => StatusCode::NOT_FOUND.into_response(),
+    }
+}
 pub async fn static_icons() -> Response { ([(header::CONTENT_TYPE, "font/woff"), (header::CACHE_CONTROL, "public, max-age=604800, immutable")], ICONS_WOFF).into_response() }
 pub async fn static_fond() -> Response { ([(header::CONTENT_TYPE, "image/jpeg"), (header::CACHE_CONTROL, "public, max-age=604800, immutable")], FOND_JPG).into_response() }
 /// Zeichen von NextPad: Blase mit Text und Cursor, für Favicon und Kopfzeile.
@@ -1186,7 +1206,14 @@ pub async fn static_start_css() -> Response { ([(header::CONTENT_TYPE, "text/css
 
 #[cfg(test)]
 mod tests {
-    use super::eigener_pfad;
+    use super::{eigener_pfad, THEME_HSD_CSS};
+
+    /// Der Grundstil im Repo darf kein HSD-Design enthalten; das liegt in NEXTPAD_THEME_DIR/hsd.css.
+    #[test]
+    fn grundstil_ohne_hsd_schrift_und_farben() {
+        assert!(!THEME_HSD_CSS.contains("Arial"), "Hausschrift im öffentlichen Grundstil");
+        assert!(!THEME_HSD_CSS.contains("#e60028"), "HSD-Rot im öffentlichen Grundstil");
+    }
 
     #[test]
     fn ruecksprung_nur_auf_eigene_pfade() {

@@ -8,6 +8,32 @@ nextpad_settings_defaults
 ynh_script_progression "NextPad anhalten..."
 ynh_systemctl --service="$app" --action="stop" --log_path="systemd"
 
+ynh_script_progression "Schnappschuss vor dem Upgrade..."
+# Die automatische Sicherung vor dem Upgrade enthält keine Pads (BACKUP_CORE_ONLY). Dieser Schnappschuss
+# ist der Stand, auf den die Wiederherstellung nach einem gescheiterten Upgrade zurückgreift.
+nextpad_pfade
+if [ -e "$nextpad_db" ]; then
+    ziel="$nextpad_snapshots/vor-upgrade-${YNH_APP_CURRENT_VERSION:-unbekannt}-$(date +%Y-%m-%d-%H%M%S).sqlite"
+    if nextpad_kann_snapshot; then
+        ynh_exec_as_app "$install_dir/nextpad" snapshot "$ziel" --quelle "$nextpad_db" \
+            || ynh_die "Schnappschuss vor dem Upgrade gescheitert, Upgrade abgebrochen"
+    else
+        # Programm bis 0.21: Dienst steht, Datenbank und WAL gemeinsam kopieren
+        install -m 640 -o "$app" -g "$app" "$nextpad_db" "$ziel"
+        if [ -e "$nextpad_db-wal" ]; then install -m 640 -o "$app" -g "$app" "$nextpad_db-wal" "$ziel-wal"; fi
+        ynh_print_info "Kopie vor dem Upgrade (altes Programm ohne snapshot): $ziel"
+    fi
+else
+    ynh_print_warn "Keine Datenbank in $data_dir/data, kein Schnappschuss vor dem Upgrade."
+fi
+
+# Einmalig: Hand-Sicherungen aus data/ nach archiv/, damit sie nicht mehr in jede Sicherung wandern
+for f in "$data_dir"/data/nextpad.sqlite.vor-*; do
+    [ -e "$f" ] || continue
+    mv "$f" "$nextpad_archiv/"
+    ynh_print_info "Hand-Sicherung nach archiv/ verschoben: $(basename "$f")"
+done
+
 ynh_script_progression "Programm aktualisieren..."
 ynh_setup_source --dest_dir="$install_dir" --full_replace
 
@@ -23,5 +49,8 @@ yunohost service add "$app" --description="NextPad (Etherpad-kompatibler Pad-Ser
 
 ynh_script_progression "NextPad starten..."
 ynh_systemctl --service="$app" --action="start" --wait_until="lauscht auf" --log_path="systemd"
+
+ynh_script_progression "Ältere Schnappschüsse aufräumen..."
+nextpad_snapshots_aufraeumen
 
 ynh_script_progression "Aktualisierung von $app abgeschlossen"

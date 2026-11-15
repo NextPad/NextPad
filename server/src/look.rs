@@ -122,11 +122,11 @@ impl Look {
         let r = |a: &str, b: Rgb| parse(a).map(|a| ratio(a, b)).unwrap_or(21.0);
         let farbe = |i: usize| tf(sp, "look.farbe_n", &[("n", &(i + 1).to_string())]);
         if r(&p.accent, WHITE) < 3.0 { w.push(tf(sp, "look.w.akzent", &[("r", &zahl(sp, r(&p.accent, WHITE)))])); }
-        for i in 0..2 {
-            if r(&p.lines[i], WHITE) < 3.0 { w.push(tf(sp, "look.w.linie", &[("r", &zahl(sp, r(&p.lines[i], WHITE))), ("farbe", &farbe(i))])); }
+        for (i, l) in p.lines.iter().take(2).enumerate() {
+            if r(l, WHITE) < 3.0 { w.push(tf(sp, "look.w.linie", &[("r", &zahl(sp, r(l, WHITE))), ("farbe", &farbe(i))])); }
         }
-        for i in 0..3 {
-            if r(&p.tints[i], BLACK) < 4.5 { w.push(tf(sp, "look.w.toenung", &[("r", &zahl(sp, r(&p.tints[i], BLACK))), ("farbe", &farbe(i))])); }
+        for (i, t) in p.tints.iter().take(3).enumerate() {
+            if r(t, BLACK) < 4.5 { w.push(tf(sp, "look.w.toenung", &[("r", &zahl(sp, r(t, BLACK))), ("farbe", &farbe(i))])); }
         }
         w
     }

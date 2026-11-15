@@ -151,6 +151,10 @@ pub enum CreatePadError {
     Other(anyhow::Error),
 }
 
+/// Schemaversion in `PRAGMA user_version`. Jede Schema-Ergänzung, auch in einem Addon, zählt sie hoch.
+/// 1: Stand 0.22.0, alle Ergänzungen bis `pads.owner_link_hash` und die Tabellen der Addons.
+pub const SCHEMA_VERSION: i64 = 1;
+
 const SCHEMA: &str = r#"
 CREATE TABLE IF NOT EXISTS groups (id TEXT PRIMARY KEY, created INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS pads (
@@ -186,6 +190,12 @@ impl Store {
     pub fn open(path: &Path, zusaetze: &[&Zusatz]) -> Result<Self> {
         let conn = Connection::open(path)?;
         conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;")?;
+        if let Some(v) = crate::sicherung::schema_vorher(&conn)? {
+            if v > SCHEMA_VERSION {
+                return Err(anyhow!("{} hat Schemaversion {v}, dieses Programm kennt höchstens {SCHEMA_VERSION}. Es startet nicht auf einer neueren Datenbank: passendes Programm einspielen oder einen Stand aus snapshots/ zurückholen.", path.display()));
+            }
+            if v < SCHEMA_VERSION { crate::sicherung::vor_schema(&conn, path, v, SCHEMA_VERSION)?; }
+        }
         conn.execute_batch(SCHEMA)?;
         // Schema-Ergänzung 24.10.2026: Moodle-Herkunft für Profilbilder
         let has_col: bool = conn.prepare("SELECT 1 FROM pragma_table_info('authors') WHERE name='moodle_url'")?.exists([])?;
@@ -213,6 +223,7 @@ impl Store {
         let has_link: bool = conn.prepare("SELECT 1 FROM pragma_table_info('pads') WHERE name='owner_link_hash'")?.exists([])?;
         if !has_link { conn.execute_batch("ALTER TABLE pads ADD COLUMN owner_link_hash TEXT;")?; }
         for z in zusaetze { conn.execute_batch(z.schema)?; (z.ergaenzen)(&conn)?; }
+        conn.pragma_update(None, "user_version", SCHEMA_VERSION)?;
         let wconn = Connection::open(path)?;
         wconn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;")?;
         let (tx, rx) = mpsc::sync_channel::<WriteOp>(65_536);

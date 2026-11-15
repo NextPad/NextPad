@@ -6,6 +6,36 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-11-15
+
+### Upgrade
+
+- The first start on an existing database writes `snapshots/vor-schema-0-1-<date>.sqlite` next to it and sets
+  schema version 1.
+
+### Added
+
+- `nextpad snapshot <target> [--quelle <database>]` writes a consistent copy of the running database and checks
+  it. `nextpad check <file>` checks integrity and schema version: exit 0 fits, 3 newer than this program, 1 error.
+- Schema version in the database. A program refuses to start on a newer database and copies an older one to
+  `snapshots/` before migrating it.
+
+### Changed
+
+- Theme `hsd`: the base style shipped in the program no longer contains a house font or house colour. A file
+  `hsd.css` in `NEXTPAD_THEME_DIR` is loaded after it and served at `/theme/hsd.css`. Without that file the
+  theme uses the editor font (Quicksand) and a dark grey accent. Installations with theme `hsd` that
+  want the previous look need `hsd.css` in their theme folder before upgrading.
+- YunoHost package: a backup contains a snapshot of the database instead of the live file with its WAL; `secrets/`
+  and `theme/` are backed up on their own. An upgrade takes a snapshot first, because YunoHost's pre-upgrade backup
+  contains no pads. After a failed upgrade the restore puts that snapshot back when the database is newer than the
+  program. The two newest snapshots of each kind are kept. Manual copies `data/nextpad.sqlite.vor-*` move to
+  `archiv/` once.
+
+### Fixed
+
+- CI: clippy 1.100 flagged two index loops in the appearance warnings (`needless_range_loop`).
+
 ## [0.21.0] - 2026-11-14
 
 ### Upgrade

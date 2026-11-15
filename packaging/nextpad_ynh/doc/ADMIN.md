@@ -33,4 +33,21 @@ sudo -u __APP__ bash -c 'set -a; . __INSTALL_DIR__/nextpad.env; __INSTALL_DIR__/
 sudo -u __APP__ bash -c 'set -a; . __INSTALL_DIR__/nextpad.env; NEXTPAD_RETENTION=dry-run __INSTALL_DIR__/nextpad retention-run'
 ```
 
+## Backup and restore
+
+- `yunohost backup create --apps __APP__` backs up the program, `secrets/`, `theme/` and a snapshot of the database (`data/snapshots/sicherung.sqlite`), never the live file.
+- Before every upgrade the package writes `data/snapshots/vor-upgrade-<version>-<time>.sqlite`. YunoHost's automatic backup before an upgrade contains no pads.
+- When a new program starts on an older database, it first writes `data/snapshots/vor-schema-<old>-<new>-<date>.sqlite`. The two newest of each kind are kept.
+- A program does not start on a database with a higher schema version. If an upgrade fails, the restore puts back the newest pre-upgrade snapshot and moves the newer database to `archiv/`.
+- `archiv/` with earlier states and manual copies is neither backed up nor emptied automatically.
+- With the setting `do_not_backup_data=1` a backup contains no pads.
+- `yunohost app remove __APP__ --purge` also deletes `data/snapshots/` and `archiv/`.
+
+By hand (the target must be writable for `__APP__`):
+
+```bash
+sudo -u __APP__ __INSTALL_DIR__/nextpad snapshot __DATA_DIR__/data/snapshots/manual.sqlite --quelle __DATA_DIR__/data/nextpad.sqlite
+sudo __INSTALL_DIR__/nextpad check __DATA_DIR__/data/nextpad.sqlite   # 0 fits, 3 newer than the program, 1 error
+```
+
 The interface is in German and English; each person switches with "DE | EN". The email before deletion uses the language the owner last chose, otherwise both.

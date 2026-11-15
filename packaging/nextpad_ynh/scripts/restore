@@ -3,9 +3,41 @@
 source ../settings/scripts/_common.sh
 source /usr/share/yunohost/helpers
 
-ynh_script_progression "Programm und Daten wiederherstellen..."
+ynh_script_progression "Programm, Schlüssel und Design wiederherstellen..."
 ynh_restore "$install_dir"
-ynh_restore "$data_dir"
+ynh_restore "$data_dir/secrets"
+ynh_restore "$data_dir/theme"
+nextpad_pfade
+
+ynh_script_progression "Datenbank wiederherstellen..."
+# Ein liegengebliebener Schnappschuss darf nicht als „im Archiv“ gelten
+snap="$nextpad_snapshots/sicherung.sqlite"
+if [ -e "$snap" ]; then
+    mv "$snap" "$nextpad_archiv/sicherung-vor-restore-$(date +%Y-%m-%d-%H%M%S).sqlite"
+fi
+ynh_restore "$snap"
+
+if [ -s "$snap" ]; then
+    if [ -e "$nextpad_db" ]; then nextpad_beiseite "vor-restore"; fi
+    nextpad_einsetzen "$snap"
+elif [ -e "$nextpad_db" ]; then
+    # Rückfall nach einem gescheiterten Upgrade: Das Archiv hat absichtlich keine Pads, die Datenbank bleibt.
+    rc=0
+    "$install_dir/nextpad" check "$nextpad_db" || rc=$?
+    if [ "$rc" -eq 3 ]; then
+        juengster=$(ls -1t "$nextpad_snapshots"/vor-upgrade-*.sqlite 2>/dev/null | head -n 1 || true)
+        [ -n "$juengster" ] || ynh_die "Die Datenbank ist neuer als das wiederhergestellte Programm und es gibt keinen Schnappschuss vor dem Upgrade in $nextpad_snapshots."
+        nextpad_beiseite "neuer-als-programm"
+        nextpad_einsetzen "$juengster"
+    elif [ "$rc" -ne 0 ]; then
+        ynh_die "Die vorhandene Datenbank $nextpad_db ist nicht lesbar oder beschädigt (nextpad check)."
+    fi
+else
+    ynh_die "Weder ein Schnappschuss im Archiv noch eine Datenbank in $data_dir/data. NextPad startet nicht mit leerer Datenbank."
+fi
+
+"$install_dir/nextpad" check "$nextpad_db" || ynh_die "Die wiederhergestellte Datenbank besteht die Prüfung nicht (nextpad check)."
+
 nextpad_set_permissions
 chown root:"$app" "$install_dir/nextpad.env"; chmod 640 "$install_dir/nextpad.env"
 
