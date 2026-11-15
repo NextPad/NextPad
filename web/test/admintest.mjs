@@ -125,5 +125,5 @@ const reset = await fetch(`${base}/admin/erscheinungsbild/vorgabe`, { method: 'P
 const after = await (await get('/')).text()
 check('Zurücksetzen: Vorgabe gilt wieder', reset.status === 303 && after.includes('<strong>NextPad</strong>') && !after.includes('--hsd-red:'))
 const afterEn = await (await fetch(base + '/', { headers: en })).text()
-check('Vorgabe-Untertitel je Sprache', after.includes('Gemeinsam schreiben an der HSD') && afterEn.includes('Writing together at HSD') && !afterEn.includes('Gemeinsam schreiben'))
+check('Vorgabe-Untertitel je Sprache', after.includes('Gemeinsam schreiben im Browser') && afterEn.includes('Writing together in the browser') && !afterEn.includes('Gemeinsam schreiben'))
 console.log(`\n${pass} ok, ${fail} fehlgeschlagen`); process.exit(fail ? 1 : 0)

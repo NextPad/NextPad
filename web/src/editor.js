@@ -201,8 +201,35 @@ const NextCodeBlock = CodeBlock.extend({
 const names = new Map()
 let showColors = true
 
+// Links: nur http, https und mailto. Der Server prüft bei jeder Ausgabe erneut (render.rs, safe_href).
+const safeHref = v => typeof v === 'string' && v.length <= 2048 && /^(https?:\/\/|mailto:)[^\s<>"`]+$/i.test(v)
+// Eingabe im Link-Dialog: Adresse ohne Protokoll bekommt https://, eine Mailadresse mailto:
+function normalizeHref(v) {
+  v = v.trim()
+  if (/^[a-z][a-z0-9+.-]*:/i.test(v)) return v
+  if (/^[^\s@/]+@[^\s@/]+\.[^\s@/]+$/.test(v)) return 'mailto:' + v
+  return v ? 'https://' + v : v
+}
+
+// Markdown vor dem Einlesen anpassen, außerhalb von Codezäunen: Überschrift 5 und 6 werden Ebene 4,
+// ein Bild bleibt als Zeichenfolge stehen (der Editor kennt keine Bilder und bräche sonst ab).
+function prepMarkdown(md) {
+  let fence = null
+  return md.split('\n').map(line => {
+    const f = line.match(/^\s{0,3}(```+|~~~+)/)
+    if (f) { if (!fence) fence = f[1][0]; else if (f[1][0] === fence) fence = null; return line }
+    if (fence) return line
+    return line.replace(/^(\s{0,3})#{5,6}(?=\s)/, '$1####').replace(/!\[([^\]\n]*)\]\(([^)\n]*)\)/g, '!\\[$1\\]($2)')
+  }).join('\n')
+}
+// Markdown einfügen. Scheitert das Einlesen, kommt der Text unverändert als Absätze ins Pad.
+function insertMarkdown(ed, md) {
+  try { if (ed.chain().focus().insertContent(prepMarkdown(md), { contentType: 'markdown' }).run()) return } catch { /* Rückfall unten */ }
+  ed.chain().focus().insertContent(md.replace(/\r/g, '').split('\n').map(l => ({ type: 'paragraph', content: l ? [{ type: 'text', text: l }] : [] }))).run()
+}
+
 // Markdown als Eingabe: eingefügter Klartext, der nach Markdown aussieht, wird als Markdown gelesen.
-const looksLikeMarkdown = t => /^(#{1,6} |[-*+] |\d+\. |> |[-*+] \[[ xX]\] |```|~~~)/m.test(t) || /^\s*\|.*\|\s*\n\s*\|?\s*:?-{3,}/m.test(t) || /\*\*[^*]+\*\*|__[^_]+__|`[^`]+`|\[[^\]]+\]\([^)]+\)|~~[^~]+~~/.test(t)
+const looksLikeMarkdown = t => /^(#{1,6} |[-*+] |\d+\. |> |[-*+] \[[ xX]\] |```|~~~|-{3,}\s*$)/m.test(t) || /^\s*\|.*\|\s*\n\s*\|?\s*:?-{3,}/m.test(t) || /\*\*[^*]+\*\*|__[^_]+__|`[^`]+`|\[[^\]]+\]\([^)]+\)|~~[^~]+~~/.test(t)
 const MarkdownPaste = Extension.create({
   name: 'markdownPaste',
   addProseMirrorPlugins() {
@@ -216,7 +243,7 @@ const MarkdownPaste = Extension.create({
           if (!cd || cd.types.includes('text/html') || ed.isActive('codeBlock')) return false
           const text = cd.getData('text/plain')
           if (!text || !looksLikeMarkdown(text)) return false
-          ed.commands.insertContent(text, { contentType: 'markdown' })
+          insertMarkdown(ed, text)
           return true
         },
       },
@@ -253,13 +280,23 @@ function renderCaret(user) {
   caret.appendChild(label); return caret
 }
 
+// Kette als Linienzeichnung (Lucide „link“, ISC)
+const LINK_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'
+
 const editor = new Editor({
   element: document.getElementById('editor'),
   editable: !cfg.readonly,
   // Name der Schreibfläche für Screenreader (TipTap setzt role=textbox ohne Namen)
   editorProps: { attributes: { 'aria-label': cfg.readonly ? tx('text_lesen') : tx('text'), 'aria-multiline': 'true' } },
   extensions: [
-    StarterKit.configure({ undoRedo: false, link: false, codeBlock: false, blockquote: false, horizontalRule: false, heading: { levels: [1, 2, 3, 4] } }),
+    StarterKit.configure({
+      undoRedo: false, codeBlock: false, heading: { levels: [1, 2, 3, 4] },
+      link: {
+        openOnClick: false, autolink: true, linkOnPaste: true, protocols: ['mailto'], defaultProtocol: 'https',
+        HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer nofollow' },
+        isAllowedUri: url => safeHref(url), shouldAutoLink: url => safeHref(url),
+      },
+    }),
     TextStyle, Color, FontSize,
     TextAlign.configure({ types: ['heading', 'paragraph'] }), Indent,
     TaskList, TaskItem.configure({ nested: true }), TaskShortcut, NextCodeBlock,
@@ -329,9 +366,15 @@ if (!cfg.readonly) {
   ibtn(menuLeft, I.alignR, tx('rechts'), () => editor.chain().setTextAlign('right').run(), () => editor.isActive({ textAlign: 'right' }))
   ibtn(menuLeft, I.alignJ, tx('blocksatz'), () => editor.chain().setTextAlign('justify').run(), () => editor.isActive({ textAlign: 'justify' }))
   sep(menuLeft)
-  select(menuLeft, tx('absatzstil'), tx('stil'), [['p', tx('normal')], ...[1, 2, 3, 4].map(n => [String(n), tx('ueberschrift', { n })]), ['code', tx('code')]], v => v === 'p' ? editor.chain().setParagraph().run() : v === 'code' ? editor.chain().setCodeBlock().run() : editor.chain().setHeading({ level: +v }).run())
+  select(menuLeft, tx('absatzstil'), tx('stil'), [['p', tx('normal')], ...[1, 2, 3, 4].map(n => [String(n), tx('ueberschrift', { n })]), ['code', tx('code')], ['quote', tx('zitat')]], v => {
+    if (v === 'quote') { if (!editor.isActive('blockquote')) editor.chain().setBlockquote().run(); return }
+    if (v === 'p' && editor.isActive('blockquote') && editor.isActive('paragraph')) { editor.chain().lift('blockquote').run(); return }
+    v === 'p' ? editor.chain().setParagraph().run() : v === 'code' ? editor.chain().setCodeBlock().run() : editor.chain().setHeading({ level: +v }).run()
+  })
   sep(menuLeft)
   ibtn(menuLeft, I.md, tx('markdown'), () => openMarkdownDialog())
+  const linkBtn = ibtn(menuLeft, '', tx('verweis'), () => openLinkDialog(), () => editor.isActive('link'))
+  linkBtn.querySelector('.buttonicon').innerHTML = LINK_SVG
   sep(menuLeft)
   addTableTools(editor, menuLeft, { ibtn, select, icon: I.table })
   const rateBtn = ibtn(menuLeft, '', tx('bewertung'), () => editor.chain().focus().insertRating().run())
@@ -599,9 +642,66 @@ function openMarkdownDialog() {
     <textarea id="mdtext" rows="10" placeholder="${tx('md_beispiel')}"></textarea>
     <div class="row"><button type="submit" value="ok">${tx('uebernehmen')}</button> <button type="submit" value="abbrechen">${tx('abbrechen')}</button></div></form>`
   document.body.appendChild(dlg)
-  dlg.addEventListener('close', () => { if (dlg.returnValue === 'ok') { const md = dlg.querySelector('textarea').value; if (md.trim()) editor.chain().focus().insertContent(md, { contentType: 'markdown' }).run() } dlg.remove() })
+  dlg.addEventListener('close', () => { if (dlg.returnValue === 'ok') { const md = dlg.querySelector('textarea').value; if (md.trim()) insertMarkdown(editor, md) } dlg.remove() })
   dlg.showModal(); dlg.querySelector('textarea').focus()
 }
+
+// Link-Dialog: Adresse eingeben oder ändern, Link öffnen oder entfernen. Auch über Strg+K / Cmd+K.
+function openLinkDialog() {
+  if (cfg.readonly || document.getElementById('linkdialog')) return
+  const active = editor.isActive('link')
+  const leer = editor.state.selection.empty && !active
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
+  const href = active ? editor.getAttributes('link').href || '' : ''
+  const dlg = document.createElement('dialog'); dlg.id = 'linkdialog'
+  dlg.innerHTML = `<form method="dialog"><h2>${tx('verweis_titel')}</h2>
+    <label for="linkadresse">${tx('verweis_adresse')}</label>
+    <input id="linkadresse" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://" value="${esc(href)}" aria-describedby="linkfehler">
+    ${leer ? `<label for="linktext">${tx('verweis_text')}</label><input id="linktext" type="text" autocomplete="off">` : ''}
+    <p id="linkfehler" class="fehler" role="alert"></p>
+    <div class="row">${active && safeHref(href) ? `<a class="oeffnen" href="${esc(href)}" target="_blank" rel="noopener noreferrer nofollow">${tx('verweis_oeffnen')}</a>` : ''}${active ? `<button type="submit" value="entfernen">${tx('verweis_entfernen')}</button>` : ''}<button type="submit" value="abbrechen">${tx('abbrechen')}</button> <button type="submit" value="ok">${tx('uebernehmen')}</button></div></form>`
+  document.body.appendChild(dlg)
+  const feld = dlg.querySelector('#linkadresse')
+  dlg.querySelector('form').addEventListener('submit', e => {
+    if (e.submitter?.value !== 'ok') return
+    const ziel = normalizeHref(feld.value)
+    if (safeHref(ziel)) { feld.value = ziel; return }
+    e.preventDefault(); dlg.querySelector('#linkfehler').textContent = tx('verweis_ungueltig'); feld.setAttribute('aria-invalid', 'true'); feld.focus()
+  })
+  // Enter im Feld übernimmt, auch wenn „Abbrechen“ im Formular davor steht
+  dlg.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); dlg.querySelector('button[value="ok"]').click() } })
+  dlg.addEventListener('close', () => {
+    const wahl = dlg.returnValue, ziel = feld.value, text = dlg.querySelector('#linktext')?.value.trim()
+    dlg.remove()
+    if (wahl === 'entfernen') editor.chain().focus().extendMarkRange('link').unsetLink().run()
+    else if (wahl === 'ok' && safeHref(ziel)) {
+      if (leer) editor.chain().focus().insertContent({ type: 'text', text: text || ziel.replace(/^mailto:/i, ''), marks: [{ type: 'link', attrs: { href: ziel } }] }).run()
+      else editor.chain().focus().extendMarkRange('link').setLink({ href: ziel }).run()
+    } else editor.commands.focus()
+  })
+  dlg.showModal(); feld.focus(); feld.select()
+}
+if (!cfg.readonly) document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k' && editor.isFocused) { e.preventDefault(); openLinkDialog() } })
+
+// Feld am Link im Schreibmodus: zeigt die volle Adresse, bevor jemand sie öffnet. Im Lesemodus öffnet der Klick selbst.
+const linkFeld = document.createElement('div'); linkFeld.id = 'linkfeld'; linkFeld.hidden = true; document.body.appendChild(linkFeld)
+function zeigeLinkFeld() {
+  const href = !cfg.readonly && editor.isFocused && editor.isActive('link') ? editor.getAttributes('link').href : null
+  if (!safeHref(href) || document.getElementById('linkdialog')) { linkFeld.hidden = true; return }
+  linkFeld.textContent = ''
+  const adr = document.createElement('span'); adr.className = 'adresse'; adr.textContent = href
+  const auf = document.createElement('a'); auf.href = href; auf.target = '_blank'; auf.rel = 'noopener noreferrer nofollow'; auf.textContent = tx('verweis_oeffnen')
+  const knopf = (t, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.addEventListener('mousedown', e => e.preventDefault()); b.addEventListener('click', fn); return b }
+  linkFeld.append(adr, auf, knopf(tx('verweis_aendern'), () => openLinkDialog()), knopf(tx('verweis_entfernen'), () => editor.chain().focus().extendMarkRange('link').unsetLink().run()))
+  auf.addEventListener('mousedown', e => e.preventDefault())
+  linkFeld.hidden = false
+  const c = editor.view.coordsAtPos(editor.state.selection.from), b = linkFeld.getBoundingClientRect()
+  linkFeld.style.left = Math.max(8, Math.min(c.left, window.innerWidth - b.width - 8)) + 'px'
+  linkFeld.style.top = (c.bottom + 6 + b.height > window.innerHeight ? c.top - b.height - 6 : c.bottom + 6) + 'px'
+}
+editor.on('selectionUpdate', zeigeLinkFeld); editor.on('focus', zeigeLinkFeld); editor.on('transaction', zeigeLinkFeld)
+editor.on('blur', () => setTimeout(() => { if (!editor.isFocused && !linkFeld.contains(document.activeElement)) linkFeld.hidden = true }, 150))
+edBox.addEventListener('scroll', zeigeLinkFeld, { passive: true }); window.addEventListener('resize', zeigeLinkFeld)
 
 // Zeitleiste wie Etherpads Timeslider: Schieberegler über alle Schritte (Vollstände und einzelne Updates),
 // Abspielen, Zeit und Autor je Schritt, Dokument im jeweiligen Stand mit Autorenfarben.

@@ -68,6 +68,20 @@ Without a name, a pad with a random name is created. The templates under **Start
 
 The language is kept in the HTML and Markdown export. The code is not highlighted in colour.
 
+## Add links
+
+1. Type or paste an address such as `https://example.org`. It becomes a link by itself.
+2. For a link with its own text, select the text and choose the chain icon or press Ctrl+K (Mac: Cmd+K). Enter the **Address** and choose **Insert**.
+3. While writing, a click on a link shows the full address with **Open**, **Edit** and **Remove link**. In the read-only view the click opens the link in a new tab.
+
+Addresses with `http://`, `https://` and `mailto:` are allowed. From Markdown, a link comes along as `[text](address)`.
+
+## Quote and divider
+
+1. For a quote, type `>` and a space at the start of a line. Alternatively choose **Quote** in the **Paragraph style** menu.
+2. **Normal** as paragraph style removes the quote again.
+3. For a divider, type three hyphens at the start of a line (`---`).
+
 ## Protect with a password
 
 1. Choose the number at the bottom right. Under **My pad** is the section **Protection**.

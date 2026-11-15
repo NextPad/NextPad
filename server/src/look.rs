@@ -67,17 +67,17 @@ const D_LINES_DARK: [&str; 2] = ["#00afd7", "#64b432"];
 const D_TINTS_DARK: [&str; 3] = ["#16424c", "#304423", "#565116"];
 const D_ACCENT_DARK: &str = "#ff4d6a";
 /// Vorgabe je Theme (Akzent hell, Akzent dunkel, Textschlüssel des Untertitels), gesetzt beim Start;
-/// ohne Aufruf (Tests) die der HSD. Nur das Theme hsd nennt die Hochschule im Untertitel.
+/// ohne Aufruf (Tests) die des Themes nextpad. Keine Einrichtung ist fest verdrahtet.
 static VORGABE: std::sync::OnceLock<(&'static str, &'static str, &'static str)> = std::sync::OnceLock::new();
 pub fn vorgabe_setzen(theme: &str) {
     let _ = VORGABE.set(match theme {
         "nextpad" => ("#007a96", "#3fb4d0", "look.untertitel_frei"),
         "rund" => ("#3a55c8", "#8ea2ff", "look.untertitel_frei"),
         "colibris" => (D_ACCENT, D_ACCENT_DARK, "look.untertitel_frei"),
-        _ => (D_ACCENT, D_ACCENT_DARK, "look.untertitel"),
+        _ => (D_ACCENT, D_ACCENT_DARK, "look.untertitel_frei"),
     });
 }
-fn d_untertitel() -> &'static str { VORGABE.get().map(|v| v.2).unwrap_or("look.untertitel") }
+fn d_untertitel() -> &'static str { VORGABE.get().map(|v| v.2).unwrap_or("look.untertitel_frei") }
 fn d_accent() -> &'static str { VORGABE.get().map(|v| v.0).unwrap_or(D_ACCENT) }
 fn d_accent_dark() -> &'static str { VORGABE.get().map(|v| v.1).unwrap_or(D_ACCENT_DARK) }
 const WHITE: Rgb = (255, 255, 255);
@@ -88,7 +88,7 @@ impl Look {
     pub fn product(&self) -> &str { if self.product.is_empty() { "NextPad" } else { &self.product } }
     /// Eingetragener Untertitel (Inhalt, nicht übersetzt), sonst die Vorgabe in der Sprache der Seite
     pub fn tagline(&self, sp: Sprache) -> &str { if self.tagline.is_empty() { t(sp, d_untertitel()) } else { &self.tagline } }
-    pub fn institution(&self) -> &str { if self.institution.is_empty() { "Hochschule Düsseldorf" } else { &self.institution } }
+    pub fn institution(&self) -> &str { if self.institution.is_empty() { "Hochschule" } else { &self.institution } }
     fn accent(&self) -> &str { or(&self.accent, d_accent()) }
     fn color(&self, i: usize) -> &str { or([&self.color1, &self.color2, &self.color3][i], D_COLORS[i]) }
     fn colors_changed(&self) -> bool { !(self.accent.is_empty() && self.color1.is_empty() && self.color2.is_empty() && self.color3.is_empty() && !self.custom_shades) }
@@ -308,7 +308,7 @@ fn form(state: &AppState, sp: Sprache, l: &Look, notice: &str) -> String {
 <fieldset><legend>{name}</legend>
 <label class="field-label" for="f-product">{name_kopf}</label><input type="text" id="f-product" name="product" maxlength="40" value="{product}" placeholder="NextPad">
 <label class="field-label" for="f-tagline">{untertitel_feld}</label><input type="text" id="f-tagline" name="tagline" maxlength="80" value="{tagline}" placeholder="{untertitel}">
-<label class="field-label" for="f-institution">{einrichtung}</label><input type="text" id="f-institution" name="institution" maxlength="80" value="{institution}" placeholder="Hochschule Düsseldorf" aria-describedby="h-institution">
+<label class="field-label" for="f-institution">{einrichtung}</label><input type="text" id="f-institution" name="institution" maxlength="80" value="{institution}" placeholder="z. B. Ihre Hochschule" aria-describedby="h-institution">
 <p class="hint" id="h-institution">{einrichtung_hinweis}</p>
 </fieldset>
 <fieldset><legend>{logo_titel}</legend>
@@ -479,7 +479,7 @@ mod tests {
         assert_eq!(p.lines[0], "#007a96");
         assert_eq!(p.tints[2], "#fff9b2");
         assert!(l.warnings(Sprache::De).is_empty());
-        assert_eq!(l.tagline(Sprache::En), "Writing together at HSD");
+        assert_eq!(l.tagline(Sprache::En), "Writing together in the browser");
     }
     #[test]
     fn derived_lines_reach_contrast() {

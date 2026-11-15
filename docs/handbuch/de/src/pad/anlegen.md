@@ -68,6 +68,20 @@ Ohne Namen entsteht ein Pad mit Zufallsnamen. Die Vorlagen unter **Mit Vorlage b
 
 Die Sprache steht im Export als HTML und Markdown mit. Farbig hervorgehoben wird der Code nicht.
 
+## Links setzen
+
+1. Eine Adresse tippen oder einfügen, etwa `https://example.org`. Sie wird von selbst zum Link.
+2. Für einen Link mit eigenem Text den Text markieren und das Ketten-Symbol wählen oder Strg+K drücken (Mac: Cmd+K). Die **Adresse** eintragen und **Übernehmen** wählen.
+3. Ein Klick auf einen Link zeigt beim Schreiben die volle Adresse mit **Öffnen**, **Ändern** und **Link entfernen**. In der Leseansicht öffnet der Klick den Link in einem neuen Tab.
+
+Erlaubt sind Adressen mit `http://`, `https://` und `mailto:`. Aus Markdown kommt ein Link als `[Text](Adresse)` mit.
+
+## Zitat und Trennlinie
+
+1. Für ein Zitat am Zeilenanfang `>` und ein Leerzeichen tippen. Alternativ in der Auswahl **Absatzstil** den Eintrag **Zitat** wählen.
+2. **Normal** im Absatzstil hebt das Zitat wieder auf.
+3. Für eine Trennlinie am Zeilenanfang drei Bindestriche tippen (`---`).
+
 ## Mit Passwort schützen
 
 1. Unten rechts die Zahl wählen. Unter **Mein Pad** steht der Bereich **Schutz**.

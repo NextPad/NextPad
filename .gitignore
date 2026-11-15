@@ -24,3 +24,5 @@ server/static/board/
 
 # Bau der Projektseite (zola)
 site/public/
+# Ausgabe des Handbuchs (mdBook)
+docs/handbuch/*/book/

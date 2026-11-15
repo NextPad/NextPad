@@ -75,6 +75,19 @@ pub fn safe_lang(v: &str) -> Option<String> {
     (!v.is_empty() && v.len() <= 32 && v != "null" && v.chars().all(|c| c.is_ascii_alphanumeric() || "+#._-".contains(c))).then(|| v.to_ascii_lowercase())
 }
 
+/// Adresse eines Links: nur http, https und mailto, ohne Leer- und Steuerzeichen. Alles andere bleibt Text.
+pub fn safe_href(v: &str) -> Option<String> {
+    let v = v.trim();
+    if v.is_empty() || v.len() > 2048 || v.chars().any(|c| c.is_whitespace() || c.is_control() || matches!(c, '<' | '>' | '"' | '`')) { return None; }
+    let l = v.to_ascii_lowercase();
+    let rest = l.strip_prefix("https://").or_else(|| l.strip_prefix("http://")).or_else(|| l.strip_prefix("mailto:"))?;
+    (!rest.is_empty()).then(|| v.to_string())
+}
+
+fn link_href(a: &Attrs) -> Option<String> {
+    mark_attr(a, "link", "href").and_then(|h| safe_href(&h))
+}
+
 fn code_lang<T: ReadTxn>(txn: &T, el: &XmlElementRef) -> Option<String> {
     attr_string(el.get_attribute(txn, "language")).and_then(|v| safe_lang(&v))
 }
@@ -137,6 +150,10 @@ fn text_html<T: ReadTxn>(txn: &T, t: &XmlTextRef) -> String {
         }
         if let Some(fs) = mark_attr(&a, "textStyle", "fontSize").and_then(|f| safe_font_size(&f)) {
             style.push_str(&format!("font-size:{};", attr(&fs)));
+        }
+        if let Some(h) = link_href(&a) {
+            open.push_str(&format!("<a href=\"{}\" target=\"_blank\" rel=\"noopener noreferrer nofollow\">", attr(&h)));
+            close.insert_str(0, "</a>");
         }
         if let Some(author) = mark_attr(&a, "author", "id") {
             open.push_str(&format!("<span data-author=\"{}\">", attr(&author)));
@@ -268,8 +285,20 @@ fn node_text<T: ReadTxn>(txn: &T, toc: &str, node: &XmlOut, out: &mut String, de
     if depth > MAX_DEPTH { return; }
     match node {
         XmlOut::Text(t) => {
-            for d in t.diff(txn, YChange::identity) {
-                if let Out::Any(Any::String(s)) = d.insert { out.push_str(&s); }
+            // Link als „Text (Adresse)“; die Adresse steht einmal hinter dem letzten Stück desselben Links
+            let runs: Vec<(String, Option<String>)> = t.diff(txn, YChange::identity).into_iter().filter_map(|d| match d.insert {
+                Out::Any(Any::String(s)) => Some((s.to_string(), link_href(&d.attributes.map(|b| *b).unwrap_or_default()))),
+                _ => None,
+            }).collect();
+            let mut shown = String::new();
+            for (i, (s, href)) in runs.iter().enumerate() {
+                out.push_str(s);
+                let Some(h) = href else { shown.clear(); continue };
+                shown.push_str(s);
+                if runs.get(i + 1).and_then(|n| n.1.as_ref()) != Some(h) {
+                    if shown.trim() != h && format!("mailto:{}", shown.trim()) != *h { out.push_str(&format!(" ({h})")); }
+                    shown.clear();
+                }
             }
         }
         XmlOut::Fragment(f) => {
@@ -327,6 +356,11 @@ fn node_text<T: ReadTxn>(txn: &T, toc: &str, node: &XmlOut, out: &mut String, de
                 }
                 "hardBreak" => out.push('\n'),
                 "horizontalRule" => out.push_str("----\n"),
+                "blockquote" => {
+                    let mut inner = String::new();
+                    for c in el.children(txn) { node_text(txn, toc, &c, &mut inner, depth + 1, None); }
+                    for line in inner.trim_end_matches('\n').split('\n') { out.push_str("> "); out.push_str(line); out.push('\n'); }
+                }
                 _ => {
                     if tag == "paragraph" || tag == "heading" { out.push_str(&"    ".repeat(indent_level(txn, el))); }
                     for c in el.children(txn) {
@@ -366,6 +400,10 @@ fn text_md<T: ReadTxn>(txn: &T, t: &XmlTextRef) -> String {
         if a.contains_key("italic") { open.push('*'); close.insert(0, '*'); }
         if a.contains_key("strike") { open.push_str("~~"); close.insert_str(0, "~~"); }
         if a.contains_key("underline") { open.push_str("<u>"); close.insert_str(0, "</u>"); }
+        if let Some(h) = link_href(&a) {
+            open.insert(0, '[');
+            close.push_str(&if h.contains('(') || h.contains(')') { format!("](<{h}>)") } else { format!("]({h})") });
+        }
         out.push_str(lead);
         if body.is_empty() { out.push_str(trail); continue; }
         out.push_str(&open); out.push_str(&body.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")); out.push_str(&close); out.push_str(trail);
@@ -456,6 +494,12 @@ fn block_md<T: ReadTxn>(txn: &T, toc: &str, node: &XmlOut, out: &mut String, dep
             out.push('\n');
         }
         "horizontalRule" => out.push_str("---\n\n"),
+        "blockquote" => {
+            let mut inner = String::new();
+            for c in el.children(txn) { block_md(txn, toc, &c, &mut inner, 0); }
+            for line in inner.trim_end().split('\n') { out.push_str(if line.is_empty() { ">" } else { "> " }); out.push_str(line); out.push('\n'); }
+            out.push('\n');
+        }
         _ => { out.push_str(&inline_md(txn, el)); out.push_str("\n\n"); }
     }
 }
@@ -509,6 +553,7 @@ fn text_typst<T: ReadTxn>(txn: &T, t: &XmlTextRef) -> String {
         if let Some(c) = mark_attr(&a, "textStyle", "color").and_then(|c| typst_color(&c)) {
             piece = format!("#text(fill: {c})[{piece}]");
         }
+        if let Some(h) = link_href(&a) { piece = format!("#link({})[#underline[{piece}]]", typst_str(&h)); }
         out.push_str(&piece);
     }
     out
@@ -594,6 +639,11 @@ fn block_typst<T: ReadTxn>(txn: &T, toc: &str, node: &XmlOut, out: &mut String, 
             out.push_str(&format!("#raw(block: true, {})\n\n", typst_str(&code_text(txn, el))));
         }
         "horizontalRule" => out.push_str("#line(length: 100%, stroke: 0.5pt + luma(170))\n\n"),
+        "blockquote" => {
+            let mut body = String::new();
+            for c in el.children(txn) { block_typst(txn, toc, &c, &mut body, 0); }
+            out.push_str(&format!("#block(inset: (left: 1em, y: 0.2em), stroke: (left: 2pt + luma(150)))[\n{}\n]\n\n", body.trim_end()));
+        }
         "table" => {
             let rows: Vec<Vec<(bool, XmlElementRef)>> = el.children(txn).map(|r| row_cells(txn, &r)).filter(|r| !r.is_empty()).collect();
             let cols = rows.iter().map(|r| r.iter().map(|(_, c)| attr_string(c.get_attribute(txn, "colspan")).and_then(|v| v.parse::<usize>().ok()).unwrap_or(1).clamp(1, 100)).sum::<usize>()).max().unwrap_or(0);
@@ -653,6 +703,8 @@ pub struct Marks {
     pub color: Option<String>,
     pub font_size: Option<String>,
     pub author: Option<String>,
+    /// Geprüfte Adresse eines Links
+    pub link: Option<String>,
     /// Lauf ist eine Bewertung (Kennung, Stimmen) statt Text
     pub rating: Option<(String, Vec<(String, i8)>)>,
 }
@@ -677,6 +729,11 @@ impl Marks {
             m.insert("id".to_string(), Any::String(id.as_str().into()));
             a.insert("author".into(), Any::Map(Arc::new(m)));
         }
+        if let Some(h) = &self.link {
+            let mut m = HashMap::new();
+            m.insert("href".to_string(), Any::String(h.as_str().into()));
+            a.insert("link".into(), Any::Map(Arc::new(m)));
+        }
         a
     }
 }
@@ -695,6 +752,10 @@ pub enum Block {
     Toc,
     /// Codeblock: Sprache und Text, Marks nur Autor
     Code { language: Option<String>, runs: Vec<(String, Marks)> },
+    /// Zitat mit seinen Blöcken
+    Quote { blocks: Vec<Block> },
+    /// Trennlinie
+    Rule,
 }
 
 /// Inhalt eines <pre>: Zeilenumbrüche bleiben, aus Marks bleibt nur der Autor.
@@ -766,6 +827,7 @@ fn collect_inline(el: ElementRef, marks: &Marks, runs: &mut Vec<(String, Marks)>
                     "u" | "ins" => m.underline = true,
                     "s" | "strike" | "del" => m.strike = true,
                     "code" => m.code = true,
+                    "a" => { if let Some(h) = e.attr("href").and_then(safe_href) { m.link = Some(h); } }
                     "br" => { runs.push(("\n".into(), marks.clone())); continue; }
                     "font" => { if let Some(c) = e.attr("color").and_then(safe_color) { m.color = Some(c); } }
                     _ => {}
@@ -783,7 +845,7 @@ fn collect_inline(el: ElementRef, marks: &Marks, runs: &mut Vec<(String, Marks)>
                         if let Some(v) = c.strip_prefix("color:") { m.color = safe_color(v); }
                     }
                 }
-                if matches!(name.as_str(), "p" | "div" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "ul" | "ol" | "li" | "blockquote" | "pre" | "table" | "nav") {
+                if matches!(name.as_str(), "p" | "div" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "ul" | "ol" | "li" | "blockquote" | "pre" | "hr" | "table" | "nav") {
                     // Block innerhalb von Inline: aktuellen Lauf abschließen, Block separat
                     flush_runs(runs, blocks, cur_align.take());
                     blocks.extend(parse_block(cel, &m));
@@ -855,7 +917,7 @@ fn parse_block(el: ElementRef, marks: &Marks) -> Vec<Block> {
                     if !runs.is_empty() { item.push(Block::Para { align: None, indent: 0, runs }); }
                     item.extend(inner);
                     // Listeneintrag beginnt mit einem Absatz (TipTap: "paragraph block*")
-                    if item.is_empty() || matches!(item.first(), Some(Block::Code { .. })) { item.insert(0, Block::Para { align: None, indent: 0, runs: vec![] }); }
+                    if item.is_empty() || matches!(item.first(), Some(Block::Code { .. } | Block::Quote { .. } | Block::Rule)) { item.insert(0, Block::Para { align: None, indent: 0, runs: vec![] }); }
                     items.push((checked, item));
                 }
                 blocks.push(Block::TaskList { items });
@@ -872,7 +934,7 @@ fn parse_block(el: ElementRef, marks: &Marks) -> Vec<Block> {
                     if !runs.is_empty() { item.push(Block::Para { align: None, indent: 0, runs }); }
                     item.extend(inner);
                     // Listeneintrag beginnt mit einem Absatz (TipTap: "paragraph block*")
-                    if item.is_empty() || matches!(item.first(), Some(Block::Code { .. })) { item.insert(0, Block::Para { align: None, indent: 0, runs: vec![] }); }
+                    if item.is_empty() || matches!(item.first(), Some(Block::Code { .. } | Block::Quote { .. } | Block::Rule)) { item.insert(0, Block::Para { align: None, indent: 0, runs: vec![] }); }
                     items.push(item);
                 }
             }
@@ -904,6 +966,19 @@ fn parse_block(el: ElementRef, marks: &Marks) -> Vec<Block> {
         }
         "nav" if el.value().attr("data-type") == Some("toc") => blocks.push(Block::Toc),
         "pre" => blocks.push(pre_block(el)),
+        "hr" => blocks.push(Block::Rule),
+        "blockquote" => {
+            let mut runs = Vec::new();
+            let mut inner = Vec::new();
+            let mut a = None;
+            collect_inline(el, marks, &mut runs, &mut inner, &mut a);
+            let mut content = Vec::new();
+            flush_runs(&mut runs, &mut content, None);
+            content.extend(inner);
+            content.retain(|b| !matches!(b, Block::Toc));
+            if content.is_empty() { content.push(Block::Para { align: None, indent: 0, runs: vec![] }); }
+            blocks.push(Block::Quote { blocks: content });
+        }
         _ => {
             let mut runs = Vec::new();
             let mut a = align;
@@ -980,6 +1055,11 @@ fn write_block(txn: &mut TransactionMut, parent: &XmlElementRef, b: &Block) {
             if let Some(l) = language { c.insert_attribute(txn, "language", Any::from(l.as_str())); }
             write_runs(txn, &c, runs);
         }
+        Block::Quote { blocks } => {
+            let q: XmlElementRef = parent.push_back(txn, XmlElementPrelim::new("blockquote", Vec::<XmlIn>::new()));
+            for b in blocks { write_block(txn, &q, b); }
+        }
+        Block::Rule => { parent.push_back(txn, XmlElementPrelim::new("horizontalRule", Vec::<XmlIn>::new())); }
     }
 }
 
@@ -1036,6 +1116,11 @@ fn write_block_root(txn: &mut TransactionMut, frag: &XmlFragmentRef, b: &Block) 
             if let Some(l) = language { c.insert_attribute(txn, "language", Any::from(l.as_str())); }
             write_runs(txn, &c, runs);
         }
+        Block::Quote { blocks } => {
+            let q: XmlElementRef = frag.push_back(txn, XmlElementPrelim::new("blockquote", Vec::<XmlIn>::new()));
+            for b in blocks { write_block(txn, &q, b); }
+        }
+        Block::Rule => { frag.push_back(txn, XmlElementPrelim::new("horizontalRule", Vec::<XmlIn>::new())); }
     }
 }
 
@@ -1225,4 +1310,41 @@ mod tests {
         assert_eq!(safe_lang("x\"><script>"), None);
         assert_eq!(safe_lang("null"), None);
     }
+    #[test]
+    fn links_zitate_und_trennlinien() {
+        assert_eq!(safe_href(" https://example.org/a?b=1 ").as_deref(), Some("https://example.org/a?b=1"));
+        assert_eq!(safe_href("MAILTO:a@example.org").as_deref(), Some("MAILTO:a@example.org"));
+        for bad in ["javascript:alert(1)", "data:text/html,x", "//example.org", "/pfad", "#anker", "https://", "http://a b", "https://a\"onclick", "vbscript:x", " java\tscript:x"] {
+            assert_eq!(safe_href(bad), None, "{bad}");
+        }
+        let doc = Doc::new();
+        let frag = doc.get_or_insert_xml_fragment(FRAGMENT);
+        let html = r#"<p>Siehe <a href="https://example.org/x_(y)">die <strong>Quelle</strong></a> und <a href="javascript:alert(1)">das hier</a>, Post an <a href="mailto:a@example.org">a@example.org</a>.</p><blockquote><p>Erste Zeile</p><p>Zweite</p></blockquote><hr><h6>Tief</h6><ul><li><blockquote>im Punkt</blockquote></li></ul>"#;
+        { let mut txn = doc.transact_mut(); set_html(&mut txn, &frag, html); }
+        let txn = doc.transact();
+        let out = to_html(&txn, &frag);
+        assert!(out.contains(r#"<a href="https://example.org/x_(y)" target="_blank" rel="noopener noreferrer nofollow">die </a>"#), "{out}");
+        assert!(!out.contains("javascript") && out.contains("das hier"), "{out}");
+        assert!(out.contains("<blockquote>\n<p>Erste Zeile</p>\n<p>Zweite</p>\n</blockquote>\n<hr>\n<h4"), "{out}");
+        assert!(out.contains("<li><p></p>\n<blockquote>"), "Listeneintrag beginnt mit einem Absatz: {out}");
+        let md = to_markdown(&txn, &frag);
+        assert!(md.contains("[die](<https://example.org/x_(y)>) [**Quelle**](<https://example.org/x_(y)>)"), "{md}");
+        assert!(md.contains("[a@example.org](mailto:a@example.org)") && !md.contains("javascript"), "{md}");
+        assert!(md.contains("> Erste Zeile\n>\n> Zweite\n\n---\n\n#### Tief"), "{md}");
+        let text = to_text(&txn, &frag);
+        assert!(text.contains("die Quelle (https://example.org/x_(y)) und das hier, Post an a@example.org."), "{text}");
+        assert!(text.contains("> Erste Zeile\n> Zweite\n----\n"), "{text}");
+        #[cfg(feature = "pdf")]
+        {
+            let typ = to_typst(&txn, &frag);
+            assert!(typ.contains(r##"#link("https://example.org/x_(y)")[#underline["##) && !typ.contains("javascript"), "{typ}");
+            assert!(typ.contains("stroke: (left: 2pt + luma(150)))[\n#\"Erste Zeile\""), "{typ}");
+        }
+        let again = Doc::new();
+        let again_frag = again.get_or_insert_xml_fragment(FRAGMENT);
+        { let mut t = again.transact_mut(); set_html(&mut t, &again_frag, &out); }
+        let t = again.transact();
+        assert_eq!(to_html(&t, &again_frag), out, "Links, Zitat und Linie überstehen den Weg über HTML");
+    }
+
 }

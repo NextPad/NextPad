@@ -43,6 +43,12 @@ body { font-family: Quicksand, Cantarell, "Open Sans", "Helvetica Neue", sans-se
 #editor .ProseMirror pre { background: var(--light); border: 1px solid var(--border); border-radius: 2px; padding: .6em .8em; margin: .6em 0; white-space: pre; font: 14px/1.45 ui-monospace, "Liberation Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace; tab-size: 2; }
 /* gescrollt wird im inneren code, sonst schneidet pre die Zeilennummer am Rand ab */
 #editor .ProseMirror pre code { display: block; overflow-x: auto; background: none; padding: 0; border-radius: 0; font: inherit; }
+#editor .ProseMirror a, #timeline .snapshot a, .print-view a { color: inherit; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 2px; overflow-wrap: anywhere; }
+#editor .ProseMirror[contenteditable="false"] a, #timeline .snapshot a { cursor: pointer; }
+#editor .ProseMirror blockquote, #timeline .snapshot blockquote, .print-view blockquote { margin: 0 0 .35em; padding: 2px 0 2px 1em; border-left: 3px solid var(--dark); }
+#editor .ProseMirror blockquote > :last-child, #timeline .snapshot blockquote > :last-child, .print-view blockquote > :last-child { margin-bottom: 0; }
+#editor .ProseMirror hr, #timeline .snapshot hr, .print-view hr { border: 0; border-top: 1px solid var(--dark); margin: 1em 0; }
+#editor .ProseMirror hr.ProseMirror-selectednode { outline: 2px solid var(--primary); outline-offset: 3px; }
 #editor.no-colors span.author { background-color: transparent !important; }
 @media (max-width: 1000px) { :root { --gutter: 46px; } #editor .ProseMirror { padding-right: 16px; } }
 
@@ -84,6 +90,19 @@ body { font-family: Quicksand, Cantarell, "Open Sans", "Helvetica Neue", sans-se
 #mddialog { border: 1px solid var(--border); border-radius: 3px; padding: 14px; width: min(90vw, 560px); font-family: inherit; color: var(--super-dark); }
 #mddialog textarea { width: 100%; font: 14px/1.4 monospace; box-sizing: border-box; margin: 6px 0; border: 1px solid var(--middle); border-radius: 3px; padding: 6px; }
 #mddialog .row { display: flex; gap: 6px; justify-content: flex-end; }
+#linkdialog { background: var(--super-light); border: 1px solid var(--dark); border-radius: 3px; padding: 14px; width: min(90vw, 460px); font-family: inherit; color: var(--super-dark); }
+#linkdialog h2 { font-size: 16px; margin: 0 0 10px; }
+#linkdialog label { display: block; font-size: 13px; margin: 8px 0 4px; }
+#linkdialog input { width: 100%; font: inherit; font-size: 16px; box-sizing: border-box; min-height: 44px; border: 1px solid var(--dark); border-radius: 3px; padding: 6px 8px; background: var(--super-light); color: inherit; }
+#linkdialog .fehler { min-height: 1.3em; margin: 6px 0; font-size: 13px; color: #b00020; }
+#linkdialog .row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; align-items: center; }
+#linkdialog button, #linkdialog a.oeffnen, #linkfeld button, #linkfeld a { font: inherit; font-size: 14px; min-height: 44px; min-width: 44px; box-sizing: border-box; padding: 0 12px; border: 1px solid var(--dark); border-radius: 3px; background: var(--super-light); color: var(--super-dark); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+#linkdialog a.oeffnen { margin-right: auto; }
+#linkdialog button[value="ok"] { background: var(--super-dark); color: var(--super-light); border-color: var(--super-dark); }
+#linkdialog :is(button, a, input):focus-visible, #linkfeld :is(button, a):focus-visible { outline: 2px solid var(--super-dark); outline-offset: 2px; }
+#linkfeld { position: fixed; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; max-width: min(92vw, 560px); padding: 6px 8px; background: var(--super-light); color: var(--super-dark); border: 1px solid var(--dark); border-radius: 3px; box-shadow: 0 2px 8px rgba(0, 0, 0, .25); font-size: 14px; }
+#linkfeld[hidden] { display: none; }
+#linkfeld .adresse { flex: 1 1 14em; min-width: 0; overflow-wrap: anywhere; padding: 0 4px; }
 #mddialog button { font: inherit; padding: 5px 12px; border: 0; border-radius: 3px; background: var(--light); cursor: pointer; } #mddialog button[value="ok"] { background: #586a69; color: var(--primary); }
 
 /* Druckansicht */
@@ -142,6 +161,7 @@ html[data-theme="dark"] #editor .ProseMirror > :not(ul):not(ol)::before, html[da
 html[data-theme="dark"] .popup { box-shadow: 0 2px 12px #000a; }
 html[data-theme="dark"] .popup .owner button.danger { color: #ff8a9a; border-color: #7a3a44; }
 html[data-theme="dark"] #mddialog { background: #1e1e1e; color: #ececec; }
+html[data-theme="dark"] #linkdialog .fehler { color: #ff8a9a; }
 html[data-theme="dark"] #mddialog textarea { background: #121212; color: #ececec; }
 /* Namensfeld trägt die helle Autorenfarbe als Hintergrund, auch im Dunkelmodus: dunkle Schrift */
 html[data-theme="dark"] .popup input.myname { color: #1e1e1e; }

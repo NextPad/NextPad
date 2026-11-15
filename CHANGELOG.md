@@ -6,8 +6,35 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-11-14
+
+### Upgrade
+
+- Back up `data/` before updating and update while nobody is writing. Links, quotes and dividers are new
+  elements in the document. A browser tab that still runs the previous editor does not know them.
+
+### Added
+
+- Links: a typed or pasted address becomes a link, Markdown `[text](address)` works when typing, pasting and in
+  the Markdown dialog, and the chain button or Ctrl+K turns selected text into a link. Only `http:`, `https:` and
+  `mailto:` are accepted; the server checks the address again on every export. While writing, a click on a link
+  shows the full address with "Open", "Edit" and "Remove link"; in the read-only view the click opens it in a new
+  tab. Links are part of HTML, Markdown, plain text ("text (address)") and PDF exports and of the HTML import.
+- Quotes: `> ` at the start of a line or "Quote" in the paragraph style menu. Exported to Markdown, plain text
+  and PDF, and read from `<blockquote>` on import.
+- Dividers: `---` at the start of a line. `<hr>` is read on import.
+
+### Changed
+
+- Defaults no longer name a specific institution, in every theme including `hsd`: the institution falls back
+  to "Hochschule" and the subtitle to "Writing together in the browser". Set both under "Appearance" to keep
+  a previous wording.
+
 ### Fixed
 
+- Pasted Markdown no longer loses content: heading levels 5 and 6 become level 4 instead of level 1, and an image
+  (`![text](address)`) stays in the text as characters instead of aborting the whole paste. If reading the text
+  as Markdown fails, it is inserted unchanged as paragraphs.
 - Timeline: marked as busy (`aria-busy`) while the history loads, so screen readers and tests wait for it.
   Two browser tests read the slider too early on slow CI runners.
 - CI: actions for Node 24 (v7). The server job builds and tests in Debian 12 (`rust:1-bookworm` container) on a
