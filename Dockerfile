@@ -24,7 +24,7 @@ ARG BUILD_DATE
 ARG VERSION
 LABEL build_version="NextPad version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL org.opencontainers.image.title="NextPad" \
-      org.opencontainers.image.authors="ZWEK, Hochschule Düsseldorf" \
+      org.opencontainers.image.authors="Christian-Maximilian Steier" \
       org.opencontainers.image.description="Etherpad-compatible pad server with Yjs and LTI 1.3" \
       org.opencontainers.image.source="https://github.com/NextPad/NextPad" \
       org.opencontainers.image.licenses="EUPL-1.2"

@@ -9,7 +9,7 @@ description.de = "Gemeinsam schreiben und zeichnen mit Zeitleiste und Moodle-Anm
 
 version = "0.22.1~ynh1"
 
-maintainers = ["ZWEK der Hochschule Düsseldorf"]
+maintainers = ["Christian-Maximilian Steier"]
 
 [upstream]
 license = "EUPL-1.2"
@@ -43,10 +43,11 @@ ram.runtime = "100M"
     [install.theme]
     ask.de = "Erscheinungsbild"
     ask.en = "Theme"
-    help.de = "„nextpad“ eckig, „rund“ mit großen Rundungen, „colibris“ wie Etherpad. „hsd“ braucht Logo und Hausschrift in /home/yunohost.app/nextpad/theme (nicht im Paket)."
-    help.en = "'nextpad' square, 'rund' rounded, 'colibris' like Etherpad. 'hsd' needs the logo and house font in /home/yunohost.app/nextpad/theme (not in the package)."
-    type = "select"
-    choices = ["nextpad", "rund", "colibris", "hsd"]
+    help.de = "„nextpad“ mit Petrol, „rund“ mit großen Rundungen, „colibris“ wie Etherpad, „eckig“ schlicht. Ein eigenes Theme heißt wie in /home/yunohost.app/nextpad/theme/theme.json (nicht im Paket)."
+    help.en = "'nextpad' with petrol, 'rund' rounded, 'colibris' like Etherpad, 'eckig' plain. A theme of your own has the name from /home/yunohost.app/nextpad/theme/theme.json (not in the package)."
+    type = "string"
+    pattern.regexp = "^[a-z0-9][a-z0-9-]*$"
+    pattern.error = "Kleinbuchstaben, Ziffern und Bindestriche / lower-case letters, digits and hyphens"
     default = "nextpad"
 
     [install.allow_free_pads]

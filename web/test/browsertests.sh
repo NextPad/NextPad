@@ -10,11 +10,11 @@
 #   NEXTPAD_TEST_PORT   erster von fünf freien Ports, Vorgabe 5195
 #   NEXTPAD_TEST_LOGS   bei Fehlschlag Serverprotokolle und Testausgaben hierhin kopieren (CI-Artefakt)
 #
-# Vier Server: Hauptserver (Erscheinungsbild hsd, freie Pads, alle Addons), LTI mit
+# Vier Server: Hauptserver (Layout eckig, freie Pads, alle Addons), LTI mit
 # nachgespielter Plattform, Addon-Server (erst alle Addons, dann nur die Ideensammlung),
 # Verwaltung Erscheinungsbild (LTI wie oben, mit NEXTPAD_ADMINS). Dazu nacheinander je Theme ein
-# Server für die axe-Prüfungen von Startseite und Ideensammlung (Test „themes“).
-# Ohne Theme-Ordner: Schriften und Logo der HSD gehören nicht ins Repo.
+# Server für die axe-Prüfungen von Startseite und Ideensammlung (Test „themes“), zuletzt das erfundene
+# Theme „beispiel“ aus server/tests/theme-beispiel mit themetest.
 # Hohe Grenze für neue freie Pads: alle Tests kommen von derselben Adresse und legen zusammen mehr als 20 an.
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -46,7 +46,7 @@ starte() {
   mkdir -p "$TMP/$name"
   [ -f "$TMP/$name/api-keys.txt" ] || echo "$KEY" > "$TMP/$name/api-keys.txt"
   env NEXTPAD_DATA="$TMP/$name" NEXTPAD_BIND="127.0.0.1:$port" NEXTPAD_ALLOW_FREE_PADS=true \
-    NEXTPAD_RETENTION=dry-run NEXTPAD_THEME=hsd NEXTPAD_FREE_PADS_PER_HOUR=1000 "$@" "$BIN" >> "$TMP/$name.log" 2>&1 &
+    NEXTPAD_RETENTION=dry-run NEXTPAD_THEME=eckig NEXTPAD_FREE_PADS_PER_HOUR=1000 "$@" "$BIN" >> "$TMP/$name.log" 2>&1 &
   pids+=($!)
   for _ in $(seq 100); do
     curl -fs -o /dev/null "http://127.0.0.1:$port/" && return 0
@@ -124,10 +124,12 @@ esac
 
 case "$NUR" in "  "|*" themes "*)
   T="http://127.0.0.1:$((PORT + 4))"
-  for th in nextpad rund colibris hsd; do
-    starte "theme-$th" $((PORT + 4)) NEXTPAD_THEME="$th"
+  for th in nextpad rund colibris eckig beispiel; do
+    ordner=(); [ "$th" = beispiel ] && ordner=(NEXTPAD_THEME_DIR="$HERE/server/tests/theme-beispiel")
+    starte "theme-$th" $((PORT + 4)) NEXTPAD_THEME="$th" "${ordner[@]}"
     lauf "a11y-start-$th" a11y-start "$T/" "$TMP/a11y-$th"
     lauf "ideen-a11y-$th" ideen-a11y "$T" "$TMP/a11y-$th"
+    [ "$th" = beispiel ] && lauf themetest themetest "$T" "$TMP/theme-$th.log"
     stoppe_letzten
   done ;;
 esac

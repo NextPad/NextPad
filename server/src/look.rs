@@ -58,28 +58,40 @@ pub fn get(state: &AppState) -> Look { state.look.lesen().clone() }
 
 fn dir(state: &AppState) -> std::path::PathBuf { state.config.data_dir.join("erscheinungsbild") }
 
-// Vorgaben [CD] wie in start.css
-const D_ACCENT: &str = "#e60028";
+// Vorgaben wie in start.css
+const D_ACCENT: &str = "#333333";
 const D_COLORS: [&str; 3] = ["#00afd7", "#64b432", "#ffeb00"];
 const D_LINES: [&str; 2] = ["#007a96", "#467e23"];
 const D_TINTS: [&str; 3] = ["#e0f5fa", "#ecf6e6", "#fff9b2"];
 const D_LINES_DARK: [&str; 2] = ["#00afd7", "#64b432"];
 const D_TINTS_DARK: [&str; 3] = ["#16424c", "#304423", "#565116"];
-const D_ACCENT_DARK: &str = "#ff4d6a";
-/// Vorgabe je Theme (Akzent hell, Akzent dunkel, Textschlüssel des Untertitels), gesetzt beim Start;
-/// ohne Aufruf (Tests) die des Themes nextpad. Keine Einrichtung ist fest verdrahtet.
-static VORGABE: std::sync::OnceLock<(&'static str, &'static str, &'static str)> = std::sync::OnceLock::new();
-pub fn vorgabe_setzen(theme: &str) {
-    let _ = VORGABE.set(match theme {
-        "nextpad" => ("#007a96", "#3fb4d0", "look.untertitel_frei"),
-        "rund" => ("#3a55c8", "#8ea2ff", "look.untertitel_frei"),
-        "colibris" => (D_ACCENT, D_ACCENT_DARK, "look.untertitel_frei"),
-        _ => (D_ACCENT, D_ACCENT_DARK, "look.untertitel_frei"),
+const D_ACCENT_DARK: &str = "#c4c4c4";
+/// Vorgabe je Layout, darüber die Farben aus `theme.json`; gesetzt beim Start.
+/// Ohne Aufruf (Tests) gilt die des Layouts eckig. Keine Einrichtung ist fest verdrahtet.
+struct Vorgabe { accent: String, accent_dark: String, colors: [String; 3], aus_theme: bool }
+static VORGABE: std::sync::OnceLock<Vorgabe> = std::sync::OnceLock::new();
+pub fn vorgabe_setzen(theme: &str, farben: &crate::theme::Farben) {
+    let (a, ad) = match theme {
+        "nextpad" => ("#007a96", "#3fb4d0"),
+        "rund" => ("#3a55c8", "#8ea2ff"),
+        _ => (D_ACCENT, D_ACCENT_DARK),
+    };
+    let accent = farben.akzent.clone().unwrap_or_else(|| a.into());
+    // eigener Akzent ohne dunkle Fassung: wie im Erscheinungsbild auf 4,5:1 zum dunklen Grund aufhellen
+    let accent_dark = farben.akzent_dunkel.clone().unwrap_or_else(|| match (&farben.akzent, parse(&accent)) {
+        (Some(_), Some(c)) => hex(lift(c, DARK, 4.5)),
+        _ => ad.into(),
     });
+    let colors = farben.haus.clone().unwrap_or_else(|| D_COLORS.map(String::from));
+    let aus_theme = farben.akzent.is_some() || farben.akzent_dunkel.is_some() || farben.haus.is_some();
+    let _ = VORGABE.set(Vorgabe { accent, accent_dark, colors, aus_theme });
 }
-fn d_untertitel() -> &'static str { VORGABE.get().map(|v| v.2).unwrap_or("look.untertitel_frei") }
-fn d_accent() -> &'static str { VORGABE.get().map(|v| v.0).unwrap_or(D_ACCENT) }
-fn d_accent_dark() -> &'static str { VORGABE.get().map(|v| v.1).unwrap_or(D_ACCENT_DARK) }
+fn d_untertitel() -> &'static str { "look.untertitel_frei" }
+fn d_accent() -> &'static str { VORGABE.get().map(|v| v.accent.as_str()).unwrap_or(D_ACCENT) }
+fn d_accent_dark() -> &'static str { VORGABE.get().map(|v| v.accent_dark.as_str()).unwrap_or(D_ACCENT_DARK) }
+fn d_color(i: usize) -> &'static str { VORGABE.get().map(|v| v.colors[i].as_str()).unwrap_or(D_COLORS[i]) }
+/// Farben aus `theme.json` gelten auch ohne Einstellung im Erscheinungsbild als Stilangaben.
+fn d_aus_theme() -> bool { VORGABE.get().is_some_and(|v| v.aus_theme) }
 const WHITE: Rgb = (255, 255, 255);
 const BLACK: Rgb = (0, 0, 0);
 const DARK: Rgb = (0x1e, 0x1e, 0x1e);
@@ -90,8 +102,8 @@ impl Look {
     pub fn tagline(&self, sp: Sprache) -> &str { if self.tagline.is_empty() { t(sp, d_untertitel()) } else { &self.tagline } }
     pub fn institution(&self) -> &str { if self.institution.is_empty() { "Hochschule" } else { &self.institution } }
     fn accent(&self) -> &str { or(&self.accent, d_accent()) }
-    fn color(&self, i: usize) -> &str { or([&self.color1, &self.color2, &self.color3][i], D_COLORS[i]) }
-    fn colors_changed(&self) -> bool { !(self.accent.is_empty() && self.color1.is_empty() && self.color2.is_empty() && self.color3.is_empty() && !self.custom_shades) }
+    fn color(&self, i: usize) -> &str { or([&self.color1, &self.color2, &self.color3][i], d_color(i)) }
+    fn colors_changed(&self) -> bool { d_aus_theme() || !(self.accent.is_empty() && self.color1.is_empty() && self.color2.is_empty() && self.color3.is_empty() && !self.custom_shades) }
 
     /// Farbwerte hell und dunkel, abgeleitet aus Akzent und Hausfarben.
     pub fn palette(&self) -> Palette {
@@ -135,9 +147,9 @@ impl Look {
     pub fn css(&self) -> String {
         if !self.colors_changed() { return String::new(); }
         let p = self.palette();
-        format!(r#"<style>:root,.theme-hsd{{--hsd-red:{a};--primary:{a};--focus-ring:3px solid {a};--hsd-blue:{c0};--hsd-green:{c1};--hsd-yellow:{c2};--line-blue:{l0};--line-green:{l1};--tint-blue:{t0};--tint-green:{t1};--tint-yellow:{t2}}}
+        format!(r#"<style>:root,.theme-eckig{{--accent:{a};--primary:{a};--focus-ring:3px solid {a};--house-blue:{c0};--house-green:{c1};--house-yellow:{c2};--line-blue:{l0};--line-green:{l1};--tint-blue:{t0};--tint-green:{t1};--tint-yellow:{t2}}}
 @media (prefers-color-scheme: dark){{:root{{--focus-ring:3px solid {ad};--line-blue:{ld0};--line-green:{ld1};--tint-blue:{td0};--tint-green:{td1};--tint-yellow:{td2}}}}}
-html[data-theme="dark"] .theme-hsd{{--primary:{ad};--line-blue:{ld0};--tint-blue:{td0}}}</style>"#,
+html[data-theme="dark"] .theme-eckig{{--primary:{ad};--line-blue:{ld0};--tint-blue:{td0}}}</style>"#,
             a = p.accent, ad = p.accent_dark, c0 = p.colors[0], c1 = p.colors[1], c2 = p.colors[2], l0 = p.lines[0], l1 = p.lines[1], t0 = p.tints[0], t1 = p.tints[1], t2 = p.tints[2],
             ld0 = p.lines_dark[0], ld1 = p.lines_dark[1], td0 = p.tints_dark[0], td1 = p.tints_dark[1], td2 = p.tints_dark[2])
     }
@@ -187,32 +199,32 @@ fn sniff(b: &[u8], svg_ok: bool) -> Option<&'static str> {
 }
 
 /// Logo nach Einstellung: eigenes Bild, Vorgabe aus NEXTPAD_THEME_DIR oder keins.
-pub fn logo(state: &AppState) -> Option<(Vec<u8>, &'static str)> { image(state, get(state).logo, "logo", "logo.png", true) }
+pub fn logo(state: &AppState) -> Option<(Vec<u8>, &'static str)> { image(state, get(state).logo, "logo", &state.config.marke.logo, true) }
 #[cfg(feature = "pdf")]
 /// Nur ein selbst hochgeladenes Logo, nie das aus dem Theme-Ordner (PDF bei den Themes nextpad und rund).
 pub fn own_logo(state: &AppState) -> Option<(Vec<u8>, &'static str)> {
-    if get(state).logo == Source::Eigen { image(state, Source::Eigen, "logo", "logo.png", true) } else { None }
+    if get(state).logo == Source::Eigen { image(state, Source::Eigen, "logo", "", true) } else { None }
 }
-pub fn background(state: &AppState) -> Option<(Vec<u8>, &'static str)> { image(state, get(state).background, "hintergrund", "background.jpg", false) }
+pub fn background(state: &AppState) -> Option<(Vec<u8>, &'static str)> { image(state, get(state).background, "hintergrund", &state.config.marke.hintergrund, false) }
 fn image(state: &AppState, src: Source, own: &str, default: &str, svg_ok: bool) -> Option<(Vec<u8>, &'static str)> {
     let b = match src {
         Source::Keins => return None,
         Source::Eigen => std::fs::read(dir(state).join(own)).ok()?,
-        Source::Vorgabe => std::fs::read(state.config.theme_dir.as_ref()?.join(default)).ok()?,
+        Source::Vorgabe => std::fs::read(crate::theme::datei(state.config.theme_dir.as_deref(), default)?).ok()?,
     };
     let t = sniff(&b, svg_ok)?;
     Some((b, t))
 }
-pub fn has_logo(state: &AppState) -> bool { exists(state, get(state).logo, "logo", "logo.png") }
-pub fn has_background(state: &AppState) -> bool { exists(state, get(state).background, "hintergrund", "background.jpg") }
+pub fn has_logo(state: &AppState) -> bool { exists(state, get(state).logo, "logo", &state.config.marke.logo) }
+pub fn has_background(state: &AppState) -> bool { exists(state, get(state).background, "hintergrund", &state.config.marke.hintergrund) }
 fn exists(state: &AppState, src: Source, own: &str, default: &str) -> bool {
     match src {
         Source::Keins => false,
         Source::Eigen => dir(state).join(own).is_file(),
-        Source::Vorgabe => state.config.theme_dir.as_ref().map(|d| d.join(default).is_file()).unwrap_or(false),
+        Source::Vorgabe => default_exists(state, default),
     }
 }
-fn default_exists(state: &AppState, name: &str) -> bool { state.config.theme_dir.as_ref().map(|d| d.join(name).is_file()).unwrap_or(false) }
+fn default_exists(state: &AppState, name: &str) -> bool { crate::theme::datei(state.config.theme_dir.as_deref(), name).is_some() }
 
 /// Bildnachweis: eingestellt oder aus NEXTPAD_BACKGROUND_CREDIT.
 pub fn credit(state: &AppState) -> Option<(String, Option<String>)> {
@@ -298,6 +310,11 @@ fn form(state: &AppState, sp: Sprache, l: &Look, notice: &str) -> String {
     let bg_prev = if has_background(state) { format!(r#"<img class="preview-bg" src="{base}/theme/background.jpg?v={v}" alt="{alt}">"#, v = l.version, alt = t(sp, "look.bild_aktuell")) } else { format!(r#"<p class="hint">{}</p>"#, t(sp, "look.bild_keins")) };
     let warnings: String = l.warnings(sp).iter().map(|w| format!("<li>{}</li>", html_escape::encode_text(w))).collect();
     let warnings = if warnings.is_empty() { String::new() } else { format!(r#"<div class="notice warn" role="status"><p><strong>{}</strong></p><ul>{warnings}</ul></div>"#, t(sp, "look.kontrast")) };
+    #[cfg(feature = "pdf")]
+    let satz: String = crate::typeset::probe_fehler().iter().map(|(id, e)| format!("<li><code>{}</code>: {}</li>", html_escape::encode_text(id), html_escape::encode_text(e))).collect();
+    #[cfg(not(feature = "pdf"))]
+    let satz = String::new();
+    let warnings = if satz.is_empty() { warnings } else { format!(r#"{warnings}<div class="notice warn" role="status"><p><strong>{}</strong></p><ul>{satz}</ul></div>"#, t(sp, "look.satz_ausfall")) };
     let checked = if l.custom_shades { " checked" } else { "" };
     let farbe = |k: &'static str, i: usize| tf(sp, k, &[("n", &i.to_string())]);
     format!(r##"<main id="inhalt" class="doc admin" tabindex="-1"><p><a href="{base}/">← {start}</a></p>
@@ -343,12 +360,12 @@ fn form(state: &AppState, sp: Sprache, l: &Look, notice: &str) -> String {
         nachweis = t(sp, "look.nachweis"), nachweis_platzhalter = t(sp, "look.nachweis_platzhalter"), nachweis_link = t(sp, "look.nachweis_link"),
         farben = t(sp, "look.farben"), selbst = t(sp, "look.selbst"), vorschau = t(sp, "look.vorschau"), speichern = t(sp, "look.speichern"), zuruecksetzen = t(sp, "look.zuruecksetzen"),
         product = esc(&l.product), tagline = esc(&l.tagline), institution = esc(&l.institution), credit = esc(&l.credit), credit_url = esc(&l.credit_url),
-        logo_radios = radios(sp, "logo", l.logo, default_exists(state, "logo.png"), has_own_logo, "look.r.eigenes_logo", "look.r.kein_logo"),
-        bg_radios = radios(sp, "background", l.background, default_exists(state, "background.jpg"), has_own_bg, "look.r.eigenes_bild", "look.r.kein_bild"),
+        logo_radios = radios(sp, "logo", l.logo, default_exists(state, &state.config.marke.logo), has_own_logo, "look.r.eigenes_logo", "look.r.kein_logo"),
+        bg_radios = radios(sp, "background", l.background, default_exists(state, &state.config.marke.hintergrund), has_own_bg, "look.r.eigenes_bild", "look.r.kein_bild"),
         accent = color_field(sp, "accent", t(sp, "look.akzentfarbe"), &l.accent, d_accent(), t(sp, "look.h.akzent")),
-        c1 = color_field(sp, "color1", &farbe("look.farbe_n", 1), &l.color1, D_COLORS[0], t(sp, "look.h.farbe1")),
-        c2 = color_field(sp, "color2", &farbe("look.farbe_n", 2), &l.color2, D_COLORS[1], t(sp, "look.h.farbe2")),
-        c3 = color_field(sp, "color3", &farbe("look.farbe_n", 3), &l.color3, D_COLORS[2], t(sp, "look.h.farbe3")),
+        c1 = color_field(sp, "color1", &farbe("look.farbe_n", 1), &l.color1, d_color(0), t(sp, "look.h.farbe1")),
+        c2 = color_field(sp, "color2", &farbe("look.farbe_n", 2), &l.color2, d_color(1), t(sp, "look.h.farbe2")),
+        c3 = color_field(sp, "color3", &farbe("look.farbe_n", 3), &l.color3, d_color(2), t(sp, "look.h.farbe3")),
         l1 = color_field(sp, "line1", &farbe("look.linie_n", 1), &l.line1, &p.lines[0], t(sp, "look.h.linie1")),
         l2 = color_field(sp, "line2", &farbe("look.linie_n", 2), &l.line2, &p.lines[1], t(sp, "look.h.linie2")),
         t1 = color_field(sp, "tint1", &farbe("look.toenung_n", 1), &l.tint1, &p.tints[0], t(sp, "look.h.toenung1")),
@@ -489,7 +506,7 @@ mod tests {
         assert!(ratio(parse(&p.lines_dark[0]).unwrap(), DARK) >= 4.5);
         assert!(l.warnings(Sprache::De).iter().any(|w| w.starts_with("Akzentfarbe: nur 1,") && w.ends_with("mindestens 3:1.")));
         assert!(l.warnings(Sprache::En).iter().any(|w| w.starts_with("Accent colour: only 1.")));
-        assert!(l.css().contains("--hsd-red:#ffcc00"));
+        assert!(l.css().contains("--accent:#ffcc00"));
     }
     #[test]
     fn svg_with_script_refused() {

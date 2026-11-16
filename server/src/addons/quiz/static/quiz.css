@@ -1,7 +1,7 @@
 /* NextPad – Quiz-Raster. Baut auf start.css auf (Hausfarben, Abstände, Schaltflächen).
    Für den Beamer: große Ziffern, harte Kanten, Rot nur als Linie; gespielte Felder gestrichelt und blass, nicht nur farbig. */
 main.quiz { flex: 1; display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-4) var(--space-5) var(--space-6); max-width: 1600px; width: 100%; margin: 0 auto; box-sizing: border-box; }
-.quiz-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-3); border-bottom: 3px solid var(--hsd-red, #e60028); padding-bottom: var(--space-2); }
+.quiz-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-3); border-bottom: 3px solid var(--accent, #333); padding-bottom: var(--space-2); }
 .quiz-top h1 { margin: 0; font-family: var(--font-text); font-weight: 700; font-size: clamp(1.5rem, 3vw, 2.25rem); line-height: 1.2; overflow-wrap: anywhere; }
 .quiz .kicker { margin: 0 0 var(--space-1); font-size: var(--text-small); font-weight: 700; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: .06em; }
 .quiz-tools { display: flex; flex-wrap: wrap; gap: var(--space-2); }
@@ -19,7 +19,7 @@ main.quiz { flex: 1; display: flex; flex-direction: column; gap: var(--space-4);
 .quiz-qr p { margin: 0; font-size: 1.1rem; overflow-wrap: anywhere; }
 
 .quiz-board { display: grid; gap: var(--space-3); min-height: min(62vh, 640px); }
-.quiz-cat { display: flex; align-items: flex-end; justify-content: center; text-align: center; font-weight: 700; font-size: clamp(.95rem, 1.8vw, 1.6rem); padding: var(--space-2) var(--space-1); border-bottom: 3px solid var(--hsd-red, #e60028); hyphens: auto; overflow-wrap: anywhere; }
+.quiz-cat { display: flex; align-items: flex-end; justify-content: center; text-align: center; font-weight: 700; font-size: clamp(.95rem, 1.8vw, 1.6rem); padding: var(--space-2) var(--space-1); border-bottom: 3px solid var(--accent, #333); hyphens: auto; overflow-wrap: anywhere; }
 /* Kacheln: weiß auf grauem Grund mit Rahmen und Kante, damit das Raster als Spielbrett trägt */
 .quiz-cell {
   display: flex; align-items: center; justify-content: center; min-height: 64px; padding: 0;
@@ -31,10 +31,10 @@ button.quiz-cell { cursor: pointer; transition: transform .12s ease-out, box-sha
 /* Hover und Tastaturfokus: Kachel kippt ins Negativ, hebt sich an, rote Kante darunter */
 button.quiz-cell:not(:disabled):hover, button.quiz-cell:not(:disabled):focus-visible {
   color: var(--color-surface); background: var(--color-text-primary);
-  transform: translateY(-4px); box-shadow: 0 8px 0 var(--color-accent, #e60028);
+  transform: translateY(-4px); box-shadow: 0 8px 0 var(--color-accent, #333);
 }
-button.quiz-cell:not(:disabled):focus-visible { outline: 3px solid var(--color-accent, #e60028); outline-offset: 4px; }
-button.quiz-cell:not(:disabled):active { transform: translateY(2px); box-shadow: 0 2px 0 var(--color-accent, #e60028); }
+button.quiz-cell:not(:disabled):focus-visible { outline: 3px solid var(--color-accent, #333); outline-offset: 4px; }
+button.quiz-cell:not(:disabled):active { transform: translateY(2px); box-shadow: 0 2px 0 var(--color-accent, #333); }
 button.quiz-cell:disabled { cursor: default; }
 .quiz-cell.is-played { background: transparent; color: var(--color-text-secondary); border: 2px dashed var(--color-border); box-shadow: none; font-weight: 400; opacity: .55; }
 @media (prefers-reduced-motion: reduce) {
@@ -55,7 +55,7 @@ button.quiz-cell:disabled { cursor: default; }
 .quiz-scores { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-5); border-top: 1px solid var(--color-border); padding-top: var(--space-3); font-size: clamp(1rem, 1.8vw, 1.6rem); }
 .quiz-score { display: flex; gap: var(--space-2); align-items: baseline; }
 .quiz-score strong { font-size: 1.25em; }
-.quiz-score.is-lead strong { text-decoration: underline; text-decoration-color: var(--hsd-red, #e60028); text-decoration-thickness: 3px; text-underline-offset: 4px; }
+.quiz-score.is-lead strong { text-decoration: underline; text-decoration-color: var(--accent, #333); text-decoration-thickness: 3px; text-underline-offset: 4px; }
 .quiz-scores .hint { margin: 0 0 0 auto; }
 .quiz-export { margin: 0; }
 
@@ -67,7 +67,7 @@ button.quiz-cell:disabled { cursor: default; }
 
 .quiz-ende { display: flex; flex-direction: column; gap: var(--space-2); }
 .quiz-ende h2 { margin: 0; font-size: clamp(1.5rem, 3vw, 2.5rem); }
-.quiz-sieg { margin: 0; font-weight: 700; font-size: clamp(1.8rem, 5vw, 4rem); line-height: 1.1; border-left: 8px solid var(--color-accent, #e60028); padding-left: var(--space-3); }
+.quiz-sieg { margin: 0; font-weight: 700; font-size: clamp(1.8rem, 5vw, 4rem); line-height: 1.1; border-left: 8px solid var(--color-accent, #333); padding-left: var(--space-3); }
 .quiz-rang { margin: 0; padding-left: 1.6em; font-size: clamp(1.1rem, 2.2vw, 2rem); }
 .quiz-rang li span { margin-right: var(--space-3); }
 .quiz-ende h3 { margin: var(--space-3) 0 0; }
@@ -81,15 +81,15 @@ button.quiz-cell:disabled { cursor: default; }
 .quiz-buzzer {
   display: block; width: 100%; min-height: 32vh; padding: var(--space-4); border-radius: 0; cursor: pointer;
   font: 700 clamp(2rem, 10vw, 4rem)/1 var(--font-text); color: var(--color-surface); background: var(--color-text-primary);
-  border: 6px solid var(--color-accent, #e60028); touch-action: manipulation; user-select: none; -webkit-user-select: none;
+  border: 6px solid var(--color-accent, #333); touch-action: manipulation; user-select: none; -webkit-user-select: none;
 }
 .quiz-buzzer:disabled { cursor: default; opacity: .6; }
 .quiz-buzzer:not(:disabled):active { transform: translateY(3px); }
 .quiz-buzz-kopf { margin: 0; font-weight: 700; color: var(--color-text-secondary); }
 .quiz-buzz-reihe { margin: 0; padding-left: 1.6em; font-size: clamp(1.1rem, 2.2vw, 2rem); }
-.quiz-buzz-reihe li.is-first { border-left: 6px solid var(--color-accent, #e60028); padding-left: var(--space-2); margin-left: calc(-1 * var(--space-2) - 6px); }
+.quiz-buzz-reihe li.is-first { border-left: 6px solid var(--color-accent, #333); padding-left: var(--space-2); margin-left: calc(-1 * var(--space-2) - 6px); }
 .quiz-buzz-reihe span { color: var(--color-text-secondary); font-size: .8em; }
-.quiz-team.is-first .quiz-team-name { border-bottom: 3px solid var(--color-accent, #e60028); }
+.quiz-team.is-first .quiz-team-name { border-bottom: 3px solid var(--color-accent, #333); }
 @media (prefers-reduced-motion: reduce) { .quiz-buzzer:not(:disabled):active { transform: none; } }
 
 :fullscreen .site-header, :fullscreen .site-footer, :fullscreen .quiz-export { display: none; }
@@ -108,7 +108,7 @@ button.quiz-cell:disabled { cursor: default; }
   padding: var(--space-2); background: var(--color-surface); border: 2px solid var(--color-text-primary); box-shadow: 0 4px 0 var(--color-text-primary); }
 .quiz-menu-list .btn { width: 100%; justify-content: flex-start; text-align: left; }
 /* Wer zuerst gedrückt hat: groß für den Beamer */
-.quiz-erster { margin: 0; padding: var(--space-3) var(--space-4); border-left: 12px solid var(--color-accent, #e60028);
+.quiz-erster { margin: 0; padding: var(--space-3) var(--space-4); border-left: 12px solid var(--color-accent, #333);
   background: var(--color-text-primary); color: var(--color-surface); animation: quiz-erster-ein .35s ease-out; }
 .quiz-erster small { display: block; font-size: clamp(1rem, 1.8vw, 1.5rem); font-weight: 700; letter-spacing: .02em; }
 .quiz-erster strong { display: block; font-size: clamp(2.5rem, 8vw, 6rem); line-height: 1.05; overflow-wrap: anywhere; }
@@ -118,5 +118,5 @@ button.quiz-cell:disabled { cursor: default; }
 .quiz-board.is-gesperrt .quiz-cell { opacity: .45; }
 /* Countdown je Frage: groß am Beamer, rot in den letzten Sekunden */
 .quiz-countdown { margin: 0; font: 700 clamp(2.5rem, 7vw, 5rem)/1 var(--font-text); font-variant-numeric: tabular-nums; }
-.quiz-countdown.is-knapp, .quiz-countdown.is-um { color: var(--color-accent, #e60028); }
+.quiz-countdown.is-knapp, .quiz-countdown.is-um { color: var(--color-accent, #333); }
 .quiz-stat { margin: 0; padding-left: 1.2em; }

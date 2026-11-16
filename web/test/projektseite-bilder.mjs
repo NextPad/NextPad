@@ -1,4 +1,4 @@
-// Bildschirmfotos für die Projektseite (site/bilder). Server im Design hsd ohne Theme-Dateien (kein Hochschullogo,
+// Bildschirmfotos für die Projektseite (site/bilder). Server im Layout eckig ohne Theme-Dateien (kein Hochschullogo,
 // keine Hausschrift), Logo und Startbild auf „keins“, Untertitel neutral, Akzent im NextPad-Blau. Schreibt PNG nach <ziel>.
 // node test/projektseite-bilder.mjs <basis-url> <api-key> <ziel>
 import { chromium } from 'playwright'

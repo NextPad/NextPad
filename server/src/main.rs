@@ -19,9 +19,11 @@ mod retention;
 mod render;
 mod sicherung;
 mod sperre;
+mod stile;
 mod texte;
 mod store;
 mod sync;
+mod theme;
 #[cfg(feature = "pdf")]
 mod typeset;
 mod web;
@@ -75,7 +77,9 @@ async fn main() -> anyhow::Result<()> {
         return Ok(());
     }
     let config = config::Config::from_env()?;
-    look::vorgabe_setzen(&config.theme);
+    look::vorgabe_setzen(&config.theme, &config.marke.farben);
+    texte::ersetzen(&config.marke.texte);
+    stile::laden(&config);
     let _ = web::BASE_PATH.set(config.base_path.clone());
     std::fs::create_dir_all(&config.data_dir)?;
     let store = Arc::new(store::Store::open(&config::db_path(&config.data_dir), &addons::daten())?);
@@ -94,6 +98,9 @@ async fn main() -> anyhow::Result<()> {
         state.store.flush();
         return Ok(());
     }
+    // Satzvorlagen des Themes einmal probesetzen; eine kaputte fällt aus, der Start nicht
+    #[cfg(feature = "pdf")]
+    typeset::probe(&state.config);
 
     let app = Router::new()
         .route("/", get(web::index))
@@ -106,6 +113,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/p/{id}/extend", axum::routing::post(web::extend_owner))
         .route("/p/{id}/delete", axum::routing::post(web::delete_owner))
         .route("/p/{id}/passwort", axum::routing::post(web::set_password))
+        .route("/p/{id}/gestaltung", get(web::get_gestaltung).post(web::set_gestaltung))
         .route("/p/{id}/besitzlink", axum::routing::post(web::set_owner_link))
         .route("/p/{id}/besitz", get(web::owner_link_page).post(web::claim_owner))
         .route("/p/{id}/entsperren", axum::routing::post(web::unlock))
@@ -136,10 +144,11 @@ async fn main() -> anyhow::Result<()> {
         .route("/static/quicksand.ttf", get(web::static_quicksand))
         .route("/static/themes.css", get(web::static_themes))
         .route("/static/fonts/{datei}", get(web::static_webfont))
-        .route("/static/theme-hsd.css", get(web::static_theme_hsd))
-        .route("/theme/hsd.css", get(web::theme_hsd_css))
+        .route("/static/eckig.css", get(web::static_eckig))
+        .route("/theme/marke.css", get(web::theme_marke_css))
         .route("/theme/logo.png", get(look::logo_file))
         .route("/theme/font.ttf", get(web::theme_font))
+        .route("/theme/stile/{datei}", get(web::stil_schrift))
         .route("/theme/background.jpg", get(look::background_file))
         .route("/admin/erscheinungsbild", get(look::page).post(look::save).layer(axum::extract::DefaultBodyLimit::max(9 << 20)))
         .route("/admin/erscheinungsbild/vorgabe", axum::routing::post(look::reset))

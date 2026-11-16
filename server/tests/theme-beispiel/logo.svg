@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="60" viewBox="0 0 240 60" role="img" aria-label="Hochschule Musterstadt">
+  <rect x="0" y="8" width="44" height="44" fill="#1d5c8a"/>
+  <path d="M10 42V18l12 14 12-14v24" fill="none" stroke="#ffffff" stroke-width="4"/>
+  <text x="56" y="28" font-family="Liberation Sans, Arial, sans-serif" font-size="15" font-weight="700" fill="#1a1a1a">Hochschule</text>
+  <text x="56" y="47" font-family="Liberation Sans, Arial, sans-serif" font-size="15" fill="#1a1a1a">Musterstadt</text>
+</svg>

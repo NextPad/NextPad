@@ -1,14 +1,14 @@
-/* NextPad – Startseite und Hilfe im HSD-Design.
-   Herkunft der Werte: [CD] = HSD-Corporate-Design (Manual 2015/v6.0, Webauftritt hs-duesseldorf.de),
+/* NextPad – Startseite und Hilfe im Grundstil.
+   Herkunft der Werte: [Vorgabe] = Akzent und Hausfarben ohne Theme, ersetzbar über theme.json und /admin/erscheinungsbild,
    [abgeleitet] = für NextPad festgelegt, geprüft auf WCAG-2.2-Kontrast. */
 
 :root {
-  /* Marke [CD] */
-  --hsd-red: #e60028;               /* Pantone 185, nur Akzent: Kopflinie, Logo, Fokus */
-  --hsd-blue: #00afd7;              /* Pantone 638 */
-  --hsd-green: #64b432;             /* Pantone 360 */
-  --hsd-yellow: #ffeb00;            /* Pantone 101 */
-  /* Hausfarben sind zu kräftig für Flächen und keine Textfarben [CD]. Daraus [abgeleitet]:
+  /* Akzent und Hausfarben [Vorgabe] */
+  --accent: #333;                  /* nur Akzent: Kopflinie, Logo, Fokus; 12,63:1 auf Weiß */
+  --house-blue: #00afd7;              /* Pantone 638 */
+  --house-green: #64b432;             /* Pantone 360 */
+  --house-yellow: #ffeb00;            /* Pantone 101 */
+  /* Hausfarben sind zu kräftig für Flächen und keine Textfarben [Vorgabe]. Daraus [abgeleitet]:
      Linien auf 70 % abgedunkelt (WCAG 1.4.11, mindestens 3:1), Flächen als Tönung auf Weiß. */
   --line-blue: #007a96;             /* Blau 70 %: 4,97:1 auf Weiß, 4,41:1 auf --tint-blue */
   --line-green: #467e23;            /* Grün 70 %: 4,92:1 auf Weiß */
@@ -16,7 +16,7 @@
   --tint-green: #ecf6e6;            /* Grün 12 %, 18,9:1 */
   --tint-yellow: #fff9b2;           /* Gelb 30 %, 19,4:1 */
   --font-text: Arial, "Liberation Sans", Helvetica, sans-serif;   /* Hausschrift Text, linksbündig */
-  --font-display: "HSD Sans", Arial, sans-serif;                   /* nur ab 20 px, nur Regular */
+  --font-display: "Hausschrift", Arial, sans-serif;                   /* nur ab 20 px, nur Regular */
 
   /* Farben [abgeleitet], Kontrast gegen --color-surface */
   --color-text-primary: #000;       /* 21:1 */
@@ -25,17 +25,17 @@
   --color-canvas: #f2f2f2;
   --color-border: #d9d9d9;          /* nur Gliederung, keine Bedeutung */
   --color-border-control: #767676;  /* Feldrahmen 4,54:1 */
-  --color-action: #000;             /* Hauptschaltfläche wie im HSD-Webauftritt: Schwarz */
+  --color-action: #000;             /* Hauptschaltfläche Schwarz */
   --color-action-hover: #333;
   --color-on-action: #fff;          /* 21:1 */
   --color-error: #b00020;           /* 7,33:1, immer mit Text und Symbol */
-  --focus-ring: 3px solid var(--hsd-red);   /* 4,78:1 auf Weiß */
+  --focus-ring: 3px solid var(--accent);   /* 12,63:1 auf Weiß */
 
   /* Maße [abgeleitet] */
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --space-7: 48px;
   --content-width: 880px; --entry-width: 540px;
   --target-min: 44px;
-  --radius: 0;                      /* [CD] Flächen eckig wie der HSD-Webauftritt */
+  --radius: 0;                      /* Flächen eckig */
   --radius-control: 4px;            /* [abgeleitet] leichte Rundung nur für Bedienelemente */
   --text-base: 1.0625rem; --text-small: .875rem; --line: 1.5;   /* rem: folgt der Schriftgröße des Browsers */
 }
@@ -52,7 +52,7 @@
     --color-action-hover: #fff;
     --color-on-action: #000;
     --color-error: #ff8a9a;           /* 7,43:1 */
-    --focus-ring: 3px solid #ff4d6a;  /* 5,18:1 */
+    --focus-ring: 3px solid #c4c4c4;  /* 9,56:1 */
     --line-blue: #00afd7;             /* Hausfarbe selbst: 6,44:1 auf #1e1e1e */
     --line-green: #64b432;            /* 6,44:1 */
     --tint-blue: #16424c;             /* Blau 25 % auf #1e1e1e, heller Text 9,8:1 */
@@ -82,7 +82,7 @@ a { color: inherit; }
   display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap;
   padding: var(--space-3) var(--space-4); padding-top: max(var(--space-3), env(safe-area-inset-top));
   padding-left: max(var(--space-4), env(safe-area-inset-left)); padding-right: max(var(--space-4), env(safe-area-inset-right));
-  background: var(--color-surface); border-bottom: 2px solid var(--hsd-red);
+  background: var(--color-surface); border-bottom: 2px solid var(--accent);
 }
 .site-header .brand { display: flex; align-items: center; text-decoration: none; min-height: var(--target-min); }
 .site-header .logo { height: 40px; width: auto; display: block; }
@@ -116,7 +116,7 @@ a { color: inherit; }
 .panel { background: var(--color-surface); padding: var(--space-5); }
 .entry { max-width: var(--entry-width); border: 1px solid var(--color-border); }
 .panel > :last-child { margin-bottom: 0; }
-/* Titel in Arial Bold, normale Schreibung: ruhiger als die Versalien der HSD Sans; die Marke trägt der Kopf */
+/* Titel in Arial Bold, normale Schreibung: ruhiger als Versalien; die Marke trägt der Kopf */
 h1 { font-weight: 700; font-size: 1.75rem; line-height: 1.15; margin: 0 0 var(--space-2); }
 h2 { font-size: 1.125rem; line-height: 1.3; margin: 0 0 var(--space-3); }
 .lead { margin: 0 0 var(--space-5); color: var(--color-text-secondary); max-width: 60ch; }

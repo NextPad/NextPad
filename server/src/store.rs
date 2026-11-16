@@ -153,7 +153,8 @@ pub enum CreatePadError {
 
 /// Schemaversion in `PRAGMA user_version`. Jede Schema-Ergänzung, auch in einem Addon, zählt sie hoch.
 /// 1: Stand 0.22.0, alle Ergänzungen bis `pads.owner_link_hash` und die Tabellen der Addons.
-pub const SCHEMA_VERSION: i64 = 1;
+/// 2: `pads.stil` (Absender) und `pads.art` (Kennung der Satzvorlage).
+pub const SCHEMA_VERSION: i64 = 2;
 
 const SCHEMA: &str = r#"
 CREATE TABLE IF NOT EXISTS groups (id TEXT PRIMARY KEY, created INTEGER NOT NULL);
@@ -222,6 +223,10 @@ impl Store {
         // Schema-Ergänzung 01.11.2026: Besitz-Link freier Pads als Argon2id-Hash
         let has_link: bool = conn.prepare("SELECT 1 FROM pragma_table_info('pads') WHERE name='owner_link_hash'")?.exists([])?;
         if !has_link { conn.execute_batch("ALTER TABLE pads ADD COLUMN owner_link_hash TEXT;")?; }
+        // Schema-Ergänzung 05.11.2026: Vorlage für den PDF-Satz, leer = Vorgabe
+        if !hat_spalte(&conn, "pads", "stil")? { conn.execute_batch("ALTER TABLE pads ADD COLUMN stil TEXT;")?; }
+        // Dokumentart; wer schon eine Gestaltung gewählt hatte, bekam die Dokumentation
+        if !hat_spalte(&conn, "pads", "art")? { conn.execute_batch("ALTER TABLE pads ADD COLUMN art TEXT; UPDATE pads SET art='dokumentation' WHERE stil IS NOT NULL AND stil<>'';")?; }
         for z in zusaetze { conn.execute_batch(z.schema)?; (z.ergaenzen)(&conn)?; }
         conn.pragma_update(None, "user_version", SCHEMA_VERSION)?;
         let wconn = Connection::open(path)?;
@@ -395,6 +400,20 @@ impl Store {
     }
     // Passwort freier Pads
     /// Fehler der Datenbank kommen als Fehler zurück, nie als „kein Passwort“: Das Pad bleibt dann zu.
+    pub fn stil(&self, pad_id: &str) -> Option<String> {
+        self.c().query_row("SELECT stil FROM pads WHERE id=?1", params![pad_id], |r| r.get::<_, Option<String>>(0)).optional().ok().flatten().flatten().filter(|s| !s.is_empty())
+    }
+    pub fn set_stil(&self, pad_id: &str, stil: Option<&str>) -> Result<()> {
+        self.c().execute("UPDATE pads SET stil=?2 WHERE id=?1", params![pad_id, stil])?;
+        Ok(())
+    }
+    pub fn art(&self, pad_id: &str) -> Option<String> {
+        self.c().query_row("SELECT art FROM pads WHERE id=?1", params![pad_id], |r| r.get::<_, Option<String>>(0)).optional().ok().flatten().flatten().filter(|s| !s.is_empty())
+    }
+    pub fn set_art(&self, pad_id: &str, art: Option<&str>) -> Result<()> {
+        self.c().execute("UPDATE pads SET art=?2 WHERE id=?1", params![pad_id, art])?;
+        Ok(())
+    }
     pub fn pw_hash(&self, pad_id: &str) -> Result<Option<String>> {
         Ok(self.c().query_row("SELECT pw_hash FROM pads WHERE id=?1", params![pad_id], |r| r.get::<_, Option<String>>(0)).optional()?.flatten())
     }
@@ -756,6 +775,33 @@ mod tests {
         assert!(store.delete_pad("p1").unwrap());
         let n = |p: &str| store.c().query_row("SELECT COUNT(*) FROM probe WHERE pad_id=?1", params![p], |r| r.get::<_, i64>(0)).unwrap();
         assert_eq!((n("p1"), n("p2")), (0, 1));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Vorlage am Pad: ältere Datenbank bekommt die Spalte, leer heißt keine Vorlage.
+    #[test]
+    fn vorlage_am_pad() {
+        let dir = std::env::temp_dir().join(format!("nextpad-test-v-{}-{}", std::process::id(), ids::now_ms()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("t.sqlite");
+        { let store = Store::open(&path, &[]).unwrap(); store.create_pad("p1", None).unwrap(); }
+        Connection::open(&path).unwrap().execute_batch("ALTER TABLE pads DROP COLUMN stil;").unwrap();
+        let store = Store::open(&path, &[]).unwrap();
+        assert_eq!(store.stil("p1"), None);
+        store.set_stil("p1", Some("fb-sk")).unwrap();
+        assert_eq!(store.stil("p1").as_deref(), Some("fb-sk"));
+        store.set_stil("p1", Some("")).unwrap();
+        assert_eq!(store.stil("p1"), None);
+        store.set_stil("p1", None).unwrap();
+        assert_eq!(store.stil("gibt-es-nicht"), None);
+        store.set_art("p1", Some("dokumentation")).unwrap();
+        assert_eq!(store.art("p1").as_deref(), Some("dokumentation"));
+        drop(store);
+        // Pad mit Gestaltung aus dem Pilot vor der getrennten Dokumentart: bekommt beim Start die Dokumentation
+        { let s2 = Store::open(&path, &[]).unwrap(); s2.create_pad("p2", None).unwrap(); s2.set_stil("p2", Some("fb-sk")).unwrap(); }
+        Connection::open(&path).unwrap().execute_batch("ALTER TABLE pads DROP COLUMN art;").unwrap();
+        let store = Store::open(&path, &[]).unwrap();
+        assert_eq!((store.art("p1"), store.art("p2").as_deref()), (None, Some("dokumentation")));
         let _ = std::fs::remove_dir_all(&dir);
     }
 

@@ -1,7 +1,7 @@
 // Addons ein- und ausschalten. Zwei Läufe gegen denselben Datenbestand:
 //   node test/addontest.mjs anlegen <basis-url> <datei>   Server mit allen Addons: legt Quiz, Ideensammlung und Zeichenbrett an
 //   node test/addontest.mjs pruefen <basis-url> <datei>   Server mit NEXTPAD_ADDONS=ideen: Quiz und Zeichenbrett sind aus
-// Beide Server mit NEXTPAD_THEME=hsd (nur dessen Startseite hat Kacheln) und NEXTPAD_ALLOW_FREE_PADS=true.
+// Beide Server mit NEXTPAD_THEME=eckig (nur dessen Startseite hat Kacheln) und NEXTPAD_ALLOW_FREE_PADS=true.
 import { readFileSync, writeFileSync } from 'node:fs'
 const [mode, base, file] = process.argv.slice(2)
 let pass = 0, fail = 0

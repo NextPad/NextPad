@@ -1,0 +1,4 @@
+/* Erfundenes Theme „Hochschule Musterstadt“: Testfall und Vorlage für eigene Themes.
+   Geladen nach dem Grundstil eckig.css, nur im Editor. */
+.theme-eckig { --primary: #1d5c8a; }
+html[data-theme="dark"] .theme-eckig { --primary: #7fb6e0; }

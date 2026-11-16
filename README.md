@@ -10,7 +10,7 @@ timeline built from snapshots. No chat.
 
 ## Overview
 
-The ZWEK runs an Etherpad server for the university's Moodle platforms. Moodle attaches
+Many universities run an Etherpad server for their Moodle platforms. Moodle attaches
 pads through the plugin `mod_etherpadlite` (Humboldt-Universität zu Berlin) as a course
 activity. With the current resources, maintaining Etherpad and its plugins is barely
 sustainable: the plugin landscape slows every upgrade down, and the dependency tree counts
@@ -101,11 +101,8 @@ Then create a group, pad, author and session through the API (examples in
 
 ## Project background
 
-Idea, concept and development: Christian-Maximilian Steier.
-
-This software was developed at Hochschule Düsseldorf – University of Applied Sciences
-(HSD) by ZWEK – Centre for Training and Competence Development, as a successor to the
-Etherpad service behind the Moodle platforms of HSD.
+Idea, concept and development: Christian-Maximilian Steier. NextPad was created as the
+successor of an Etherpad service for Moodle platforms.
 
 ## Citation
 

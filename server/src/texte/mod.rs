@@ -74,8 +74,21 @@ fn quellen() -> Vec<(Sprache, Texte)> {
     q
 }
 
+static ERSETZT: std::sync::OnceLock<Katalog> = std::sync::OnceLock::new();
+
+/// Texte aus dem Theme, einmal beim Start; sie gehen dem Katalog vor.
+pub fn ersetzen(texte: &[(Sprache, &'static str, &'static str)]) {
+    let _ = ERSETZT.set(texte.iter().map(|(sp, k, v)| ((*sp, *k), *v)).collect());
+}
+
+/// Schlüssel aus dem Katalog zu einem Namen, etwa aus `theme.json`.
+pub fn schluessel(name: &str) -> Option<&'static str> {
+    katalog().keys().find(|(_, k)| *k == name).map(|(_, k)| *k)
+}
+
 /// Text zum Schlüssel. Fehlt er in der Sprache, gilt Deutsch; fehlt er ganz, erscheint der Schlüssel.
 pub fn t(sprache: Sprache, schluessel: &'static str) -> &'static str {
+    if let Some(v) = ERSETZT.get().and_then(|e| e.get(&(sprache, schluessel))) { return v; }
     let k = katalog();
     k.get(&(sprache, schluessel)).or_else(|| k.get(&(Sprache::De, schluessel))).copied().unwrap_or_else(|| {
         tracing::warn!("Text fehlt im Katalog: {schluessel}");

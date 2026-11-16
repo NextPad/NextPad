@@ -1,5 +1,5 @@
 // Verwaltung Erscheinungsbild: Zugang nur für Admins (Moodle-Rolle oder NEXTPAD_ADMINS), Speichern, Prüfungen, Wirkung, Zurücksetzen.
-// Server wie für ltitest, im Design hsd und mit NEXTPAD_ADMINS=admin@example.org.
+// Server wie für ltitest, im Layout eckig und mit NEXTPAD_ADMINS=admin@example.org.
 // node test/admintest.mjs <datadir> http://127.0.0.1:<port>
 import crypto from 'node:crypto'
 import fs from 'node:fs'
@@ -72,7 +72,7 @@ check('Speichern 303 mit Rückmeldung', ok.status === 303 && ok.headers.get('loc
 const start = await (await get('/')).text()
 check('Name, Untertitel, Einrichtung im Kopf', start.includes('<strong>Testpads</strong>') && start.includes('Schreiben im Test') && start.includes('alt="Testhochschule"'))
 check('eingetragener Untertitel bleibt auf Englisch unübersetzt', (await (await fetch(base + '/', { headers: en })).text()).includes('Schreiben im Test'))
-check('Farben als Stilangaben', start.includes('--hsd-red:#007a96') && start.includes('--hsd-blue:#7fd4ff') && /--line-blue:#[0-9a-f]{6}/.test(start))
+check('Farben als Stilangaben', start.includes('--accent:#007a96') && start.includes('--house-blue:#7fd4ff') && /--line-blue:#[0-9a-f]{6}/.test(start))
 const logo = await get('/theme/logo.png')
 check('eigenes Logo als SVG, abgeschottet', logo.status === 200 && logo.headers.get('content-type') === 'image/svg+xml' && (logo.headers.get('content-security-policy') || '').includes('sandbox'))
 check('kein NextPad-Zeichen neben eigenem Logo', !start.includes('brand-mark'))
@@ -123,7 +123,7 @@ await b.close()
 
 const reset = await fetch(`${base}/admin/erscheinungsbild/vorgabe`, { method: 'POST', redirect: 'manual', headers: { cookie: admin } })
 const after = await (await get('/')).text()
-check('Zurücksetzen: Vorgabe gilt wieder', reset.status === 303 && after.includes('<strong>NextPad</strong>') && !after.includes('--hsd-red:'))
+check('Zurücksetzen: Vorgabe gilt wieder', reset.status === 303 && after.includes('<strong>NextPad</strong>') && !after.includes('--accent:'))
 const afterEn = await (await fetch(base + '/', { headers: en })).text()
 check('Vorgabe-Untertitel je Sprache', after.includes('Gemeinsam schreiben im Browser') && afterEn.includes('Writing together in the browser') && !afterEn.includes('Gemeinsam schreiben'))
 console.log(`\n${pass} ok, ${fail} fehlgeschlagen`); process.exit(fail ? 1 : 0)

@@ -248,6 +248,7 @@ fn element_html<T: ReadTxn>(txn: &T, el: &XmlElementRef, out: &mut String, depth
         "tableOfContents" => toc_html(cx, out),
         "hardBreak" => out.push_str("<br>"),
         "horizontalRule" => out.push_str("<hr>\n"),
+        "pageBreak" => out.push_str("<div class=\"seitenumbruch\" style=\"break-after: page\"></div>\n"),
         _ => { out.push_str("<div>"); inner(txn, out, cx); out.push_str("</div>\n"); }
     }
 }
@@ -356,6 +357,7 @@ fn node_text<T: ReadTxn>(txn: &T, toc: &str, node: &XmlOut, out: &mut String, de
                 }
                 "hardBreak" => out.push('\n'),
                 "horizontalRule" => out.push_str("----\n"),
+                "pageBreak" => out.push('\n'),
                 "blockquote" => {
                     let mut inner = String::new();
                     for c in el.children(txn) { node_text(txn, toc, &c, &mut inner, depth + 1, None); }
@@ -494,6 +496,7 @@ fn block_md<T: ReadTxn>(txn: &T, toc: &str, node: &XmlOut, out: &mut String, dep
             out.push('\n');
         }
         "horizontalRule" => out.push_str("---\n\n"),
+        "pageBreak" => out.push_str("<!-- Seitenumbruch -->\n\n"),
         "blockquote" => {
             let mut inner = String::new();
             for c in el.children(txn) { block_md(txn, toc, &c, &mut inner, 0); }
@@ -595,6 +598,22 @@ fn aligned<T: ReadTxn>(txn: &T, el: &XmlElementRef, body: String) -> String {
     }
 }
 
+/// Ab dieser Spaltenzahl trennt A4 hoch selbst kurze Wörter.
+#[cfg(feature = "pdf")]
+const QUER_AB_SPALTEN: usize = 7;
+
+/// Eine ungeteilte Zeile, die höher als die Seite wird, liefe über den Rand hinaus. Grob 30 Zeilen je Zelle
+/// bei rund 90 Zeichen Satzbreite; Tabellen mit längeren Zellen darf Typst weiter innerhalb der Zeile teilen.
+#[cfg(feature = "pdf")]
+const ZEICHEN_JE_ZELLE_MAL_SPALTEN: usize = 2700;
+
+/// Eine Überschrift direkt vor einer Querseite bliebe sonst allein auf der Seite davor.
+#[cfg(feature = "pdf")]
+fn ueberschrift_abtrennen(out: &mut String) -> String {
+    let anfang = out.trim_end_matches('\n').rfind("\n\n").map_or(0, |i| i + 2);
+    if out[anfang..].starts_with("#heading(") { out.split_off(anfang) } else { String::new() }
+}
+
 #[cfg(feature = "pdf")]
 fn block_typst<T: ReadTxn>(txn: &T, toc: &str, node: &XmlOut, out: &mut String, depth: usize) {
     if depth > MAX_DEPTH { return; }
@@ -639,6 +658,8 @@ fn block_typst<T: ReadTxn>(txn: &T, toc: &str, node: &XmlOut, out: &mut String, 
             out.push_str(&format!("#raw(block: true, {})\n\n", typst_str(&code_text(txn, el))));
         }
         "horizontalRule" => out.push_str("#line(length: 100%, stroke: 0.5pt + luma(170))\n\n"),
+        // weak: keine leere Seite am Anfang, am Ende oder bei zwei Umbrüchen hintereinander
+        "pageBreak" => out.push_str("#pagebreak(weak: true)\n\n"),
         "blockquote" => {
             let mut body = String::new();
             for c in el.children(txn) { block_typst(txn, toc, &c, &mut body, 0); }
@@ -660,12 +681,25 @@ fn block_typst<T: ReadTxn>(txn: &T, toc: &str, node: &XmlOut, out: &mut String, 
                     (cs, rs) => format!("table.cell(colspan: {}, rowspan: {})[{body}]", cs.unwrap_or(1), rs.unwrap_or(1)),
                 }
             };
-            out.push_str(&format!("#table(columns: (1fr,) * {cols}, stroke: 0.5pt + luma(150), inset: 5pt, align: left{},\n", if header { ", fill: (_, y) => if y == 0 { luma(235) }" } else { "" }));
+            // np-quer darf nur auf oberster Ebene stehen, Typst lehnt Seiten in Containern ab
+            let quer = depth == 0 && cols >= QUER_AB_SPALTEN;
+            let ungeteilt = rows.iter().flatten().all(|(_, c)| crate::bausteine::plain_text(txn, c).chars().count() <= ZEICHEN_JE_ZELLE_MAL_SPALTEN / cols);
+            if quer {
+                let ueberschrift = ueberschrift_abtrennen(out);
+                out.push_str("#np-quer[\n");
+                out.push_str(&ueberschrift);
+            } else if ungeteilt {
+                out.push_str("#[");
+            }
+            if ungeteilt { out.push_str("#set table.cell(breakable: false)\n"); }
+            // Linien und Kopf legt die Vorlage fest (typeset::tabellen), je nach Theme
+            out.push_str(&format!("#table(columns: (1fr,) * {cols}, stroke: np-linie({}, {header}), inset: 5pt, align: left, fill: np-kopf({header}),\n", rows.len()));
             for (i, r) in rows.iter().enumerate() {
                 let cells: Vec<String> = r.iter().map(|(h, c)| cell(c, *h || (header && i == 0))).collect();
                 if header && i == 0 { out.push_str(&format!("  table.header({}),\n", cells.join(", "))); } else { out.push_str(&format!("  {},\n", cells.join(", "))); }
             }
             out.push_str(")\n\n");
+            if quer || ungeteilt { out.push_str("]\n\n"); }
         }
         "tableOfContents" => {
             if !doc_headings(txn).is_empty() { out.push_str(&format!("#outline(title: [#{}], depth: 4)\n\n", typst_str(toc))); }
@@ -752,10 +786,30 @@ pub enum Block {
     Toc,
     /// Codeblock: Sprache und Text, Marks nur Autor
     Code { language: Option<String>, runs: Vec<(String, Marks)> },
+    /// Von Hand gesetzter Seitenumbruch
+    Seitenumbruch,
     /// Zitat mit seinen Blöcken
     Quote { blocks: Vec<Block> },
     /// Trennlinie
     Rule,
+}
+
+/// Seitenumbruch vor bzw. nach einem Element: Klasse `seitenumbruch` (eigener Export) oder CSS
+/// `break-before`/`break-after: page` und die alten Namen `page-break-*: always`.
+fn umbruch(e: &scraper::node::Element) -> (bool, bool) {
+    let eigener = e.attr("class").is_some_and(|c| c.split_whitespace().any(|k| k == "seitenumbruch"));
+    let (mut vor, mut nach) = (false, eigener);
+    for decl in e.attr("style").unwrap_or("").split(';') {
+        let Some((k, v)) = decl.split_once(':') else { continue };
+        let v = v.trim().to_ascii_lowercase();
+        if v != "page" && v != "always" { continue; }
+        match k.trim().to_ascii_lowercase().as_str() {
+            "break-before" | "page-break-before" => vor = true,
+            "break-after" | "page-break-after" => nach = true,
+            _ => {}
+        }
+    }
+    (vor, nach)
 }
 
 /// Inhalt eines <pre>: Zeilenumbrüche bleiben, aus Marks bleibt nur der Autor.
@@ -848,7 +902,12 @@ fn collect_inline(el: ElementRef, marks: &Marks, runs: &mut Vec<(String, Marks)>
                 if matches!(name.as_str(), "p" | "div" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "ul" | "ol" | "li" | "blockquote" | "pre" | "hr" | "table" | "nav") {
                     // Block innerhalb von Inline: aktuellen Lauf abschließen, Block separat
                     flush_runs(runs, blocks, cur_align.take());
-                    blocks.extend(parse_block(cel, &m));
+                    let (vor, nach) = umbruch(e);
+                    if vor { blocks.push(Block::Seitenumbruch); }
+                    // ein leeres Element mit Umbruch ist nur der Umbruch, kein leerer Absatz
+                    let leer = cel.text().all(|t| t.trim().is_empty()) && cel.descendants().filter_map(ElementRef::wrap).all(|d| d.value().attr("data-type") != Some("rating"));
+                    if !((vor || nach) && leer) { blocks.extend(parse_block(cel, &m)); }
+                    if nach { blocks.push(Block::Seitenumbruch); }
                 } else {
                     collect_inline(cel, &m, runs, blocks, cur_align);
                 }
@@ -956,7 +1015,7 @@ fn parse_block(el: ElementRef, marks: &Marks) -> Vec<Block> {
                     let mut content = Vec::new();
                     flush_runs(&mut runs, &mut content, None);
                     content.extend(inner);
-                    content.retain(|b| !matches!(b, Block::Table { .. } | Block::Toc)); // keine Tabellen in Tabellen
+                    content.retain(|b| !matches!(b, Block::Table { .. } | Block::Toc | Block::Seitenumbruch)); // keine Tabellen und Seitenumbrüche in Tabellen
                     if content.is_empty() { content.push(Block::Para { align: None, indent: 0, runs: vec![] }); }
                     row.push((cn == "th", content));
                 }
@@ -1055,6 +1114,7 @@ fn write_block(txn: &mut TransactionMut, parent: &XmlElementRef, b: &Block) {
             if let Some(l) = language { c.insert_attribute(txn, "language", Any::from(l.as_str())); }
             write_runs(txn, &c, runs);
         }
+        Block::Seitenumbruch => { parent.push_back(txn, XmlElementPrelim::new("pageBreak", Vec::<XmlIn>::new())); }
         Block::Quote { blocks } => {
             let q: XmlElementRef = parent.push_back(txn, XmlElementPrelim::new("blockquote", Vec::<XmlIn>::new()));
             for b in blocks { write_block(txn, &q, b); }
@@ -1116,6 +1176,7 @@ fn write_block_root(txn: &mut TransactionMut, frag: &XmlFragmentRef, b: &Block) 
             if let Some(l) = language { c.insert_attribute(txn, "language", Any::from(l.as_str())); }
             write_runs(txn, &c, runs);
         }
+        Block::Seitenumbruch => { frag.push_back(txn, XmlElementPrelim::new("pageBreak", Vec::<XmlIn>::new())); }
         Block::Quote { blocks } => {
             let q: XmlElementRef = frag.push_back(txn, XmlElementPrelim::new("blockquote", Vec::<XmlIn>::new()));
             for b in blocks { write_block(txn, &q, b); }
@@ -1190,6 +1251,55 @@ mod tests {
         doc
     }
 
+    /// Breite Tabellen auf eine Querseite samt Überschrift, Zeilen nur ungeteilt, wenn sie sicher auf die Seite passen.
+    #[cfg(feature = "pdf")]
+    #[test]
+    fn tabellen_quer_und_ungeteilt() {
+        let tabelle = |spalten: usize, text: &str| format!("<table><tr>{}</tr></table>", format!("<td>{text}</td>").repeat(spalten));
+        let typst = |html: String| {
+            let doc = Doc::new();
+            let frag = doc.get_or_insert_xml_fragment(FRAGMENT);
+            { let mut txn = doc.transact_mut(); set_html(&mut txn, &frag, &format!("<html><body>{html}</body></html>")); }
+            let txn = doc.transact();
+            to_typst(&txn, &frag)
+        };
+        let breit = typst(format!("<p>Davor</p><h2>Matrix</h2>{}", tabelle(7, "kurz")));
+        assert!(breit.contains("Davor") && breit.contains("#np-quer[\n#heading(level: 2)[") && breit.contains("#set table.cell(breakable: false)"), "{breit}");
+        assert!(breit.find("Davor") < breit.find("#np-quer"), "{breit}");
+        let schmal = typst(tabelle(6, "kurz"));
+        assert!(!schmal.contains("np-quer") && schmal.starts_with("#[#set table.cell(breakable: false)"), "{schmal}");
+        let lang = typst(tabelle(2, &"x".repeat(1400)));
+        assert!(!lang.contains("breakable") && lang.starts_with("#table("), "{lang}");
+        let verschachtelt = typst(format!("<table><tr><td>{}</td></tr></table>", tabelle(8, "kurz")));
+        assert!(!verschachtelt.contains("np-quer"), "{verschachtelt}");
+    }
+
+    /// Seitenumbruch aus fremdem und eigenem HTML, in allen Exporten.
+    #[test]
+    fn seitenumbruch_in_import_und_exporten() {
+        let doc = Doc::new();
+        let frag = doc.get_or_insert_xml_fragment(FRAGMENT);
+        let html = r#"<html><body><p>Eins</p><div style="page-break-after: always"></div><p style="break-before: page">Zwei</p><div class="seitenumbruch"></div><p>Drei</p>
+            <table><tr><td><div style="break-after: page"></div>Zelle</td></tr></table></body></html>"#;
+        { let mut txn = doc.transact_mut(); set_html(&mut txn, &frag, html); }
+        let txn = doc.transact();
+        let html = to_html(&txn, &frag);
+        assert_eq!(html.matches("class=\"seitenumbruch\"").count(), 3, "{html}");
+        assert!(html.contains("<p>Zwei</p>") && html.contains("Zelle"), "{html}");
+        let md = to_markdown(&txn, &frag);
+        assert_eq!(md.matches("<!-- Seitenumbruch -->").count(), 3, "{md}");
+        assert!(to_text(&txn, &frag).starts_with("Eins\n\n"), "{}", to_text(&txn, &frag));
+        #[cfg(feature = "pdf")]
+        assert_eq!(to_typst(&txn, &frag).matches("#pagebreak(weak: true)").count(), 3);
+        drop(txn);
+        // eigener Export wieder eingelesen: gleich viele Umbrüche, kein leerer Absatz dazu
+        let zurueck = Doc::new();
+        let f2 = zurueck.get_or_insert_xml_fragment(FRAGMENT);
+        { let mut t = zurueck.transact_mut(); set_html(&mut t, &f2, &html); }
+        let t = zurueck.transact();
+        assert_eq!(to_html(&t, &f2), html);
+    }
+
     #[test]
     fn exporte_mit_tabelle_bewertung_und_verzeichnis() {
         let doc = pad();
@@ -1210,7 +1320,7 @@ mod tests {
         #[cfg(feature = "pdf")]
         {
             let typ = to_typst(&txn, &frag);
-            assert!(typ.contains("#outline(") && typ.contains("#table(columns: (1fr,) * 2") && typ.contains("table.header("), "{typ}");
+            assert!(typ.contains("#outline(") && typ.contains("#table(columns: (1fr,) * 2, stroke: np-linie(") && typ.contains("table.header("), "{typ}");
             assert!(typ.contains("image(bytes(") && typ.contains(r##"#"2"#h(5pt)"##) && typ.contains(r##"#"1"]]"##), "Daumen als Bild, 2 hoch, 1 runter: {typ}");
         }
     }
@@ -1280,7 +1390,7 @@ mod tests {
         let doc = pad();
         let frag = doc.get_or_insert_xml_fragment(FRAGMENT);
         let body = { let txn = doc.transact(); to_typst(&txn, &frag) };
-        let o = crate::typeset::Options { hsd: false, rahmen: false, theme_dir: None, logo: None, accent: "#e60028", product: "NextPad", header: "Test", footer: "pad", title: "Test", sprache: crate::texte::Sprache::De };
+        let o = crate::typeset::Options { hausschrift: None, rahmen: false, theme_dir: None, logo: None, accent: "#333333", product: "NextPad", header: "Test", footer: "pad", title: "Test", datum: "15.11.2026", sprache: crate::texte::Sprache::De, vorlage: "standard", schriften: &[], absender: None };
         let pdf = crate::typeset::pdf(&o, &body).expect("Satz gelingt");
         assert!(pdf.starts_with(b"%PDF"));
     }

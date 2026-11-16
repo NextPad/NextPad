@@ -5,7 +5,7 @@
 | `__DATA_DIR__/data/` | Database (SQLite with WAL) |
 | `__DATA_DIR__/secrets/api-keys.txt` | API keys for Moodle; line: `<key> [https://moodle-address]` (with an address, NextPad shows profile pictures from that Moodle) |
 | `__DATA_DIR__/secrets/lti-platforms.json` | Optional: Moodle instances for sign-in through LTI 1.3 (format in the project's `server/README.md`) |
-| `__DATA_DIR__/theme/` | Optional: `logo.png`, `font.ttf`, `background.jpg` for the HSD look (not in the package, requires permission) |
+| `__DATA_DIR__/theme/` | Optional: a theme of your own with `theme.json`, or just `logo.png`, `font.ttf`, `background.jpg` (not in the package) |
 | `__INSTALL_DIR__/nextpad.env` | Generated settings; change them through the configuration panel |
 
 After changing files in `secrets/` or `theme/`: `systemctl restart __APP__`.

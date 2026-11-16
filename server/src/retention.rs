@@ -202,7 +202,7 @@ mod tests {
         assert_eq!(decide(&r, 900 * D, 365 * D, 14 * D, false), Action::Keep);
     }
     fn mail(addon: Option<&'static crate::addons::Addon>) -> Mail<'static> {
-        Mail { titel: "Plan {datum}", addon, name: Some("Kim"), pad_link: "https://x/p/a", extend_link: "https://x/verlaengern?t=1", delete_after: 1_792_800_000_000, site: "HSD" }
+        Mail { titel: "Plan {datum}", addon, name: Some("Kim"), pad_link: "https://x/p/a", extend_link: "https://x/verlaengern?t=1", delete_after: 1_792_800_000_000, site: "Musterstadt" }
     }
     #[test]
     fn mail_in_einer_sprache() {

@@ -29,8 +29,11 @@ name = "NextPad"
         [main.appearance.theme]
         ask.de = "Design"
         ask.en = "Look"
-        type = "select"
-        choices = ["nextpad", "rund", "colibris", "hsd"]
+        help.de = "nextpad, rund, colibris, eckig oder der Name aus theme/theme.json"
+        help.en = "nextpad, rund, colibris, eckig or the name from theme/theme.json"
+        type = "string"
+        pattern.regexp = "^[a-z0-9][a-z0-9-]*$"
+        pattern.error = "Kleinbuchstaben, Ziffern und Bindestriche / lower-case letters, digits and hyphens"
 
         [main.appearance.admins]
         ask.de = "Admins für das Erscheinungsbild"

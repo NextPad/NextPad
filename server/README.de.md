@@ -29,12 +29,12 @@ Konfiguration über Umgebungsvariablen:
 | `NEXTPAD_ADDONS` | alle | eingeschaltete Addons, kommagetrennt aus `ideen`, `quiz`, `zeichenbrett`; leer = keins, unbekannte Kennung = Startfehler. Ausgeschaltet: keine Kachel, keine Routen, keine Hilfe, kein Moodle-Typ; bestehende Pads zeigen einen Hinweis, ihre Daten bleiben und gehen beim Löschen des Pads mit |
 | `NEXTPAD_FREE_PADS_PER_HOUR` | `20` | höchstens so viele neue freie Pads je Quelladresse und Stunde |
 | `NEXTPAD_AUTHOR_COOKIE` | `nextpad_author` | Name des Gast-Cookies |
-| `NEXTPAD_THEME` | `nextpad` | Erscheinungsbild: `nextpad` (eckig, Petrol), `rund` (große Rundungen, Lexend), `colibris` (leicht rund, wie Etherpad) oder `hsd` (Corporate Design der Hochschule Düsseldorf). Schriften liegen im Programm, nichts wird aus dem Netz geladen |
-| `NEXTPAD_THEME_DIR` | leer | Vorgabe-Verzeichnis mit `logo.png`, `background.jpg` und `font.ttf` für das Design; Marke und Hausschrift liegen bewusst nicht im Repo |
-| `NEXTPAD_BACKGROUND_CREDIT` | leer | Bildnachweis für `background.jpg` im Design-Verzeichnis (Hintergrund der HSD-Startseite), z. B. `Foto: Jula2812, CC BY-SA 4.0, Wikimedia Commons`; bei Bildern unter CC-Lizenz Pflicht |
+| `NEXTPAD_THEME` | `nextpad` | Erscheinungsbild: `nextpad` (eckig, Petrol), `rund` (große Rundungen, Lexend), `colibris` (leicht rund, wie Etherpad), `eckig` (schlicht) oder der Name eines Themes in `NEXTPAD_THEME_DIR` (siehe „Eigenes Theme“). Schriften liegen im Programm, nichts wird aus dem Netz geladen. Bis 0.22 hieß `eckig` `hsd`; ohne `theme.json` gilt der Wert weiter |
+| `NEXTPAD_THEME_DIR` | leer | Theme-Ordner: `theme.json` für ein eigenes Theme, sonst nur `logo.png`, `background.jpg` und `font.ttf`; Marke und Hausschrift liegen bewusst nicht im Repo |
+| `NEXTPAD_BACKGROUND_CREDIT` | leer | Bildnachweis für `background.jpg` im Design-Verzeichnis (Hintergrund der Startseite), z. B. `Foto: Jula2812, CC BY-SA 4.0, Wikimedia Commons`; bei Bildern unter CC-Lizenz Pflicht |
 | `NEXTPAD_BACKGROUND_CREDIT_URL` | leer | Link des Bildnachweises (Dateiseite auf Commons) |
 | `NEXTPAD_HISTORY_DAYS` | `30` | so lange zeigt die Zeitleiste jeden Einzelschritt; ältere Abschnitte nur als Tagesstände (`nextpad compact`) |
-| `NEXTPAD_SITE_NAME` | leer | Betreiberangabe im Fuß der Startseite (z. B. `ZWEK der Hochschule Düsseldorf`) |
+| `NEXTPAD_SITE_NAME` | leer | Betreiberangabe im Fuß der Startseite (z. B. `Medienzentrum der Hochschule Musterstadt`) |
 | `NEXTPAD_ADMINS` | leer | Mailadressen aus Moodle (mit Komma getrennt), die das Erscheinungsbild einstellen dürfen; die Moodle-Administration darf es immer |
 | `NEXTPAD_COOKIE_NAME` | `sessionID` | Name des Session-Cookies, das Moodle setzt |
 | `NEXTPAD_PUBLIC_URL` | leer | öffentliche Adresse mit Basis-Pfad, z. B. `https://host/np`; Pflicht für LTI (Rücksprungadresse) und für Links in Mails |
@@ -105,13 +105,88 @@ zeigt, welche Pads angekündigt oder gelöscht würden, ohne etwas zu tun.
 
 ### Erscheinungsbild einstellen
 
-Im Design `hsd` stellen Admins unter `/admin/erscheinungsbild` Name und Untertitel im Kopf, die Einrichtung (Name des Logos), das Logo, das Hintergrundbild der Startseite samt Bildnachweis und die Farben ein. Admin ist, wer sich über Moodle (LTI) anmeldet und dort zur Administration gehört (Rolle `institution/person#Administrator` oder `system/person#Administrator`) oder mit seiner Mailadresse in `NEXTPAD_ADMINS` steht. Angemeldete Admins sehen auf der Startseite den Knopf „Erscheinungsbild“.
+In den Designs `nextpad`, `rund` und `eckig` stellen Admins unter `/admin/erscheinungsbild` Name und Untertitel im Kopf, die Einrichtung (Name des Logos), das Logo, das Hintergrundbild der Startseite samt Bildnachweis und die Farben ein. Admin ist, wer sich über Moodle (LTI) anmeldet und dort zur Administration gehört (Rolle `institution/person#Administrator` oder `system/person#Administrator`) oder mit seiner Mailadresse in `NEXTPAD_ADMINS` steht. Angemeldete Admins sehen auf der Startseite den Knopf „Erscheinungsbild“.
 
 - Farben: eine Akzentfarbe (Kopflinie, Fokusrahmen) und drei Hausfarben. Linien und Tönungen für hell und dunkel leitet NextPad ab (Linien auf mindestens 4,5:1 abgedunkelt, Tönungen als Anteil auf Weiß bzw. Dunkelgrau); wer will, legt sie selbst fest. Kontraste unter WCAG 2.2 meldet die Seite.
 - Logo: PNG, JPEG, WebP oder SVG bis 2 MB; SVG nur ohne Skripte und Ereignisattribute, ausgeliefert mit `sandbox`. Mit Logo der Einrichtung entfällt das NextPad-Zeichen im Kopf.
 - Hintergrundbild: JPEG, PNG oder WebP bis 6 MB.
 - Ohne Einstellung gilt die Vorgabe des Servers (`NEXTPAD_THEME_DIR`, `NEXTPAD_BACKGROUND_CREDIT`). „Alles auf die Vorgabe zurücksetzen“ stellt sie wieder her; hochgeladene Bilder bleiben liegen und sind wieder wählbar.
 - Gespeichert wird in der Datenbank (Tabelle `settings`), Bilder unter `<NEXTPAD_DATA>/erscheinungsbild/`.
+
+### Eigenes Theme
+
+Eine Einrichtung mit eigenem Corporate Design legt ihr Theme in `NEXTPAD_THEME_DIR` und setzt `NEXTPAD_THEME` auf dessen Namen. Der Ordner braucht ein `theme.json`. Vorlage ist das erfundene Theme in `server/tests/theme-beispiel/`:
+
+```json
+{
+  "format": 1,
+  "name": "beispiel",
+  "basis": "eckig",
+  "stylesheet": "beispiel.css",
+  "logo": "logo.svg",
+  "farben": { "akzent": "#1d5c8a", "haus": ["#2a7ab0", "#3c8d5a", "#e0b020"] },
+  "texte": { "de": { "look.untertitel_frei": "Gemeinsam schreiben an der Hochschule Musterstadt" } }
+}
+```
+
+| Schlüssel | Bedeutung |
+|---|---|
+| `format` | Pflicht. Version des Formats; dieses NextPad kennt `1` |
+| `name` | Pflicht. Wert für `NEXTPAD_THEME`, kein eingebautes Theme |
+| `basis` | Pflicht. Eingebautes Layout darunter: `nextpad`, `rund`, `colibris` oder `eckig` |
+| `stylesheet` | CSS aus dem Ordner, im Editor nach dem Grundstil geladen (Klasse `theme-eckig` am `<body>`) |
+| `logo`, `hintergrund` | Logo und Startbild, Vorgabe `logo.png` und `background.jpg` |
+| `hausschrift` | `{ "datei": "font.ttf", "familie": "…" }`: auf Seiten als `Hausschrift` geladen, im PDF mit ihrem Familiennamen für Ebene 1 |
+| `farben` | `akzent`, `akzent_dunkel` und `haus` (drei Farben) als `#rrggbb`; Ausgangswerte für `/admin/erscheinungsbild` |
+| `texte` | Ersetzte Texte je Sprache (`de`, `en`) mit Schlüsseln aus `src/texte/de.rs`; unbekannte Schlüssel ergeben eine Warnung |
+| `schriften` | Ordner mit weiteren `.ttf`/`.otf` für den PDF-Satz, z. B. `["satz/schriften"]` |
+| `satzvorlagen` | Liste aus `{ "id": "standard", "name": "…", "name_en": "…", "datei": "satz/standard.typ" }`: Typst-Module für das PDF |
+| `gestaltungen` | `{ "datei": "stile/stile.json", "vorgabe": "…" }`: Absender für das PDF, `vorgabe` gilt ohne Wahl |
+
+- Pfade sind relativ zum Theme-Ordner. Ein Pfad mit `..`, einer führenden `/` oder einem versteckten Teil ist ein Startfehler.
+- NextPad startet nicht, wenn `format` fehlt oder neuer ist, wenn eine Pflichtangabe fehlt oder `basis` unbekannt ist oder `name` nicht zu `NEXTPAD_THEME` passt. Die Meldung nennt Datei und Grund.
+- Fehlt eine genannte Datei, steht eine Warnung im Log und dieser Teil entfällt.
+- Ein eingebautes Theme mit Theme-Ordner ohne `theme.json` nimmt aus dem Ordner nur `logo.png`, `background.jpg` und `font.ttf`.
+
+#### Satzvorlagen
+
+Eine Satzvorlage ist ein Typst-Modul mit einer Funktion `vorlage`:
+
+```typst
+#let vorlage(meta, body) = {
+  set page(paper: "a4", footer: context [#meta.fuss #h(1fr) #counter(page).display()])
+  set text(font: ("Liberation Sans", "Noto Emoji"), lang: meta.sprache, region: meta.region)
+  body
+}
+```
+
+`meta` enthält `titel`, `kopf`, `fuss`, `datum`, `produkt`, `akzent` (`#rrggbb`), `rahmen` (Layout mit Logo und Akzentlinie), `logo` (Pfad oder `none`), `hausschrift` (Familienname oder `none`), `sprache`, `region`, `seite` und `von` (für „Seite 1 von 3“), dazu `absender` (siehe unten, sonst `none`).
+
+- Eingebaut ist nur die neutrale Vorlage `standard`. Eine Vorlage des Themes mit der Kennung `standard` ersetzt sie.
+- Jede Vorlage, die die Probe besteht, ist eine Dokumentart. Wer ein Textpad bearbeiten darf, wählt sie in der Werkzeugleiste; sie gilt für alle PDFs des Pads. Ohne Wahl gilt `standard`, ebenso wenn die gewählte Vorlage ausfällt.
+- Tabellen ruft der Inhalt über `np-linie(n, kopf)` (Linien, Wert für `stroke`), `np-kopf(kopf)` (Füllung, Wert für `fill`) und `np-quer(inhalt)` (breite Tabellen) auf. Definiert die Vorlage eine davon, gilt ihre; sonst Gitter mit grauem Kopf und Querseite.
+- Typst sieht nur den Theme-Ordner, lesend. Pfade in der Vorlage gelten relativ zur Vorlage, mit führendem `/` ab dem Theme-Ordner. Pakete aus dem Netz gibt es nicht.
+- Schriften: die eingebauten (Liberation Sans und Mono, Noto Emoji), alle `.ttf`/`.otf` direkt im Theme-Ordner und in den Ordnern aus `schriften`.
+- Beim Start setzt NextPad jede Vorlage einmal mit Beispieltext. Scheitert sie, steht der Typst-Fehler im Log und unter `/admin/erscheinungsbild`; die Vorlage fällt aus, PDFs entstehen mit `standard`. NextPad startet trotzdem.
+- Beispiel: `server/tests/theme-beispiel/satz/standard.typ` und `satz/bericht.typ`.
+
+#### Gestaltungen
+
+Absender für das PDF, etwa Fachbereiche oder Einrichtungen. Die Datei aus `gestaltungen.datei` ist eine Liste:
+
+```json
+[
+  { "id": "fb-x", "name": "X · Fachbereich Beispiel", "name_en": "X · Faculty of Examples", "schrift": "schrift.ttf",
+    "familie": "Muster Sans", "fliesstext": "serif", "kuerzel": "FBX", "beischrift": ["Fachbereich Beispiel"] }
+]
+```
+
+- `schrift` (Pflicht) ist der Schnitt der Hausschrift für diesen Absender, `familie` sein Familienname. `schriften` nennt weitere Schriften.
+- `fliesstext`: `arial`, `arial-fett` oder `serif`. Was daraus im PDF wird, entscheidet die Vorlage.
+- `logo` (Bild, Breite `logo_breite_mm`, 5–55) oder `kuerzel` mit bis zu vier Zeilen `beischrift`/`beischrift_en`, nicht beides.
+- Dateinamen gelten im Ordner der Liste, ohne Unterordner. Fehlerhafte Einträge stehen im Log und fallen weg.
+- Im PDF kommt der Absender als `meta.absender` mit `id`, `name` (in der Sprache des Exports), `familie`, `fliesstext`, `logo` (Pfad ab Theme-Ordner oder `none`), `logo_breite`, `kuerzel`, `beischrift`, `beischrift_en`. Ohne Wahl ist es der Eintrag aus `vorgabe`.
+- Im Editor setzt NextPad die Klassen `np-vorlage-<id>` und `np-mit-absender` (nur bei gewähltem Absender) an `<body>` und die Schnitte als `--np-schnitt` (Absender, sonst Vorgabe), `--np-schnitt-vorgabe` und `--np-fliesstext`. Welche Überschrift welchen Schnitt bekommt, legt das Stylesheet des Themes fest. Die Schnitte liefert `/theme/stile/<id>.ttf`.
 
 ### Sprache
 
@@ -126,7 +201,7 @@ Beide Cookies enthalten nur das Sprachkürzel, gelten ein Jahr und sind `HttpOnl
 
 ## Endpunkte
 
-`GET /api` (Version), `GET|POST /api/1.2*/<Funktion>` (siehe `docs/api-spezifikation.md`), `GET /p/<padID>` und `/p/<readOnlyID>` (Editor), `GET /ws/<id>` (Yjs-Sync), `GET /p/<id>/export/html|txt|md|pdf|print`, `GET /p/<id>/snapshots`, `GET /p/<id>/snapshots/<ts>`, `GET /status`, `GET /static/editor.js|css|print.js`, `GET /sprache/de|en`; mit freien Pads zusätzlich `GET /` (Startseite), `GET /new`, `GET /open?padname=`, `POST /me` (eigener Name), `GET /hilfe`, `GET /new?vorlage=gruppenarbeit|protokoll`, `GET /new?typ=zeichenbrett|ideen|quiz`, `GET|POST /p/<id>/ideen`, `GET /p/<id>/ideen/live` (Server-Sent Events), `POST /p/<id>/ideen/frage`, `POST /p/<id>/ideen/<n>/stimme`, `POST /p/<id>/ideen/<n>/moderation`, `GET /p/<id>/leinwand`, `POST /p/<id>/extend` und `POST /p/<id>/delete` (nur Besitz), `GET|POST /verlaengern` (Link aus der Mail); mit LTI `GET|POST /lti/login`, `POST /lti/launch` (auch Start einer Kursaktivität), `GET /lti/jwks`, `POST /logout`, `GET|POST /admin/erscheinungsbild` und `POST /admin/erscheinungsbild/vorgabe` (nur Admins), `GET /theme/logo.png` und `/theme/background.jpg` (eingestelltes Bild in seinem Format).
+`GET /api` (Version), `GET|POST /api/1.2*/<Funktion>` (siehe `docs/api-spezifikation.md`), `GET /p/<padID>` und `/p/<readOnlyID>` (Editor), `GET /ws/<id>` (Yjs-Sync), `GET /p/<id>/export/html|txt|md|pdf|print`, `GET /p/<id>/snapshots`, `GET /p/<id>/snapshots/<ts>`, `GET /status`, `GET /static/editor.js|css|print.js`, `GET /sprache/de|en`; mit freien Pads zusätzlich `GET /` (Startseite), `GET /new`, `GET /open?padname=`, `POST /me` (eigener Name), `GET /hilfe`, `GET /new?vorlage=gruppenarbeit|protokoll`, `GET /new?typ=zeichenbrett|ideen|quiz`, `GET|POST /p/<id>/ideen`, `GET /p/<id>/ideen/live` (Server-Sent Events), `POST /p/<id>/ideen/frage`, `POST /p/<id>/ideen/<n>/stimme`, `POST /p/<id>/ideen/<n>/moderation`, `GET /p/<id>/leinwand`, `POST /p/<id>/extend` und `POST /p/<id>/delete` (nur Besitz), `POST /p/<id>/gestaltung` (Absender und Dokumentart, siehe Gestaltungen), `GET|POST /verlaengern` (Link aus der Mail); mit LTI `GET|POST /lti/login`, `POST /lti/launch` (auch Start einer Kursaktivität), `GET /lti/jwks`, `POST /logout`, `GET|POST /admin/erscheinungsbild` und `POST /admin/erscheinungsbild/vorgabe` (nur Admins), `GET /theme/logo.png` und `/theme/background.jpg` (eingestelltes Bild in seinem Format).
 
 ## Aufbau
 

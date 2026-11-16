@@ -1,0 +1,21 @@
+{
+  "format": 1,
+  "name": "beispiel",
+  "basis": "eckig",
+  "stylesheet": "beispiel.css",
+  "logo": "logo.svg",
+  "farben": {
+    "akzent": "#1d5c8a",
+    "haus": ["#2a7ab0", "#3c8d5a", "#e0b020"]
+  },
+  "satzvorlagen": [
+    { "id": "standard", "name": "Hausvorlage Musterstadt", "name_en": "Musterstadt house template", "datei": "satz/standard.typ" },
+    { "id": "bericht", "name": "Bericht", "name_en": "Report", "datei": "satz/bericht.typ" },
+    { "id": "kaputt", "name": "Kaputt", "datei": "satz/kaputt.typ" }
+  ],
+  "gestaltungen": { "datei": "gestaltungen/gestaltungen.json", "vorgabe": "musterstadt" },
+  "texte": {
+    "de": { "look.untertitel_frei": "Gemeinsam schreiben an der Hochschule Musterstadt" },
+    "en": { "look.untertitel_frei": "Writing together at Musterstadt University" }
+  }
+}

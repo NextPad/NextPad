@@ -1,6 +1,6 @@
 // NextPad-Editor: TipTap auf ProseMirror, Yjs-Sync über y-websocket gegen den Rust-Server.
-import { Editor, Mark, Extension, InputRule } from '@tiptap/core'
-import { Plugin, PluginKey } from '@tiptap/pm/state'
+import { Editor, Mark, Node, Extension, InputRule, canInsertNode } from '@tiptap/core'
+import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state'
 import StarterKit from '@tiptap/starter-kit'
 import Collaboration from '@tiptap/extension-collaboration'
 import CollaborationCaret from '@tiptap/extension-collaboration-caret'
@@ -43,6 +43,40 @@ const AuthorMark = Mark.create({
     const style = id && showColors ? `background-color:${colorFor(id)}` : ''
     return ['span', { ...HTMLAttributes, class: 'author', style, title: id ? (names.get(id) || '') : '' }, 0]
   },
+})
+
+// Seitenumbruch: eigener Block, Strg/⌘+Enter. In Listen und Tabellen landet er hinter dem
+// umgebenden Block, im PDF als weicher Umbruch (keine leeren Seiten).
+const istUmbruchDiv = el => !el.textContent.trim() && /(^|;)\s*(page-)?break-(after|before)\s*:\s*(page|always)/i.test(el.getAttribute('style') || '')
+const Seitenumbruch = Node.create({
+  name: 'pageBreak',
+  group: 'block',
+  atom: true,
+  selectable: true,
+  priority: 1000,
+  parseHTML() { return [{ tag: 'div.seitenumbruch' }, { tag: 'div', getAttrs: el => istUmbruchDiv(el) ? null : false }] },
+  renderHTML() { return ['div', { class: 'seitenumbruch', style: 'break-after: page', role: 'separator', 'aria-label': tx('seitenumbruch'), 'data-label': tx('seitenumbruch') }] },
+  renderMarkdown: () => '<!-- Seitenumbruch -->',
+  addCommands() {
+    return {
+      setSeitenumbruch: () => ({ chain, state }) => {
+        const typ = state.schema.nodes.pageBreak
+        const { $from } = state.selection
+        if ($from.depth > 1) return chain().insertContentAt($from.after(1), { type: 'pageBreak' }).run()
+        if (!canInsertNode(state, typ)) return false
+        return chain().insertContent({ type: 'pageBreak' }).command(({ tr, dispatch }) => {
+          if (!dispatch) return true
+          const { $to } = tr.selection
+          if (!$to.nodeAfter) { tr.insert($to.pos, state.schema.nodes.paragraph.create()); tr.setSelection(TextSelection.create(tr.doc, $to.pos + 1)) }
+          else if ($to.nodeAfter.isTextblock) tr.setSelection(TextSelection.create(tr.doc, $to.pos + 1))
+          tr.scrollIntoView()
+          return true
+        }).run()
+      },
+    }
+  },
+  // vor dem Zeilenumbruch von StarterKit (Strg+Enter), Shift+Enter bleibt Zeilenumbruch
+  addKeyboardShortcuts() { return { 'Mod-Enter': () => this.editor.commands.setSeitenumbruch() } },
 })
 
 // Plugin: Die Mark des eigenen Autors ist immer als gespeicherte Mark aktiv, damit alles,
@@ -300,7 +334,7 @@ const editor = new Editor({
     TextStyle, Color, FontSize,
     TextAlign.configure({ types: ['heading', 'paragraph'] }), Indent,
     TaskList, TaskItem.configure({ nested: true }), TaskShortcut, NextCodeBlock,
-    ...tableExtensions, TableOfContents,
+    ...tableExtensions, TableOfContents, Seitenumbruch,
     createRating({ ydoc, me: cfg.author.id, readonly: cfg.readonly }),
     Markdown, MarkdownPaste,
     AuthorMark, ...(testFlags.has('noauthor') ? [] : [AuthorTagging]),
@@ -318,6 +352,75 @@ function ibtn(parent, icon, title, fn, isActive) {
   const b = document.createElement('button'); b.type = 'button'; b.className = 'ib'; b.title = title; b.setAttribute('aria-label', title)
   const i = document.createElement('span'); i.className = 'buttonicon'; i.textContent = icon; i.setAttribute('aria-hidden', 'true'); b.appendChild(i)
   b.addEventListener('click', () => { fn(); editor.commands.focus() }); b._isActive = isActive; parent.appendChild(b); return b
+}
+// Absender und Dokumentart des PDF je Pad, getrennt wählbar. Beide gelten für alle, die das Pad bearbeiten.
+function gestaltungWahl(parent, feld, titel, eintraege, aktuell) {
+  const sel = document.createElement('select'); sel.className = 'tsel gestaltung'; sel.setAttribute('aria-label', titel)
+  for (const [v, t] of eintraege) { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o) }
+  sel.value = aktuell
+  const meldung = document.createElement('span'); meldung.className = 'nur-vorlesen'; meldung.setAttribute('role', 'status')
+  const titelSetzen = () => { sel.title = `${titel}: ${sel.selectedOptions[0]?.textContent || ''}` }
+  let gespeichert = aktuell
+  sel.addEventListener('change', async () => {
+    const r = await fetch(`${cfg.basePath}/p/${encodeURIComponent(cfg.urlId)}/gestaltung`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ [feld]: sel.value }) }).catch(() => null)
+    if (r?.ok) { gespeichert = sel.value; meldung.textContent = tx('gestaltung_gespeichert'); satzGeaendert(await r.json().catch(() => null)) } else { sel.value = gespeichert; meldung.textContent = tx('gestaltung_fehler') }
+    titelSetzen()
+  })
+  titelSetzen()
+  sel.setzen = v => { sel.value = gespeichert = v; titelSetzen() }
+  parent.appendChild(sel); parent.appendChild(meldung); return sel
+}
+// Schrift im Editor wie im PDF: Klassen np-vorlage-<id> und np-mit-absender, dazu die
+// Schnitte als Variablen. Welche Überschrift welchen Schnitt bekommt, legt das Stylesheet des Themes fest.
+// Andere offene Editoren erfahren über die Awareness nur, dass sich etwas geändert hat, und holen den Stand beim Server.
+const schnitte = new Map()
+function schnitt(id) {
+  if (!schnitte.has(id)) {
+    const f = new FontFace(`np-stil-${id}`, `url("${cfg.basePath}/theme/stile/${encodeURIComponent(id)}.ttf")`, { display: 'swap' })
+    document.fonts.add(f); f.load().catch(() => {})
+    schnitte.set(id, f)
+  }
+  return `"np-stil-${id}", Arial, "Liberation Sans", sans-serif`
+}
+function satzAnwenden(satz) {
+  const b = document.body
+  for (const k of [...b.classList]) if (k.startsWith('np-vorlage-')) b.classList.remove(k)
+  b.classList.remove('np-mit-absender')
+  if (!satz) return
+  b.classList.add(`np-vorlage-${satz.art || 'standard'}`)
+  if (satz.stil) b.classList.add('np-mit-absender')
+  const absender = satz.stil || satz.vorgabe
+  if (satz.vorgabe) b.style.setProperty('--np-schnitt-vorgabe', schnitt(satz.vorgabe))
+  if (absender) b.style.setProperty('--np-schnitt', schnitt(absender))
+  b.style.setProperty('--np-fliesstext', satz.serif.includes(absender) ? '"Times New Roman", "Liberation Serif", serif' : 'Arial, "Liberation Sans", Helvetica, sans-serif')
+}
+const gestaltungFelder = {}
+let satzStand = 0
+function satzGeaendert(neu) {
+  if (!cfg.satz || !neu) return
+  cfg.satz.stil = neu.stil === cfg.satz.vorgabe ? '' : neu.stil; cfg.satz.art = neu.art
+  satzAnwenden(cfg.satz)
+  provider.awareness.setLocalStateField('gestaltung', ++satzStand)
+}
+if (cfg.satz) {
+  satzAnwenden(cfg.satz)
+  const gesehen = new Map()
+  provider.awareness.on('change', () => {
+    let neu = false
+    provider.awareness.getStates().forEach((s, client) => {
+      if (client === provider.awareness.clientID) return
+      const n = s.gestaltung ?? 0
+      // Der Server reicht Awareness nicht an Neue weiter: Wer zuerst mit Zähler auftaucht, hat eben etwas geändert
+      if (gesehen.has(client) ? gesehen.get(client) !== n : n > 0) neu = true
+      gesehen.set(client, n)
+    })
+    if (!neu) return
+    fetch(`${cfg.basePath}/p/${encodeURIComponent(cfg.urlId)}/gestaltung`).then(r => r.ok ? r.json() : null).then(satz => {
+      if (!satz) return
+      Object.assign(cfg.satz, satz); satzAnwenden(cfg.satz)
+      gestaltungFelder.stil?.setzen(satz.stil === satz.vorgabe ? '' : satz.stil); gestaltungFelder.art?.setzen(satz.art)
+    }).catch(() => {})
+  })
 }
 const sep = parent => { const s = document.createElement('span'); s.className = 'separator'; parent.appendChild(s) }
 function select(parent, title, label, entries, onChange) {
@@ -359,7 +462,7 @@ ibtn(menuLeft, I.eye, tx('autorenfarben'), () => { showColors = !showColors; doc
 if (!cfg.readonly) {
   sep(menuLeft)
   select(menuLeft, tx('schriftgroesse'), tx('schriftgroesse'), [['', tx('standard')], ...[8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 24, 30, 36, 48].map(n => [n + 'px', String(n)])], v => v ? editor.chain().setFontSize(v).run() : editor.chain().unsetFontSize().run())
-  select(menuLeft, tx('textfarbe'), tx('farbe'), [['', tx('schwarz')], ['#e60028', tx('rot')], ['#2e8b57', tx('gruen')], ['#1e5bc6', tx('blau')], ['#c9a800', tx('gelb')], ['#e07a00', tx('orange')], ['#6f42c1', tx('violett')], ['#8b4513', tx('braun')]], v => v ? editor.chain().setColor(v).run() : editor.chain().unsetColor().run())
+  select(menuLeft, tx('textfarbe'), tx('farbe'), [['', tx('schwarz')], ['#d32f2f', tx('rot')], ['#2e8b57', tx('gruen')], ['#1e5bc6', tx('blau')], ['#c9a800', tx('gelb')], ['#e07a00', tx('orange')], ['#6f42c1', tx('violett')], ['#8b4513', tx('braun')]], v => v ? editor.chain().setColor(v).run() : editor.chain().unsetColor().run())
   sep(menuLeft)
   ibtn(menuLeft, I.alignL, tx('links'), () => editor.chain().setTextAlign('left').run(), () => editor.isActive({ textAlign: 'left' }))
   ibtn(menuLeft, I.alignC, tx('zentriert'), () => editor.chain().setTextAlign('center').run(), () => editor.isActive({ textAlign: 'center' }))
@@ -371,6 +474,8 @@ if (!cfg.readonly) {
     if (v === 'p' && editor.isActive('blockquote') && editor.isActive('paragraph')) { editor.chain().lift('blockquote').run(); return }
     v === 'p' ? editor.chain().setParagraph().run() : v === 'code' ? editor.chain().setCodeBlock().run() : editor.chain().setHeading({ level: +v }).run()
   })
+  if (cfg.absender?.length) gestaltungFelder.stil = gestaltungWahl(menuLeft, 'stil', tx('absender'), [['', tx('absender_vorgabe')], ...cfg.absender.map(g => [g.id, g.name])], cfg.absenderWahl || '')
+  if (cfg.arten?.length > 1) gestaltungFelder.art = gestaltungWahl(menuLeft, 'art', tx('dokumentart'), cfg.arten.map(a => [a.id, a.name]), cfg.art || 'standard')
   sep(menuLeft)
   ibtn(menuLeft, I.md, tx('markdown'), () => openMarkdownDialog())
   const linkBtn = ibtn(menuLeft, '', tx('verweis'), () => openLinkDialog(), () => editor.isActive('link'))
@@ -379,6 +484,8 @@ if (!cfg.readonly) {
   addTableTools(editor, menuLeft, { ibtn, select, icon: I.table })
   const rateBtn = ibtn(menuLeft, '', tx('bewertung'), () => editor.chain().focus().insertRating().run())
   rateBtn.querySelector('.buttonicon').innerHTML = thumbSvg('up', 15)
+  const umbruchBtn = ibtn(menuLeft, '', tx('seitenumbruch_einfuegen'), () => editor.chain().focus().setSeitenumbruch().run())
+  umbruchBtn.querySelector('.buttonicon').innerHTML = '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 1v4h10V1M3 15v-4h10v4"/><path d="M1 8h2.5M6 8h4M12.5 8H15"/></svg>'
 }
 const tocBtn = ibtn(menuRight, I.toc, tx('inhalt_umschalten'), () => toc.toggle(), () => toc.open)
 const toc = createTocSidebar(editor, edBox, { readonly: cfg.readonly, onChange: open => { tocBtn.classList.toggle('selected', open); tocBtn.setAttribute('aria-pressed', String(open)) } })

@@ -46,7 +46,7 @@ main.ideas { flex: 1; padding: var(--space-5) 0 var(--space-7); }
 .done-mark svg { fill: none; stroke: var(--line-green); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .mod-tools { flex: none; display: flex; gap: var(--space-2); }
 
-/* Abstimmen: Pfeil und Zahl; abgegeben = Tönung und Linie in HSD-Blau, Pfeil gefüllt */
+/* Abstimmen: Pfeil und Zahl; abgegeben = Tönung und Linie in Hausblau, Pfeil gefüllt */
 .vote {
   flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center;
   width: 52px; min-height: 56px; padding: var(--space-1); font: inherit; font-weight: 700; cursor: pointer;
@@ -65,7 +65,7 @@ main.ideas { flex: 1; padding: var(--space-5) 0 var(--space-7); }
   .idea.is-new { animation: idea-new 3s ease-out; }
   .vote, .tab, .icon-btn { transition: background-color .15s, border-color .15s, color .15s; }
 }
-@media (prefers-reduced-motion: reduce) { .idea.is-new { box-shadow: inset 4px 0 0 var(--hsd-yellow); } }
+@media (prefers-reduced-motion: reduce) { .idea.is-new { box-shadow: inset 4px 0 0 var(--house-yellow); } }
 
 .idea-group > summary { min-height: var(--target-min); display: flex; align-items: center; font-weight: 700; cursor: pointer; }
 .idea-group > .hint { margin: 0 0 var(--space-2); }
@@ -86,7 +86,7 @@ main.ideas { flex: 1; padding: var(--space-5) 0 var(--space-7); }
 /* Leinwand für den Beamer: groß, ruhig, ohne Bedienung. Rote Kopflinie wie auf den Seiten. */
 body.wall { background: var(--color-canvas); }
 .wall-main { flex: 1; display: flex; flex-direction: column; gap: 2.5vh; padding: 3vh 4vw; }
-.wall-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 4vw; padding-bottom: 2vh; border-bottom: 3px solid var(--hsd-red); }
+.wall-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 4vw; padding-bottom: 2vh; border-bottom: 3px solid var(--accent); }
 .wall-head .kicker { font-size: clamp(.9rem, 1.4vw, 1.4rem); }
 .wall-head h1 { margin: 0; font-size: clamp(1.75rem, 4vw, 4rem); line-height: 1.15; overflow-wrap: anywhere; }
 .wall-logo { height: clamp(40px, 6vh, 80px); width: auto; flex: none; }

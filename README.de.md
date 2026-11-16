@@ -10,7 +10,7 @@ eine Zeitleiste aus Snapshots. Kein Chat.
 
 ## Worum es geht
 
-Das ZWEK betreibt für die Moodle-Plattformen der Hochschule einen Etherpad-Server. Moodle
+Viele Hochschulen betreiben für ihre Moodle-Plattformen einen Etherpad-Server. Moodle
 bindet Pads über das Plugin `mod_etherpadlite` (Humboldt-Universität zu Berlin) als
 Aktivität in Kurse ein. Etherpad samt Plugins ist in der Pflege mit den aktuellen
 Ressourcen kaum noch leistbar: Die Plugin-Landschaft bremst jedes Upgrade, und der
@@ -105,11 +105,8 @@ Dann Gruppe, Pad, Autor und Session über die API anlegen (Beispiele in
 
 ## Projekthintergrund
 
-Idee, Konzept und Entwicklung: Christian-Maximilian Steier.
-
-Diese Software wurde an der Hochschule Düsseldorf – University of Applied Sciences (HSD)
-durch ZWEK – Zentrum für Weiterbildung und Kompetenzentwicklung entwickelt, als Nachfolger
-des Etherpad-Dienstes hinter den Moodle-Plattformen der HSD.
+Idee, Konzept und Entwicklung: Christian-Maximilian Steier. NextPad entstand als Nachfolger
+eines Etherpad-Dienstes für Moodle-Plattformen.
 
 ## Zitation
 

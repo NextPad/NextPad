@@ -1,0 +1,4 @@
+[
+  {"id": "musterstadt", "name": "HSM · Hochschule Musterstadt", "name_en": "HSM · Musterstadt University", "schrift": "schrift.ttf", "familie": "Liberation Sans", "fliesstext": "arial"},
+  {"id": "fb-x", "name": "X · Fachbereich Beispiel", "name_en": "X · Faculty of Examples", "schrift": "schrift.ttf", "familie": "Liberation Sans", "fliesstext": "serif", "kuerzel": "FBX", "beischrift": ["Fachbereich Beispiel"], "beischrift_en": ["Faculty of Examples"]}
+]

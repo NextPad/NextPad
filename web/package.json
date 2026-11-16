@@ -1,6 +1,6 @@
 {
   "name": "nextpad-web",
-  "version": "0.22.1",
+  "version": "0.23.0-rc.1",
   "private": true,
   "description": "Editor- und Zeichenbrett-Bundle für NextPad (TipTap + Yjs, Excalidraw + Yjs), gebaut mit esbuild",
   "license": "EUPL-1.2",

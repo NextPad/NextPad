@@ -18,7 +18,7 @@ pub const LOGO_SVG: &str = include_str!("../static/logo.svg");
 pub const FAVICON_PNG: &[u8] = include_bytes!("../static/favicon-32.png");
 pub const TOUCH_ICON_PNG: &[u8] = include_bytes!("../static/apple-touch-icon.png");
 pub const QUICKSAND_TTF: &[u8] = include_bytes!("../static/quicksand.ttf");
-pub const THEME_HSD_CSS: &str = include_str!("../static/theme-hsd.css");
+pub const ECKIG_CSS: &str = include_str!("../static/eckig.css");
 pub const THEMES_CSS: &str = include_str!("../static/themes.css");
 /// Webschriften der Themes: im Programm, auf lateinische Zeichen verkleinert, keine fremden Dienste.
 /// „NextPad Sans“ ist Liberation Sans 2.1.5 unter eigenem Namen (OFL, reservierter Name).
@@ -33,7 +33,7 @@ pub fn bundle_version() -> &'static str {
     static V: std::sync::OnceLock<String> = std::sync::OnceLock::new();
     V.get_or_init(|| {
         let mut h: u64 = 1469598103934665603;
-        for b in EDITOR_JS.bytes().chain(EDITOR_CSS.bytes()).chain(THEME_HSD_CSS.bytes()) { h ^= b as u64; h = h.wrapping_mul(1099511628211); }
+        for b in EDITOR_JS.bytes().chain(EDITOR_CSS.bytes()).chain(ECKIG_CSS.bytes()) { h ^= b as u64; h = h.wrapping_mul(1099511628211); }
         format!("{h:016x}")
     })
 }
@@ -233,6 +233,12 @@ pub async fn page(State(state): State<Arc<AppState>>, Path(id): Path<String>, he
         "course": if access.free { None } else { state.store.course_url(&access.pad.id) },
         "lang": sp.kuerzel(),
         "texte": texte::texte_mit(sp, "editor."),
+        // die Vorgabe ist die leere Wahl und erscheint nicht doppelt; Wahl nur mit Gestaltungen bzw. mehr als einer Vorlage
+        "absender": if gestaltung_waehlbar(&state, &access) { crate::stile::alle().iter().filter(|s| s.id != crate::stile::vorgabe_id()).map(|s| json!({ "id": s.id, "name": s.name(sp) })).collect::<Vec<_>>() } else { vec![] },
+        "absenderWahl": state.store.stil(&access.pad.id).filter(|v| v != crate::stile::vorgabe_id() && crate::stile::finde(v).is_some()).unwrap_or_default(),
+        "arten": if gestaltung_waehlbar(&state, &access) { vorlagen(sp).into_iter().map(|(id, name)| json!({ "id": id, "name": name })).collect::<Vec<_>>() } else { vec![] },
+        "art": state.store.art(&access.pad.id).filter(|v| art_gueltig(v)).unwrap_or_else(|| "standard".into()),
+        "satz": satz_json(&state, &access.pad.id),
     });
     let base = &state.config.base_path;
     if let Some(addon) = crate::addons::von_pad(&state, &access.pad.id) {
@@ -241,9 +247,9 @@ pub async fn page(State(state): State<Arc<AppState>>, Path(id): Path<String>, he
         let resp = (addon.seite)(crate::addons::Seite { state: &state, headers: &headers, url_id: &id, pad_id: &access.pad.id, free: access.free, readonly_id, cfg });
         return with_cookie(resp, access.set_cookie.clone());
     }
-    let theme_link = if theme_rahmen(&state) { format!(r#"<link rel="stylesheet" href="{}/static/theme-hsd.css?v={}">"#, state.config.base_path, bundle_version()) } else { String::new() };
-    let theme_link = theme_link + &hsd_link(&state) + &themes_link(&state);
-    let body_class = if theme_rahmen(&state) { format!("theme-hsd {}", theme_klasse(&state)).trim_end().to_string() } else { "theme-colibris".to_string() };
+    let theme_link = if theme_rahmen(&state) { format!(r#"<link rel="stylesheet" href="{}/static/eckig.css?v={}">"#, state.config.base_path, bundle_version()) } else { String::new() };
+    let theme_link = theme_link + &marke_link(&state) + &themes_link(&state);
+    let body_class = if theme_rahmen(&state) { format!("theme-eckig {}", theme_klasse(&state)).trim_end().to_string() } else { "theme-colibris".to_string() };
     let icons = icon_links();
     let body = format!(
         r#"<!doctype html><html lang="{lang}"><head><meta charset="utf-8">{icons}<meta name="viewport" content="width=device-width, initial-scale=1"><title>NextPad</title>
@@ -386,6 +392,72 @@ async fn snapshot_html_inner(State(state): State<Arc<AppState>>, Path((id, ts)):
     }
 }
 
+/// Absender und Dokumentart wählen darf, wer ein Textpad bearbeitet, wenn das Theme Gestaltungen oder mehr als eine
+/// Satzvorlage mitbringt.
+fn gestaltung_waehlbar(state: &AppState, access: &Access) -> bool {
+    PDF_SATZ && !access.readonly && access.author.is_some() && crate::addons::von_pad(state, &access.pad.id).is_none() && satz_mit_wahl()
+}
+
+#[cfg(feature = "pdf")]
+fn vorlagen(sp: Sprache) -> Vec<(&'static str, &'static str)> { crate::typeset::vorlagen(sp) }
+#[cfg(not(feature = "pdf"))]
+fn vorlagen(_sp: Sprache) -> Vec<(&'static str, &'static str)> { Vec::new() }
+
+fn satz_mit_wahl() -> bool { !crate::stile::alle().is_empty() || vorlagen(Sprache::De).len() > 1 }
+
+fn art_gueltig(id: &str) -> bool { vorlagen(Sprache::De).iter().any(|(v, _)| *v == id) }
+
+/// Schrift im Editor: Absender, Dokumentart, Vorgabe und je Absender die Fließtextgruppe.
+/// Welche Überschrift welchen Schnitt bekommt, legt das Stylesheet des Themes fest. Auch für Lesende, damit alle
+/// dieselbe Schrift sehen; ohne Wahl im Theme `null`.
+fn satz_json(state: &AppState, pad: &str) -> serde_json::Value {
+    if !satz_mit_wahl() || crate::addons::von_pad(state, pad).is_some() { return serde_json::Value::Null; }
+    let alle = crate::stile::alle();
+    json!({
+        "stil": state.store.stil(pad).filter(|v| crate::stile::finde(v).is_some()).unwrap_or_default(),
+        "art": state.store.art(pad).filter(|v| art_gueltig(v)).unwrap_or_else(|| "standard".into()),
+        "vorgabe": crate::stile::finde(crate::stile::vorgabe_id()).map(|s| s.id.as_str()).unwrap_or(""),
+        "serif": alle.iter().filter(|s| s.fliesstext == crate::stile::Fliesstext::Serif).map(|s| s.id.as_str()).collect::<Vec<_>>(),
+    })
+}
+
+/// Aktuelle Gestaltung für offene Editoren, die über den Live-Kanal von einer Änderung erfahren haben.
+pub async fn get_gestaltung(State(state): State<Arc<AppState>>, Path(id): Path<String>, headers: HeaderMap) -> Response {
+    let access = match check_access(&state, &headers, &id) { Ok(a) => a, Err((s, m)) => return abgelehnt(&headers, s, m) };
+    let mut r = axum::Json(satz_json(&state, &access.pad.id)).into_response();
+    r.headers_mut().insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
+    r
+}
+
+/// Schnitt der Hausschrift eines Absenders für die Überschriften im Editor, `/theme/stile/<id>.ttf`.
+/// Nur Einträge aus `stile.json`, kein freier Dateizugriff.
+pub async fn stil_schrift(Path(datei): Path<String>) -> Response {
+    let Some(st) = datei.strip_suffix(".ttf").and_then(crate::stile::finde) else { return StatusCode::NOT_FOUND.into_response() };
+    match std::fs::read(&st.schrift) {
+        Ok(b) => ([(header::CONTENT_TYPE, "font/ttf"), (header::CACHE_CONTROL, "public, max-age=86400")], b).into_response(),
+        Err(_) => StatusCode::NOT_FOUND.into_response(),
+    }
+}
+
+/// Gestaltung des Pads setzen: `{"stil": "<absender>"}` und/oder `{"art": "<satzvorlage>"}`,
+/// jeweils unabhängig; ein leerer Absender ist die Vorgabe aus `theme.json`, die Dokumentart „standard“ das bisherige PDF.
+pub async fn set_gestaltung(State(state): State<Arc<AppState>>, Path(id): Path<String>, headers: HeaderMap, axum::Json(b): axum::Json<serde_json::Value>) -> Response {
+    if !origin_ok(&state, &headers) || headers.get(header::ORIGIN).is_none() { return StatusCode::FORBIDDEN.into_response(); }
+    let access = match check_access(&state, &headers, &id) { Ok(a) => a, Err((s, m)) => return abgelehnt(&headers, s, m) };
+    if !gestaltung_waehlbar(&state, &access) { return abgelehnt(&headers, StatusCode::FORBIDDEN, "gestaltung.nicht_erlaubt"); }
+    let absender = b.get("stil").map(|v| v.as_str().unwrap_or("\u{0}"));
+    let art = b.get("art").map(|v| v.as_str().unwrap_or("\u{0}"));
+    if absender.is_none() && art.is_none() { return abgelehnt(&headers, StatusCode::BAD_REQUEST, "gestaltung.unbekannt"); }
+    if absender.is_some_and(|w| !w.is_empty() && crate::stile::finde(w).is_none()) || art.is_some_and(|a| !art_gueltig(a)) {
+        return abgelehnt(&headers, StatusCode::BAD_REQUEST, "gestaltung.unbekannt");
+    }
+    let r = absender.map_or(Ok(()), |w| state.store.set_stil(&access.pad.id, (!w.is_empty()).then_some(w)))
+        .and_then(|_| art.map_or(Ok(()), |a| state.store.set_art(&access.pad.id, Some(a))));
+    if let Err(e) = r { tracing::warn!("Gestaltung setzen: {e}"); return StatusCode::INTERNAL_SERVER_ERROR.into_response(); }
+    tracing::info!("Gestaltung für Pad {}: Absender {}, Art {}", access.pad.id, absender.map(|w| if w.is_empty() { "Vorgabe" } else { w }).unwrap_or("unverändert"), art.unwrap_or("unverändert"));
+    axum::Json(json!({ "ok": true, "stil": state.store.stil(&access.pad.id).unwrap_or_default(), "art": state.store.art(&access.pad.id).unwrap_or_else(|| "standard".into()) })).into_response()
+}
+
 /// Frühere Stände zurückholen darf, wer das freie Pad besitzt; bei Moodle-Pads, wer moderiert (Lehrende).
 fn may_restore(state: &AppState, access: &Access) -> bool {
     let Some((aid, _)) = access.author.as_ref().filter(|_| !access.readonly) else { return false };
@@ -512,7 +584,7 @@ pub async fn rename_me(State(state): State<Arc<AppState>>, headers: HeaderMap, a
 pub async fn index(State(state): State<Arc<AppState>>, headers: HeaderMap) -> Response {
     let sp = Sprache::aus_anfrage(&headers);
     if state.config.allow_free_pads && theme_rahmen(&state) {
-        return start_page_hsd(&state, &headers);
+        return start_page_rahmen(&state, &headers);
     }
     if state.config.allow_free_pads {
         let base = &state.config.base_path;
@@ -532,7 +604,7 @@ p.hint{{font-size:14px;margin:26px 0 0;color:#fff}} p.hint a{{color:#fff}} .spra
 <input type="text" id="padname" name="padname" maxlength="50" autofocus><button type="submit">{ok}</button></form>
 {account}<p class="hint">NextPad{site}. {hinweis}</p>
 <p class="hint">{wahl}</p>
-</main></div></body></html>"#, account = account_block(&state, &headers, "colibris"), wahl = sprachwahl(&state, sp, "/"), site = site_suffix(&state), lang = sp.kuerzel(),
+</main></div></body></html>"#, account = account_block(&state, &headers, false), wahl = sprachwahl(&state, sp, "/"), site = site_suffix(&state), lang = sp.kuerzel(),
             neu = texte::t(sp, "start.c.neues_pad"), oder = texte::t(sp, "start.c.oder_name"), ok = texte::t(sp, "start.c.ok"), hinweis = texte::t(sp, "start.c.hinweis"));
         let mut resp = Html(body).into_response();
         resp.headers_mut().insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
@@ -542,7 +614,7 @@ p.hint{{font-size:14px;margin:26px 0 0;color:#fff}} p.hint a{{color:#fff}} .spra
     let (pads, _, _) = state.store.counts().unwrap_or((0, 0, 0));
     let icons = icon_links();
     let body = format!(r#"<!doctype html><html lang="{lang}"><head><meta charset="utf-8">{icons}<meta name="viewport" content="width=device-width, initial-scale=1"><title>NextPad</title>
-<style>body{{font-family:Arial,Helvetica,sans-serif;color:#333;max-width:40em;margin:3em auto;padding:0 1em;line-height:1.5}} h1{{font-size:1.5em;border-bottom:2px solid #e60028;padding-bottom:.2em}} code{{background:#f3f3f3;padding:0 .3em}}</style></head>
+<style>body{{font-family:Arial,Helvetica,sans-serif;color:#333;max-width:40em;margin:3em auto;padding:0 1em;line-height:1.5}} h1{{font-size:1.5em;border-bottom:2px solid #333;padding-bottom:.2em}} code{{background:#f3f3f3;padding:0 .3em}}</style></head>
 <body><h1>NextPad</h1>
 <p>{text}</p>
 <p>{instanz}{betrieb}</p>
@@ -630,9 +702,9 @@ pub async fn history(State(state): State<Arc<AppState>>, Path(id): Path<String>,
 pub async fn static_js() -> Response {
     ([(header::CONTENT_TYPE, "application/javascript; charset=utf-8"), (header::CACHE_CONTROL, "public, max-age=31536000, immutable")], EDITOR_JS).into_response()
 }
-/// Rahmen aus start.css (Startseite, Seiten, Editor mit theme-hsd.css): alle Themes außer colibris.
+/// Rahmen aus start.css (Startseite, Seiten, Editor mit eckig.css): alle Themes außer colibris.
 pub fn theme_rahmen(state: &AppState) -> bool { state.config.theme != "colibris" }
-/// Klasse für `<body>`, mit der themes.css die Themes nextpad und rund über den Rahmen legt; leer für hsd und colibris.
+/// Klasse für `<body>`, mit der themes.css die Themes nextpad und rund über den Rahmen legt; leer für eckig und colibris.
 pub fn theme_klasse(state: &AppState) -> &'static str {
     match state.config.theme.as_str() { "nextpad" => "theme-nextpad", "rund" => "theme-rund", _ => "" }
 }
@@ -642,8 +714,7 @@ pub fn themes_link(state: &AppState) -> String {
     format!(r#"<link rel="stylesheet" href="{}/static/themes.css?v={}">"#, state.config.base_path, start_version())
 }
 fn theme_file(state: &AppState, name: &str) -> Option<Vec<u8>> {
-    let dir = state.config.theme_dir.as_ref()?;
-    std::fs::read(dir.join(name)).ok()
+    std::fs::read(crate::theme::datei(state.config.theme_dir.as_deref(), name)?).ok()
 }
 /// Logo, Startbild und Hausschrift: Vorgabe aus NEXTPAD_THEME_DIR (nicht im Repo, Marke der Hochschule),
 /// Logo und Startbild auch über die Verwaltungsseite (look.rs).
@@ -651,7 +722,7 @@ pub fn has_logo(state: &AppState) -> bool { crate::look::has_logo(state) }
 fn has_background(state: &AppState) -> bool { crate::look::has_background(state) }
 /// Adresse eines Theme-Bilds mit Stand, damit ein neues Bild sofort erscheint.
 pub fn theme_url(state: &AppState, file: &str) -> String { format!("{}/theme/{file}?v={}", state.config.base_path, crate::look::get(state).version) }
-/// Stilangaben aus dem Erscheinungsbild, nur im Design hsd.
+/// Stilangaben aus dem Erscheinungsbild, nur in den Layouts mit Rahmen.
 pub fn look_css(state: &AppState) -> String { if theme_rahmen(state) { crate::look::get(state).css() } else { String::new() } }
 /// Admin: über Moodle angemeldet mit Admin-Recht.
 pub fn login_admin(state: &AppState, headers: &HeaderMap) -> Option<crate::store::Author> {
@@ -662,28 +733,28 @@ pub fn login_admin(state: &AppState, headers: &HeaderMap) -> Option<crate::store
 }
 /// Einfache Seite im Rahmen der Startseite.
 pub fn start_page(state: &AppState, sp: Sprache, wahl: Option<&str>, title: &str, content: &str, scripts: &str) -> Response {
-    start_headers(state, Html(hsd_page(state, sp, wahl, title, "", "", content, scripts)).into_response())
+    start_headers(state, Html(rahmen_page(state, sp, wahl, title, "", "", content, scripts)).into_response())
 }
 pub async fn theme_font(State(state): State<Arc<AppState>>) -> Response {
-    match theme_file(&state, "font.ttf") { Some(b) => ([(header::CONTENT_TYPE, "font/ttf"), (header::CACHE_CONTROL, "public, max-age=86400")], b).into_response(), None => StatusCode::NOT_FOUND.into_response() }
+    match theme_file(&state, &state.config.marke.hausschrift) { Some(b) => ([(header::CONTENT_TYPE, "font/ttf"), (header::CACHE_CONTROL, "public, max-age=86400")], b).into_response(), None => StatusCode::NOT_FOUND.into_response() }
 }
-pub async fn static_theme_hsd() -> Response { ([(header::CONTENT_TYPE, "text/css; charset=utf-8"), (header::CACHE_CONTROL, "public, max-age=31536000, immutable")], THEME_HSD_CSS).into_response() }
-/// Hausdesign hsd: die Datei hsd.css aus NEXTPAD_THEME_DIR (nicht im Repo), nach dem Grundstil geladen.
+pub async fn static_eckig() -> Response { ([(header::CONTENT_TYPE, "text/css; charset=utf-8"), (header::CACHE_CONTROL, "public, max-age=31536000, immutable")], ECKIG_CSS).into_response() }
+/// Stylesheet der Marke aus dem Theme-Ordner (`stylesheet` in theme.json), nach dem Grundstil geladen.
 /// Fehlt die Datei, bleibt es beim Grundstil. Versionsangabe nach Änderungszeit, damit Änderungen sofort greifen.
-fn hsd_link(state: &AppState) -> String {
-    match hsd_css_version(state) {
-        Some(v) => format!(r#"<link rel="stylesheet" href="{}/theme/hsd.css?v={v}">"#, state.config.base_path),
+fn marke_link(state: &AppState) -> String {
+    match marke_css_version(state) {
+        Some(v) => format!(r#"<link rel="stylesheet" href="{}/theme/marke.css?v={v}">"#, state.config.base_path),
         None => String::new(),
     }
 }
-fn hsd_css_version(state: &AppState) -> Option<String> {
-    if state.config.theme != "hsd" { return None; }
-    let meta = std::fs::metadata(state.config.theme_dir.as_ref()?.join("hsd.css")).ok()?;
+fn marke_css_version(state: &AppState) -> Option<String> {
+    let name = state.config.marke.stylesheet.as_deref()?;
+    let meta = std::fs::metadata(crate::theme::datei(state.config.theme_dir.as_deref(), name)?).ok()?;
     let secs = meta.modified().ok()?.duration_since(std::time::UNIX_EPOCH).ok()?.as_secs();
     Some(secs.to_string())
 }
-pub async fn theme_hsd_css(State(state): State<Arc<AppState>>) -> Response {
-    match theme_file(&state, "hsd.css") {
+pub async fn theme_marke_css(State(state): State<Arc<AppState>>) -> Response {
+    match state.config.marke.stylesheet.as_deref().and_then(|n| theme_file(&state, n)) {
         Some(b) => ([(header::CONTENT_TYPE, "text/css; charset=utf-8"), (header::CACHE_CONTROL, "public, max-age=86400")], b).into_response(),
         None => StatusCode::NOT_FOUND.into_response(),
     }
@@ -729,13 +800,14 @@ pub const START_JS: &str = include_str!("../static/start.js");
 pub async fn static_start() -> Response { ([(header::CONTENT_TYPE, "text/javascript; charset=utf-8"), (header::CACHE_CONTROL, "public, max-age=31536000, immutable")], START_JS).into_response() }
 
 /// Anmeldebereich der Startseite: angemeldet (Name, Bild, Abmelden) oder Schaltflächen je Moodle.
-fn account_block(state: &AppState, headers: &HeaderMap, theme: &str) -> String {
+/// `zeile`: schmale Zeile unter dem Fotoband der Rahmen-Startseite statt Karte (colibris).
+fn account_block(state: &AppState, headers: &HeaderMap, zeile: bool) -> String {
     let sp = Sprache::aus_anfrage(headers);
     let t = |k| texte::t(sp, k);
     let base = &state.config.base_path;
     if let Some(a) = login_author(state, headers) {
         let img = a.avatar.as_deref().map(|u| format!(r#"<img class="avatar" src="{}" alt="" width="40" height="40">"#, html_escape::encode_double_quoted_attribute(u))).unwrap_or_default();
-        if theme == "hsd" {
+        if zeile {
             let admin = if login_admin(state, headers).is_some() { format!(r#"<a class="btn btn-secondary btn-block" href="{base}/admin/erscheinungsbild">{}</a>"#, t("konto.erscheinungsbild")) } else { String::new() };
             let wer = texte::tf(sp, "konto.angemeldet_als_html", &[("name", &html_escape::encode_text(&a.name))]);
             return format!(r#"<section class="account-line" aria-label="{anmeldung}"><div class="account-row">{img}<p class="who">{wer}</p>{admin}<form method="post" action="{base}/logout"><button type="submit" class="btn btn-secondary btn-block">{abmelden}</button></form></div></section>"#, anmeldung = t("konto.anmeldung"), abmelden = t("konto.abmelden"));
@@ -745,7 +817,7 @@ fn account_block(state: &AppState, headers: &HeaderMap, theme: &str) -> String {
     let buttons: String = state.config.lti.iter().filter_map(|p| p.start_url.as_ref().map(|u| (p, u)))
         .map(|(p, u)| format!(r#"<a class="btn btn-secondary btn-block secondary" href="{}">{}<span class="visually-hidden"> {}</span></a>"#, html_escape::encode_double_quoted_attribute(u), html_escape::encode_text(&p.label), t("konto.oeffnet_moodle"))).collect();
     if buttons.is_empty() { return String::new(); }
-    if theme == "hsd" {
+    if zeile {
         return format!(r#"<section class="account-line" aria-label="{}"><div class="account-row">{buttons}<p class="hint">{}</p></div></section>"#, t("konto.anmeldung"), t("konto.hinweis"));
     }
     format!(r#"<section class="account card" aria-label="{}">{buttons}</section>"#, t("konto.anmeldung"))
@@ -791,7 +863,7 @@ fn sprachwahl(state: &AppState, sp: Sprache, pfad: &str) -> String {
 /// Seitenrahmen im eingestellten Design; im Design colibris ohne Dachmarke. `wahl`: Pfad für den Sprachumschalter,
 /// `None` auf Seiten, die es noch nicht in beiden Sprachen gibt.
 pub fn page_frame(state: &AppState, sp: Sprache, wahl: Option<&str>, title: &str, head: &str, content: &str, scripts: &str) -> String {
-    if theme_rahmen(state) { return hsd_page_with(state, sp, wahl, title, head, "", "", content, scripts); }
+    if theme_rahmen(state) { return rahmen_page_with(state, sp, wahl, title, head, "", "", content, scripts); }
     let base = &state.config.base_path;
     let icons = icon_links();
     let t = |k| texte::t(sp, k);
@@ -806,14 +878,14 @@ pub fn page_frame(state: &AppState, sp: Sprache, wahl: Option<&str>, title: &str
         wahl = wahl.map(|p| sprachwahl(state, sp, p)).unwrap_or_default())
 }
 
-/// Seitenrahmen im HSD-Design: Kopf mit Dachmarke und Produktname, Fuß mit Hilfe und Pflichtlinks.
+/// Seitenrahmen der Layouts nextpad, rund und eckig: Kopf mit Dachmarke und Produktname, Fuß mit Hilfe und Pflichtlinks.
 #[allow(clippy::too_many_arguments)]
-fn hsd_page(state: &AppState, sp: Sprache, wahl: Option<&str>, title: &str, body_class: &str, style_attr: &str, content: &str, scripts: &str) -> String {
-    hsd_page_with(state, sp, wahl, title, "", body_class, style_attr, content, scripts)
+fn rahmen_page(state: &AppState, sp: Sprache, wahl: Option<&str>, title: &str, body_class: &str, style_attr: &str, content: &str, scripts: &str) -> String {
+    rahmen_page_with(state, sp, wahl, title, "", body_class, style_attr, content, scripts)
 }
 
 #[allow(clippy::too_many_arguments)]
-fn hsd_page_with(state: &AppState, sp: Sprache, wahl: Option<&str>, title: &str, head: &str, body_class: &str, style_attr: &str, content: &str, scripts: &str) -> String {
+fn rahmen_page_with(state: &AppState, sp: Sprache, wahl: Option<&str>, title: &str, head: &str, body_class: &str, style_attr: &str, content: &str, scripts: &str) -> String {
     let t = |k| texte::t(sp, k);
     let base = &state.config.base_path;
     let look = crate::look::get(state);
@@ -829,7 +901,7 @@ fn hsd_page_with(state: &AppState, sp: Sprache, wahl: Option<&str>, title: &str,
     let site = site_suffix(state);
     let icons = icon_links();
     format!(r##"<!doctype html><html lang="{lang}" data-base="{base}"><head><meta charset="utf-8">{icons}<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="robots" content="noindex"><meta name="color-scheme" content="light dark"><title>{title}</title>
-<link rel="stylesheet" href="{base}/static/start.css?v={v}">{themes}<style>@font-face{{font-family:"HSD Sans";src:url("{base}/theme/font.ttf") format("truetype");font-weight:400;font-display:swap}}</style>{css}{head}</head>
+<link rel="stylesheet" href="{base}/static/start.css?v={v}">{themes}<style>@font-face{{font-family:"Hausschrift";src:url("{base}/theme/font.ttf") format("truetype");font-weight:400;font-display:swap}}</style>{css}{head}</head>
 <body class="{body_class}"{style_attr}><a class="skip-link" href="#inhalt">{zum_inhalt}</a>
 <header class="site-header">{brand}<nav aria-label="{service}"><a href="{base}/hilfe">{hilfe}</a>{wahl}</nav></header>
 {content}
@@ -848,12 +920,12 @@ pub fn start_version() -> &'static str {
     })
 }
 
-/// Startseite im HSD-Design: Fotoband mit
+/// Startseite der Layouts mit Rahmen: Fotoband mit
 /// Pad-Namen als einziger Hauptsache, darunter auf ruhiger Fläche neu anlegen, zuletzt geöffnet, Anmeldung, Hinweis.
-fn start_page_hsd(state: &AppState, headers: &HeaderMap) -> Response {
+fn start_page_rahmen(state: &AppState, headers: &HeaderMap) -> Response {
     let sp = Sprache::aus_anfrage(headers);
     let base = &state.config.base_path;
-    let account = account_block(state, headers, "hsd");
+    let account = account_block(state, headers, true);
     let bg = has_background(state);
     let credit = match (bg, crate::look::credit(state)) {
         (true, Some((c, url))) => {
@@ -904,7 +976,7 @@ fn start_page_hsd(state: &AppState, headers: &HeaderMap) -> Response {
         zuletzt = t("start.zuletzt"), zuletzt_hinweis = t("start.zuletzt_hinweis"), leeren = t("start.liste_leeren"), hinweis = t("start.hinweis"), mehr_hilfe = t("start.mehr_hilfe"));
     let scripts = format!(r#"<script type="application/json" id="start-texte">{json}</script><script src="{base}/static/start.js?v={v}"></script>"#, json = texte::fuer_skript(sp, "startjs."), v = start_version());
     let body_class = if bg { "has-bg" } else { "" };
-    start_headers(state, Html(hsd_page(state, sp, Some("/"), "NextPad", body_class, &style_attr, &content, &scripts)).into_response())
+    start_headers(state, Html(rahmen_page(state, sp, Some("/"), "NextPad", body_class, &style_attr, &content, &scripts)).into_response())
 }
 
 /// Tatsächlicher Stand der Löschregel, nicht der geplante (keine Zusagen, die der Server nicht einlöst).
@@ -924,9 +996,11 @@ pub async fn help(State(state): State<Arc<AppState>>, headers: HeaderMap) -> Res
         _ => texte::t(sp, "hilfe.aufbewahrung_aus_html").to_string(),
     };
     let addon_hilfe: String = crate::addons::aktive(&state).map(|a| texte::t(sp, a.hilfe)).collect::<Vec<_>>().join("\n");
-    let content = texte::tf(sp, "hilfe.seite_html", &[("base", base), ("addon_hilfe", &addon_hilfe), ("aufbewahrung", &aufbewahrung)]);
+    // Absender und Dokumentart nur, wenn das Theme etwas zur Wahl stellt
+    let gestaltung = if satz_mit_wahl() { texte::t(sp, "hilfe.gestaltung_html") } else { "" };
+    let content = texte::tf(sp, "hilfe.seite_html", &[("base", base), ("addon_hilfe", &addon_hilfe), ("aufbewahrung", &aufbewahrung), ("gestaltung", gestaltung)]);
     let titel = format!("NextPad · {}", texte::t(sp, "hilfe.titel"));
-    start_headers(&state, Html(hsd_page(&state, sp, Some("/hilfe"), &titel, "", "", &content, "")).into_response())
+    start_headers(&state, Html(rahmen_page(&state, sp, Some("/hilfe"), &titel, "", "", &content, "")).into_response())
 }
 
 /// Abmelden per Adresse (GET): nicht sofort abmelden (Vorab-Laden durch Browser), sondern nachfragen.
@@ -939,7 +1013,7 @@ pub async fn logout_confirm(State(state): State<Arc<AppState>>, headers: HeaderM
     };
     let abmelden = texte::t(sp, "konto.abmelden");
     let content = format!(r#"<main id="inhalt" class="doc" tabindex="-1"><h1>{abmelden}</h1>{text}<p><a href="{base}/">{start}</a></p></main>"#, start = texte::t(sp, "abmelden.zur_startseite"));
-    start_headers(&state, Html(hsd_page(&state, sp, Some("/logout"), &format!("NextPad · {abmelden}"), "", "", &content, "")).into_response())
+    start_headers(&state, Html(rahmen_page(&state, sp, Some("/logout"), &format!("NextPad · {abmelden}"), "", "", &content, "")).into_response())
 }
 
 /// Besitzer-Aktionen: nur per POST von der eigenen Seite, nur wer das freie Pad angelegt hat.
@@ -1139,7 +1213,7 @@ pub async fn extend_page(State(state): State<Arc<AppState>>, Query(q): Query<Has
     let sp = Sprache::aus_anfrage(&headers);
     let icons = icon_links();
     let body = format!(r#"<!doctype html><html lang="{lang}"><head><meta charset="utf-8">{icons}<meta name="viewport" content="width=device-width, initial-scale=1"><title>NextPad · {titel}</title>
-<style>body{{font-family:Arial,sans-serif;max-width:32em;margin:0 auto;padding:32px 16px;line-height:1.5}} button{{min-height:48px;padding:0 20px;background:#262626;color:#fff;border:0;font:inherit;font-weight:700;cursor:pointer}} h1{{font-size:24px;border-bottom:2px solid #e60028;padding-bottom:6px}}</style></head>
+<style>body{{font-family:Arial,sans-serif;max-width:32em;margin:0 auto;padding:32px 16px;line-height:1.5}} button{{min-height:48px;padding:0 20px;background:#262626;color:#fff;border:0;font:inherit;font-weight:700;cursor:pointer}} h1{{font-size:24px;border-bottom:2px solid #333;padding-bottom:6px}}</style></head>
 <body><h1>{titel}</h1><p>{text}</p><form method="post" action="{base}/verlaengern"><input type="hidden" name="t" value="{t}"><button type="submit">{knopf}</button></form></body></html>"#,
         lang = sp.kuerzel(), titel = texte::t(sp, "verlaengern.titel"), text = texte::t(sp, "verlaengern.text"), knopf = texte::t(sp, "verlaengern.knopf"));
     start_headers(&state, Html(body).into_response())
@@ -1175,17 +1249,26 @@ pub async fn pad_pdf(state: &Arc<AppState>, pad_id: &str, shown_id: &str, sp: Sp
     let md = state.rooms.markdown(pad_id).await?;
     let title = md.lines().map(|l| l.trim_start_matches('#').trim()).find(|l| !l.is_empty()).unwrap_or(shown_id).chars().take(80).collect::<String>();
     let title = html_escape::decode_html_entities(&title).to_string();
-    let header = texte::tf(sp, "export.pdf_kopf", &[("datum", &crate::pdf::datum(sp, ids::now_ms()))]);
+    let datum = crate::pdf::datum(sp, ids::now_ms());
+    let header = texte::tf(sp, "export.pdf_kopf", &[("datum", &datum)]);
     let footer = format!("Pad {shown_id}");
     let st = state.clone();
+    let pad = pad_id.to_string();
     let res = tokio::task::spawn_blocking(move || {
         let look = crate::look::get(&st);
         let accent = look.palette().accent;
-        // HSD-Design (Hausschrift, Schriften und Logo aus dem Theme-Ordner) nur beim Theme hsd;
-        // nextpad und rund tragen nur Logo und Akzent, die die Einrichtung selbst hinterlegt hat
-        let hsd = st.config.theme == "hsd";
-        let logo = if hsd { crate::look::logo(&st) } else { crate::look::own_logo(&st) };
-        let o = crate::typeset::Options { hsd, rahmen: theme_rahmen(&st), theme_dir: if hsd { st.config.theme_dir.as_deref() } else { None }, logo, accent: &accent, product: look.product(), header: &header, footer: &footer, title: &title, sprache: sp };
+        // Schriften und Logo aus dem Theme-Ordner nur bei einem Theme aus theme.json;
+        // die eingebauten tragen nur Logo und Akzent, die die Einrichtung selbst hinterlegt hat
+        let marke = !st.config.marke.name.is_empty();
+        // Absender und Dokumentart am Pad; Dokumentart ist die Kennung einer Satzvorlage
+        let art = st.store.art(&pad).unwrap_or_else(|| "standard".into());
+        let absender = crate::stile::fuer(st.store.stil(&pad).as_deref());
+        let logo = if marke { crate::look::logo(&st) } else { crate::look::own_logo(&st) };
+        let o = crate::typeset::Options {
+            hausschrift: st.config.marke.hausschrift_familie.as_deref().filter(|_| marke), rahmen: theme_rahmen(&st),
+            theme_dir: if marke { st.config.theme_dir.as_deref() } else { None }, logo, accent: &accent, product: look.product(),
+            header: &header, footer: &footer, title: &title, datum: &datum, sprache: sp, vorlage: &art, schriften: &st.config.marke.schriften, absender,
+        };
         crate::typeset::pdf(&o, &body)
     }).await.map_err(|e| anyhow::anyhow!("{e}"))?;
     match res {
@@ -1206,13 +1289,12 @@ pub async fn static_start_css() -> Response { ([(header::CONTENT_TYPE, "text/css
 
 #[cfg(test)]
 mod tests {
-    use super::{eigener_pfad, THEME_HSD_CSS};
+    use super::{eigener_pfad, ECKIG_CSS};
 
-    /// Der Grundstil im Repo darf kein HSD-Design enthalten; das liegt in NEXTPAD_THEME_DIR/hsd.css.
+    /// Der Grundstil im Repo trägt keine Hausschrift; Markenfarben im ganzen Stand findet die Exportprüfung.
     #[test]
-    fn grundstil_ohne_hsd_schrift_und_farben() {
-        assert!(!THEME_HSD_CSS.contains("Arial"), "Hausschrift im öffentlichen Grundstil");
-        assert!(!THEME_HSD_CSS.contains("#e60028"), "HSD-Rot im öffentlichen Grundstil");
+    fn grundstil_ohne_hausschrift() {
+        assert!(!ECKIG_CSS.contains("Arial"), "Hausschrift im öffentlichen Grundstil");
     }
 
     #[test]

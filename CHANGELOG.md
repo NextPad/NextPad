@@ -6,6 +6,58 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+## [0.23.0-rc.1] - 2026-11-16
+
+### Upgrade
+
+- The square layout formerly called `hsd` is now `eckig`: CSS class `theme-eckig`, file `static/eckig.css`. The
+  old custom properties for the red accent and the blue, green and yellow house colours are now `--accent`,
+  `--house-blue`, `--house-green` and `--house-yellow`. A stylesheet in the theme folder that uses the old names needs updating.
+- `NEXTPAD_THEME=hsd` without `theme.json` in the theme folder still works: it starts as `eckig` with `hsd.css` from the
+  theme folder and logs a warning.
+- An installation with layout `eckig` and without its own accent shows dark grey instead of red after the upgrade.
+  `farben.akzent` in `theme.json` or the accent under "Appearance" brings a colour back.
+- Schema version 2: new columns `pads.stil` (sender) and `pads.art` (document type). The first start copies the
+  database to `snapshots/vor-schema-1-2-<date>.sqlite`. Version 0.22 refuses to start on the migrated database.
+
+### Added
+
+- Themes of your own in `NEXTPAD_THEME_DIR` with a `theme.json` (format 1): name, base layout, stylesheet, logo,
+  background, house font, colours and replaced texts. NextPad refuses to start on a newer format, a missing required
+  key, an unknown base layout or a path leading out of the folder. An invented example theme lives in
+  `server/tests/theme-beispiel/` and is part of the browser tests.
+- The YunoHost package accepts any theme name instead of a fixed list.
+- Typesetting templates in the theme folder (`satzvorlagen` in `theme.json`): Typst modules with
+  `#let vorlage(meta, body)`. A theme template with the id `standard` replaces the built-in neutral one. NextPad sets
+  each template once at start; a broken one drops out with its Typst error in the log and on
+  `/admin/erscheinungsbild`, and PDFs fall back to `standard`. Further font directories via `schriften`.
+- Sender and document type per pad. A theme with `gestaltungen` in `theme.json` lists
+  senders (name, cut of the house font, body text group, logo or acronym with descriptor); `vorgabe` names the one
+  that applies when nobody chooses. Every theme template that passed the start check is a document type. Whoever can
+  edit a text pad chooses both in the toolbar (`POST /p/<id>/gestaltung`); the choice applies to all PDFs of the pad.
+  Templates get the sender as `meta.absender`.
+- The editor shows the typefaces of the PDF where the theme's stylesheet provides for it: classes
+  `np-vorlage-<id>` and `np-mit-absender` on `<body>`, the cuts as `--np-schnitt`, `--np-schnitt-vorgabe` and
+  `--np-fliesstext`. Cuts are served at `/theme/stile/<id>.ttf`. Other open editors switch without reloading.
+- Table hooks: the PDF content calls `np-linie`, `np-kopf` and `np-quer`. A template may define them to draw its own
+  table rules or to keep wide tables upright; otherwise the built-in grid and landscape pages apply.
+- Wide tables in the PDF: a table with seven or more columns goes on its own landscape page together
+  with a heading directly above it. Table rows no longer break across pages unless a cell is so long that the row
+  might not fit on one page.
+- Page breaks: Ctrl+Enter (Mac: ⌘+Enter) or a toolbar button inserts a page break block. It appears
+  as a dashed line, becomes a weak page break in the PDF (no empty pages), `break-after: page` in HTML and the
+  print view, an HTML comment in Markdown and an empty line in text. `setHTML` reads `break-before`/`break-after:
+  page` and the old `page-break-*: always`. Version 0.22 does not know the block and removes it when a pad is
+  opened; the rest of the text stays.
+
+### Changed
+
+- The built-in PDF layout is now the Typst module `server/src/satz/standard.typ`. Its output is unchanged.
+- The layout `eckig` no longer defaults to red: its accent is dark grey (`#333`, dark mode `#c4c4c4`) on the start
+  page, in the editor and in the quiz. A theme sets its own accent with `farben.akzent` in `theme.json`, an admin
+  under "Appearance". The warning in the editor status bar uses the error red `#b00020`, the text colour "Red" is
+  now `#d32f2f` (4.98:1 on white). Text that already has the old red keeps it.
+
 ## [0.22.1] - 2026-11-15
 
 ### Security
@@ -92,9 +144,9 @@ All notable changes to this project are documented in this file. The format is b
 
 ### Changed
 
-- PDF: the HSD design (HSD Sans, fonts and logo from `NEXTPAD_THEME_DIR`) applies only with
+- PDF: the house design (house font, fonts and logo from `NEXTPAD_THEME_DIR`) applies only with
   `NEXTPAD_THEME=hsd`. With `nextpad` and `rund` the PDF shows only a logo uploaded under "Appearance" and the
-  accent colour, set in Liberation Sans. Before, these themes also used HSD Sans and the theme folder.
+  accent colour, set in Liberation Sans. Before, these themes also used the house font and the theme folder.
 
 ### Fixed
 
@@ -265,9 +317,9 @@ before updating; an older version keeps working with the extra column.
 
 - The help mentioned a “Share” button that did not exist.
 - The email before deleting an idea collection named a button that is actually called “Teilen, zeigen, sichern”.
-- On English pages in the HSD look, the start page showed the German default subtitle.
+- On English pages in the look `hsd`, the start page showed the German default subtitle.
 - The read-only label in the editor was German on English pages, and the logo in the editor toolbar was announced as
-  “Hochschule Düsseldorf” regardless of the configured institution.
+  a fixed institution name regardless of the configured institution.
 
 ## [0.16.0] - 2026-10-29
 
@@ -438,14 +490,14 @@ before updating; an older version keeps working with the extra column.
   Noto Emoji font (SIL Open Font License 1.1) as fallback.
 - The tighter spacing from 0.9.1 now actually ships: it was only in the generated stylesheet, which the
   release build overwrites, and is now in the source stylesheet of the editor bundle.
-- The cache-busting version of the editor stylesheets now also covers the HSD theme stylesheet, so browsers
+- The cache-busting version of the editor stylesheets now also covers the stylesheet of theme `hsd`, so browsers
   load a changed theme instead of keeping the old one for up to a year.
 
 ## [0.9.1] - 2026-10-28
 
 ### Changed
 
-- HSD theme: all editor headings in Arial bold like the HSD LaTeX templates; HSD Sans stays on the start page
+- Theme `hsd`: all editor headings in Arial bold like the LaTeX templates of the house; the house font stays on the start page
   wordmark and level-1 headings in the PDF. Line height 1.4 instead of 1.55.
 - Tighter spacing in both themes: list items without paragraph gap (2 px between items), headings with more
   space above than below; also in the timeline and print view.
@@ -483,13 +535,13 @@ before updating; an older version keeps working with the extra column.
 
 ### Changed
 
-- Logo without red: the speech bubble and its tail are both HSD blue (favicon, header, README).
+- Logo without red: the speech bubble and its tail are both house blue (favicon, header, README).
 
 ## [0.8.0] - 2026-10-26
 
 ### Added
 
-- Appearance settings for admins at `/admin/erscheinungsbild` (HSD theme): name and subtitle in the header,
+- Appearance settings for admins at `/admin/erscheinungsbild` (theme `hsd`): name and subtitle in the header,
   institution name, logo (PNG, JPEG, WebP or script-free SVG), start page background with credit, accent and
   three house colours. Lines and tints for light and dark mode are derived with WCAG contrast checks or set by
   hand; the page warns about weak contrasts. Applies to start page, help, editor, idea collection, projector view
@@ -501,13 +553,13 @@ before updating; an older version keeps working with the extra column.
 
 - The NextPad mark appears in the header only when no institution logo is set; without a logo, mark and name
   link to the start page.
-- Editor (HSD theme) takes the accent from a variable instead of a fixed red.
+- Editor (theme `hsd`) takes the accent from a variable instead of a fixed red.
 
 ## [0.7.0] - 2026-10-26
 
 ### Added
 
-- Logo: a filled speech bubble in HSD blue with a red tail (blue since 0.8.1), a line of text and a cursor inside.
+- Logo: a filled speech bubble in house blue with a red tail (blue since 0.8.1), a line of text and a cursor inside.
   It serves as favicon (SVG, 32 px PNG, Apple touch icon), stands before the name in the page header
   and on the projector view; README files show it as a word mark (`docs/bilder/`).
 
@@ -515,7 +567,7 @@ before updating; an older version keeps working with the extra column.
 
 ### Changed
 
-- Editor (HSD theme) follows the softened design: active tool and participant count as HSD-blue
+- Editor (theme `hsd`) follows the softened design: active tool and participant count as house-blue
   tint with an underline instead of black, controls with 4 px radius, timeline buttons outlined.
 - Start page: panels over the photo 94 % opaque instead of 88 %. Measured on the rendered page
   (`web/test/transparenz.mjs`, text against the least favourable background pixel), every text now
@@ -538,11 +590,11 @@ before updating; an older version keeps working with the extra column.
 
 ### Changed
 
-- Design softened within the HSD corporate design, always derived from the house colours:
+- Design softened within the corporate design, always derived from the house colours:
   blue, green and yellow as tints (12 %, yellow 30 %) for surfaces and darkened to 70 % for lines
   (at least 3:1, WCAG 1.4.11); in dark mode the house colours themselves. Black only for the main
   action. Controls get a 4 px radius, surfaces stay square. Start page tiles carry a tinted icon.
-- Idea collection: sorting as tabs; a cast vote shows HSD blue; new posts flash in yellow
+- Idea collection: sorting as tabs; a cast vote shows house blue; new posts flash in yellow
   (a static marker with reduced motion); done posts show a green check and the word "erledigt";
   moderation as icon buttons; the question is edited via a pencil next to the heading.
 
@@ -580,13 +632,13 @@ before updating; an older version keeps working with the extra column.
 
 ### Changed
 
-- Start page (HSD theme, desktop): the entry panel is as wide as the panel below it.
+- Start page (theme `hsd`, desktop): the entry panel is as wide as the panel below it.
 
 ## [0.3.2] - 2026-10-26
 
 ### Changed
 
-- Start page (HSD theme, desktop): the photo now reaches down to the footer; sign-in, recently
+- Start page (theme `hsd`, desktop): the photo now reaches down to the footer; sign-in, recently
   opened pads and the note sit on their own translucent panel, aligned with the entry panel.
 
 ### Fixed

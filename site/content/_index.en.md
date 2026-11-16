@@ -55,7 +55,7 @@ themes = [
   { name = "Rounded", wert = "rund", text = "Large radii, pill buttons, blue as accent. The font Lexend was designed for readability. Logo and house colours can be set in the admin pages.", alt = "Start page in the rounded look: light blue background, card with large radii, blue pill button, font Lexend." },
   { name = "Slightly rounded", wert = "colibris", text = "Like Etherpad with Quicksand and the pencil background. Familiar to everyone who worked with Etherpad before.", alt = "Start page in the slightly rounded look: green background with coloured pencils, dark panel with “New pad” and a field for the name." },
 ]
-themes_hint = "The variable <code>NEXTPAD_THEME</code> picks the look, on YunoHost the installation does. Institutions with their own corporate design use the <code>hsd</code> look as a template."
+themes_hint = "The variable <code>NEXTPAD_THEME</code> picks the look, on YunoHost the installation does. Institutions with their own corporate design put a theme with <code>theme.json</code> into the theme folder; the example in the repository is the template."
 
 ops_kicker = "For operation"
 ops_title = "Privacy, operation, accessibility"
