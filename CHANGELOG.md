@@ -6,6 +6,16 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+## [0.23.1] - 2026-11-23
+
+### Security
+
+- lettre updated to 0.11.24. Fixes RUSTSEC-2026-0560 to RUSTSEC-2026-0565: SMTP command injection through a bare LF
+  or CR, mail for an address with a quoted local part going to another address, forged replies after STARTTLS and
+  denial of service through malformed or oversized SMTP replies. NextPad uses lettre only for retention mails
+  (`NEXTPAD_SMTP_URL`).
+- url updated to 2.5.9. Fixes RUSTSEC-2026-0592, a stack overflow in `Url::origin()` on nested `blob:` URLs.
+
 ## [0.23.0] - 2026-11-23
 
 Same as release candidate 0.23.0-rc.1 from 2026-11-16 apart from the version number.
