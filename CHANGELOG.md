@@ -6,7 +6,9 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
-## [0.23.0-rc.1] - 2026-11-16
+## [0.23.0] - 2026-11-23
+
+Same as release candidate 0.23.0-rc.1 from 2026-11-16 apart from the version number.
 
 ### Upgrade
 
