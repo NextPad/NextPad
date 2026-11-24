@@ -474,6 +474,13 @@ if (!cfg.readonly) {
     if (v === 'p' && editor.isActive('blockquote') && editor.isActive('paragraph')) { editor.chain().lift('blockquote').run(); return }
     v === 'p' ? editor.chain().setParagraph().run() : v === 'code' ? editor.chain().setCodeBlock().run() : editor.chain().setHeading({ level: +v }).run()
   })
+  if (cfg.vorlagen?.length) {
+    select(menuLeft, tx('vorlage_einfuegen'), tx('vorlage'), cfg.vorlagen.map(v => [v.id, v.name]), id => {
+      const v = cfg.vorlagen.find(x => x.id === id)
+      // ein leerer Listenpunkt braucht für TipTap einen Absatz, die Vorlagen schreiben ihn kurz als <li></li>
+      if (v) editor.chain().focus().insertContent(v.html.replaceAll('<li></li>', '<li><p></p></li>')).run()
+    })
+  }
   if (cfg.absender?.length) gestaltungFelder.stil = gestaltungWahl(menuLeft, 'stil', tx('absender'), [['', tx('absender_vorgabe')], ...cfg.absender.map(g => [g.id, g.name])], cfg.absenderWahl || '')
   if (cfg.arten?.length > 1) gestaltungFelder.art = gestaltungWahl(menuLeft, 'art', tx('dokumentart'), cfg.arten.map(a => [a.id, a.name]), cfg.art || 'standard')
   sep(menuLeft)

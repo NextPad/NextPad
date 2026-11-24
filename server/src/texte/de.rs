@@ -163,6 +163,8 @@ pub const TEXTE: &[(&str, &str)] = &[
     ("editor.blocksatz", "Blocksatz"),
     ("editor.absatzstil", "Absatzstil"),
     ("editor.stil", "Stil"),
+    ("editor.vorlage", "Vorlage"),
+    ("editor.vorlage_einfuegen", "Vorlage an der Cursorstelle einfügen"),
     ("editor.absender", "Absender des PDF (Institution oder Fachbereich)"),
     ("editor.absender_vorgabe", "Vorgabe"),
     ("editor.dokumentart", "Dokumentart des PDF"),

@@ -6,6 +6,13 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-11-24
+
+### Added
+
+- Toolbar list “Template” in the text pad inserts the group work or minutes outline at the cursor, in German and
+  English. Undo removes it again. Browser test `vorlagetest`.
+
 ## [0.23.1] - 2026-11-23
 
 ### Security

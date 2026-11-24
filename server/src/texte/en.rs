@@ -163,6 +163,8 @@ pub const TEXTE: &[(&str, &str)] = &[
     ("editor.blocksatz", "Justify"),
     ("editor.absatzstil", "Paragraph style"),
     ("editor.stil", "Style"),
+    ("editor.vorlage", "Template"),
+    ("editor.vorlage_einfuegen", "Insert template at the cursor"),
     ("editor.absender", "Sender of the PDF (institution or faculty)"),
     ("editor.absender_vorgabe", "Default"),
     ("editor.dokumentart", "Document type of the PDF"),

@@ -239,6 +239,7 @@ pub async fn page(State(state): State<Arc<AppState>>, Path(id): Path<String>, he
         "arten": if gestaltung_waehlbar(&state, &access) { vorlagen(sp).into_iter().map(|(id, name)| json!({ "id": id, "name": name })).collect::<Vec<_>>() } else { vec![] },
         "art": state.store.art(&access.pad.id).filter(|v| art_gueltig(v)).unwrap_or_else(|| "standard".into()),
         "satz": satz_json(&state, &access.pad.id),
+        "vorlagen": if access.readonly { vec![] } else { VORLAGEN.iter().map(|v| json!({ "id": v.0, "name": texte::t(sp, v.1), "html": texte::t(sp, v.2) })).collect::<Vec<_>>() },
     });
     let base = &state.config.base_path;
     if let Some(addon) = crate::addons::von_pad(&state, &access.pad.id) {
@@ -551,9 +552,14 @@ fn with_cookie(mut resp: Response, cookie: Option<String>) -> Response {
     resp
 }
 
-/// Vorlagen für neue Pads (Startseite: Gruppenarbeit, Protokoll), in der Sprache der Person.
+/// Vorlagen: Kennung, Name und Inhalt. Die Startseite legt damit ein neues Pad an, die Werkzeugleiste fügt sie ein.
+const VORLAGEN: [(&str, &str, &str); 2] = [
+    ("gruppenarbeit", "start.gruppenarbeit", "vorlage.gruppenarbeit_html"),
+    ("protokoll", "start.protokoll", "vorlage.protokoll_html"),
+];
+
 fn template(name: &str, sp: Sprache) -> Option<&'static str> {
-    Some(texte::t(sp, match name { "gruppenarbeit" => "vorlage.gruppenarbeit_html", "protokoll" => "vorlage.protokoll_html", _ => return None }))
+    VORLAGEN.iter().find(|v| v.0 == name).map(|v| texte::t(sp, v.2))
 }
 
 /// „Pad öffnen“: Name aus dem Formular; legt an, wenn es das Pad noch nicht gibt.

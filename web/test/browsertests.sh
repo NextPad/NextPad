@@ -93,6 +93,7 @@ pruefe passworttest
 pruefe tasklist "$U" "$NEXTPAD_KEY_FILE"
 pruefe startform "$U"
 pruefe recenttest "$U"
+pruefe vorlagetest "$U"
 pruefe darktest "$U"
 pruefe sprachtest "$U"
 pruefe ideentest "$U"

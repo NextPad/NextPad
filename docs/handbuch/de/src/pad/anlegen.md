@@ -25,6 +25,7 @@ Ein Pad ist ein Text, an dem mehrere Personen gleichzeitig schreiben. Alle sehen
 2. **Öffnen oder anlegen** wählen. Gibt es das Pad schon, öffnet es sich. Sonst legt NextPad ein neues, leeres Pad an.
 
 Ohne Namen entsteht ein Pad mit Zufallsnamen. Die Vorlagen unter **Mit Vorlage beginnen** bringen eine Gliederung für Gruppenarbeit oder Protokoll mit.
+In einem bestehenden Pad fügt die Liste **Vorlage** in der Werkzeugleiste dieselben Gliederungen an der Cursorstelle ein.
 
 ## Gemeinsam schreiben
 

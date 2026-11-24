@@ -25,6 +25,7 @@ A pad is a text that several people write at the same time. Everyone sees the ch
 2. Choose **Open or create**. If the pad exists, it opens. Otherwise NextPad creates a new, empty pad.
 
 Without a name, a pad with a random name is created. The templates under **Start from a template** come with an outline for group work or minutes.
+In an existing pad, the **Template** list in the toolbar inserts the same outlines at the cursor.
 
 ## Write together
 
