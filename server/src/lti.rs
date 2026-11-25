@@ -374,6 +374,9 @@ pub async fn launch(State(state): State<Arc<AppState>>, headers: HeaderMap, axum
         let (join, course) = plattform_links(produkt, &pl.moodle(), &ctx.id, &link.id);
         if let Some(u) = join { let _ = state.store.set_join_url(&pad, &u); }
         if let Some(u) = course { let _ = state.store.set_course_url(&pad, &u); }
+        // bei jedem Start, damit Umbenennungen in der Lernplattform ankommen
+        let sauber = |s: Option<&str>| -> String { s.unwrap_or("").chars().filter(|c| !c.is_control()).take(200).collect::<String>().trim().to_string() };
+        let _ = state.store.set_lti_namen(&pad, &sauber(ctx.title.as_deref()), &sauber(link.title.as_deref()));
         let group = crate::ids::group_of_pad(&pad).unwrap_or("").to_string();
         let sid = match state.store.create_session(&group, &author.id, ids::now_ms() / 1000 + LOGIN_SECONDS) {
             Ok(s) => s,

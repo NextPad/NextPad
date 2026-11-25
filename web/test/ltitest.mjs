@@ -248,6 +248,21 @@ check('Moodle-Ideensammlung: Leinwand mit QR zur Aktivität', wall.includes(`${I
 const tl = await startAct(act('42', 'Instructor', String(Number(nr) + 2), { [C + 'tool_platform']: { product_family_code: 'ilias' } }))
 const wallI = await (await fetch(base + tl.loc.replace(/^.*?\/p\//, '/p/') + '/leinwand', { headers: { cookie: tl.sid } })).text()
 check('ILIAS-Ideensammlung: Leinwand mit QR zum Objekt in ILIAS', wallI.includes(`${ISS}/goto.php?target=lti_${Number(nr) + 2}`) && !wallI.includes('/mod/lti/view.php'))
+// Meine Kurs-Pads: Startseite listet Aktivitäten mit Lehrrolle, Namen vom letzten Start, Links in die Lernplattform
+const anmeldung = r => (r.headers.getSetCookie().find(c => c.startsWith('nextpad_login=') && c.length > 20) || '').split(';')[0]
+const nk = String(Number(nr) + 3)
+const kursAct = (sub, role, titel) => act(sub, role, nk, { [C + 'context']: { id: kursNr, title: 'Kurs <b>fett</b>' }, [C + 'resource_link']: { id: nk, title: titel }, [C + 'custom']: { typ: 'pad' } })
+await startAct(kursAct('42', 'Instructor', 'Erste Fassung'))
+const tk = await startAct(kursAct('42', 'Instructor', 'Protokoll Woche 1'))
+const startK = await (await fetch(`${base}/`, { headers: { cookie: anmeldung(tk.r) } })).text()
+check('Kurs-Pads: Abschnitt für Lehrende', startK.includes('Meine Kurs-Pads') && startK.includes('id="h-kurs-pads"'))
+check('Kurs-Pads: Link zur Aktivität in Moodle', startK.includes(`href="${ISS}/mod/lti/view.php?l=${nk}"`))
+check('Kurs-Pads: Name vom letzten Start', startK.includes('Protokoll Woche 1') && !startK.includes('Erste Fassung'))
+check('Kurs-Pads: Kursname maskiert, Kurs verlinkt', startK.includes('Kurs &lt;b&gt;fett&lt;/b&gt;') && !startK.includes('<b>fett</b>') && startK.includes(`href="${ISS}/course/view.php?id=${kursNr}"`))
+check('Kurs-Pads: auch Quiz und Ideensammlung', startK.includes(`view.php?l=${nr}"`) && startK.includes(`view.php?l=${Number(nr) + 1}"`))
+const sk = await startAct(kursAct('43', 'Learner', 'Protokoll Woche 1'))
+check('Kurs-Pads: nicht für Studierende', !(await (await fetch(`${base}/`, { headers: { cookie: anmeldung(sk.r) } })).text()).includes('h-kurs-pads'))
+check('Kurs-Pads: englisch', (await (await fetch(`${base}/`, { headers: { cookie: anmeldung(tk.r), 'accept-language': 'en' } })).text()).includes('My course pads'))
 const s4 = await startAct({ ...act('43', 'Learner', 'x'), [C + 'resource_link']: undefined })
 check('Aktivität ohne Ressourcen-Link 400', s4.r.status === 400, `Status ${s4.r.status}`)
 

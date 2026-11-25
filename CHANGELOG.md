@@ -6,6 +6,19 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-11-25
+
+### Added
+
+- “My course pads” on the start page: after signing in through Moodle or ILIAS, teachers see the course activities
+  they moderate, grouped by course, with links to the activity in the learning platform. Course and activity names
+  are stored at each launch, so pads show their names after the next launch.
+
+### Changed
+
+- Database schema version 3 (new table `pad_lti_namen`). NextPad backs up the database before the upgrade. Older
+  versions do not start on the upgraded database, so a rollback needs the backup as well.
+
 ## [0.24.0] - 2026-11-24
 
 ### Added

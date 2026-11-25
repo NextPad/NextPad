@@ -12,8 +12,8 @@ authors:
     given-names: "Christian-Maximilian"
     orcid: "https://orcid.org/0000-0001-7946-0461"
 license: EUPL-1.2
-version: "0.24.0"
-date-released: "2026-11-24"
+version: "0.25.0"
+date-released: "2026-11-25"
 keywords:
   - etherpad
   - moodle

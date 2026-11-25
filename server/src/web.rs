@@ -807,7 +807,16 @@ pub async fn static_start() -> Response { ([(header::CONTENT_TYPE, "text/javascr
 
 /// Anmeldebereich der Startseite: angemeldet (Name, Bild, Abmelden) oder Schaltflächen je Moodle.
 /// `zeile`: schmale Zeile unter dem Fotoband der Rahmen-Startseite statt Karte (colibris).
+/// Mit Anmeldung folgt darunter „Meine Kurs-Pads“.
 fn account_block(state: &AppState, headers: &HeaderMap, zeile: bool) -> String {
+    let konto = konto_bereich(state, headers, zeile);
+    match login_author(state, headers) {
+        Some(a) => konto + &kurs_pads_block(state, &a.id, Sprache::aus_anfrage(headers)),
+        None => konto,
+    }
+}
+
+fn konto_bereich(state: &AppState, headers: &HeaderMap, zeile: bool) -> String {
     let sp = Sprache::aus_anfrage(headers);
     let t = |k| texte::t(sp, k);
     let base = &state.config.base_path;
@@ -827,6 +836,36 @@ fn account_block(state: &AppState, headers: &HeaderMap, zeile: bool) -> String {
         return format!(r#"<section class="account-line" aria-label="{}"><div class="account-row">{buttons}<p class="hint">{}</p></div></section>"#, t("konto.anmeldung"), t("konto.hinweis"));
     }
     format!(r#"<section class="account card" aria-label="{}">{buttons}</section>"#, t("konto.anmeldung"))
+}
+
+/// „Meine Kurs-Pads“: Kursaktivitäten mit Lehrrolle, nach Kurs gruppiert, Links in die Lernplattform.
+fn kurs_pads_block(state: &AppState, author_id: &str, sp: Sprache) -> String {
+    let pads = match state.store.kurs_pads(author_id) {
+        Ok(p) if !p.is_empty() => p,
+        Ok(_) => return String::new(),
+        Err(e) => { tracing::warn!("Kurs-Pads lesen: {e}"); return String::new(); }
+    };
+    let t = |k| texte::t(sp, k);
+    let attr = |s: &str| html_escape::encode_double_quoted_attribute(s).into_owned();
+    let text = |s: &str| html_escape::encode_text(s).into_owned();
+    let mut gruppen = String::new();
+    let mut offen: Option<(String, Option<String>)> = None;
+    for p in &pads {
+        let schluessel = (p.kurs.clone(), p.kurs_url.clone());
+        if offen.as_ref() != Some(&schluessel) {
+            if offen.is_some() { gruppen.push_str("</ul></li>"); }
+            let name = if p.kurs.is_empty() { t("start.kurspads_ohne_kurs").to_string() } else { text(&p.kurs) };
+            let kopf = match &p.kurs_url { Some(u) => format!(r#"<a href="{}">{name}</a>"#, attr(u)), None => name };
+            gruppen.push_str(&format!(r#"<li><h3>{kopf}</h3><ul class="kurs-pads-liste">"#));
+            offen = Some(schluessel);
+        }
+        let art = match p.art.as_deref().and_then(crate::addons::nach_art) { Some(a) => t(a.name), None => t("start.kurspads_textpad") };
+        let name = if p.aktivitaet.is_empty() { t("start.kurspads_ohne_titel").to_string() } else { text(&p.aktivitaet) };
+        gruppen.push_str(&format!(r#"<li><a href="{}">{name}</a> <span class="art">{art}</span></li>"#, attr(&p.aktivitaet_url)));
+    }
+    gruppen.push_str("</ul></li>");
+    format!(r#"<section class="panel card kurs-pads" aria-labelledby="h-kurs-pads"><h2 id="h-kurs-pads">{titel}</h2><p class="hint">{info}</p><ul class="kurs-pads-kurse">{gruppen}</ul></section>"#,
+        titel = t("start.kurspads"), info = t("start.kurspads_info"))
 }
 
 /// Fußzeile: Hilfe, eingestellte Links (Datenschutz, Impressum …), Einrichtung.

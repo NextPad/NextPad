@@ -29,6 +29,7 @@ NextPad can be added to a Moodle course as an activity. For this the administrat
 | Moderation | the browser it was created in | the teachers of the course |
 | QR code on the board | leads straight to the collection | leads to the activity in Moodle, where sign-in follows |
 | Language | choice “DE \| EN”, otherwise the browser | choice “DE \| EN”, otherwise the Moodle language |
+| Finding it again | “Recently opened” in this browser | for teachers after sign-in under “My course pads” on the start page, with a link to the activity in Moodle |
 
 ## The two guides
 

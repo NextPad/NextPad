@@ -151,10 +151,20 @@ pub enum CreatePadError {
     Other(anyhow::Error),
 }
 
+/// Eine Zeile von „Meine Kurs-Pads“.
+pub struct KursPad {
+    pub art: Option<String>,
+    pub aktivitaet_url: String,
+    pub kurs_url: Option<String>,
+    pub kurs: String,
+    pub aktivitaet: String,
+}
+
 /// Schemaversion in `PRAGMA user_version`. Jede Schema-Ergänzung, auch in einem Addon, zählt sie hoch.
 /// 1: Stand 0.22.0, alle Ergänzungen bis `pads.owner_link_hash` und die Tabellen der Addons.
 /// 2: `pads.stil` (Absender) und `pads.art` (Kennung der Satzvorlage).
-pub const SCHEMA_VERSION: i64 = 2;
+/// 3: Tabelle `pad_lti_namen` (Kurs- und Aktivitätsname vom letzten Start aus der Lernplattform).
+pub const SCHEMA_VERSION: i64 = 3;
 
 const SCHEMA: &str = r#"
 CREATE TABLE IF NOT EXISTS groups (id TEXT PRIMARY KEY, created INTEGER NOT NULL);
@@ -177,6 +187,7 @@ CREATE TABLE IF NOT EXISTS snapshots (
 CREATE TABLE IF NOT EXISTS lti_links (link_key TEXT PRIMARY KEY, pad_id TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS pad_join (pad_id TEXT PRIMARY KEY, url TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS pad_kurs (pad_id TEXT PRIMARY KEY, url TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS pad_lti_namen (pad_id TEXT PRIMARY KEY, kurs TEXT NOT NULL, aktivitaet TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS pad_moderators (pad_id TEXT NOT NULL, author_id TEXT NOT NULL, PRIMARY KEY (pad_id, author_id));
 CREATE TABLE IF NOT EXISTS pad_unlocks (token TEXT PRIMARY KEY, pad_id TEXT NOT NULL, created INTEGER NOT NULL);
@@ -318,6 +329,7 @@ impl Store {
         c.execute("DELETE FROM lti_links WHERE pad_id=?1", params![id])?;
         c.execute("DELETE FROM pad_join WHERE pad_id=?1", params![id])?;
         c.execute("DELETE FROM pad_kurs WHERE pad_id=?1", params![id])?;
+        c.execute("DELETE FROM pad_lti_namen WHERE pad_id=?1", params![id])?;
         c.execute("DELETE FROM snapshots WHERE pad_id=?1", params![id])?;
         c.execute("DELETE FROM pad_unlocks WHERE pad_id=?1", params![id])?;
         c.execute("DELETE FROM pad_owners WHERE pad_id=?1", params![id])?;
@@ -734,6 +746,23 @@ impl Store {
     pub fn set_course_url(&self, pad_id: &str, url: &str) -> Result<()> {
         self.c().execute("INSERT INTO pad_kurs (pad_id, url) VALUES (?1, ?2) ON CONFLICT(pad_id) DO UPDATE SET url=?2", params![pad_id, url])?;
         Ok(())
+    }
+    pub fn set_lti_namen(&self, pad_id: &str, kurs: &str, aktivitaet: &str) -> Result<()> {
+        self.c().execute("INSERT INTO pad_lti_namen (pad_id, kurs, aktivitaet) VALUES (?1, ?2, ?3) ON CONFLICT(pad_id) DO UPDATE SET kurs=?2, aktivitaet=?3", params![pad_id, kurs, aktivitaet])?;
+        Ok(())
+    }
+    /// Kursaktivitäten, die dieses Konto moderiert und die sich über die Lernplattform öffnen lassen,
+    /// nach Kurs und Aktivität sortiert; Namen fehlen bei Pads, die seit 0.25.0 nicht mehr gestartet wurden.
+    pub fn kurs_pads(&self, author_id: &str) -> Result<Vec<KursPad>> {
+        let c = self.c();
+        let mut st = c.prepare(
+            "SELECT p.kind, j.url, k.url, COALESCE(n.kurs, ''), COALESCE(n.aktivitaet, '') FROM pad_moderators m
+             JOIN pads p ON p.id = m.pad_id JOIN pad_join j ON j.pad_id = p.id
+             LEFT JOIN pad_kurs k ON k.pad_id = p.id LEFT JOIN pad_lti_namen n ON n.pad_id = p.id
+             WHERE m.author_id = ?1 ORDER BY COALESCE(n.kurs, '') = '', n.kurs COLLATE NOCASE, k.url, COALESCE(n.aktivitaet, '') = '', n.aktivitaet COLLATE NOCASE LIMIT 200")?;
+        let r = st.query_map(params![author_id], |r| Ok(KursPad { art: r.get(0)?, aktivitaet_url: r.get(1)?, kurs_url: r.get(2)?, kurs: r.get(3)?, aktivitaet: r.get(4)? }))?
+            .collect::<rusqlite::Result<_>>()?;
+        Ok(r)
     }
     pub fn course_url(&self, pad_id: &str) -> Option<String> {
         self.c().query_row("SELECT url FROM pad_kurs WHERE pad_id=?1", params![pad_id], |r| r.get(0)).optional().ok().flatten()

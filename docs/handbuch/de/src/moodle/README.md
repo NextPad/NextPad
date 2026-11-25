@@ -29,6 +29,7 @@ NextPad lässt sich als Aktivität in einen Moodle-Kurs legen. Die Administratio
 | Moderation | der Browser, in dem angelegt wurde | die Lehrenden des Kurses |
 | QR-Code auf der Leinwand | führt direkt in die Sammlung | führt zur Aktivität in Moodle, dort folgt die Anmeldung |
 | Sprache | Auswahl „DE \| EN“, sonst Browser | Auswahl „DE \| EN“, sonst Sprache aus Moodle |
+| Wiederfinden | „Zuletzt geöffnet“ in diesem Browser | für Lehrende nach der Anmeldung unter „Meine Kurs-Pads“ auf der Startseite, mit Link zur Aktivität in Moodle |
 
 ## Die zwei Anleitungen
 
